@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: cogs
+    runtime: node
+    plan: free
+    region: oregon
+    buildCommand: npm ci && npm run build
+    startCommand: node .output/server/index.mjs
+    healthCheckPath: /
+    envVars:
+      - key: NODE_VERSION
+        value: "20"
+      - key: NITRO_PRESET
+        value: node
+      - key: ENABLE_GROK_EXTENSIONS
+        value: "false"
+      # Required for production SSR + data (set these in the Render dashboard):
+      - key: DATABASE_URL
+        sync: false
+      - key: ADMIN_UNLOCK_PASSWORD
+        sync: false
+      - key: CHANCELLOR_USERNAME
+        sync: false
+      - key: CHANCELLOR_INITIAL_PASSWORD
+        sync: false
+      - key: CHANCELLOR_SETUP_TOKEN
+        sync: false
+      - key: APP_URL
+        sync: false
+      # Optional
+      - key: MIGRATIONS_REQUIRED
+        value: "true"
