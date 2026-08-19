@@ -10,9 +10,11 @@ export function SiteShell({
   invertedHeader?: boolean;
 }) {
   return (
-    <div className="flex min-h-dvh flex-col bg-paper text-ink">
+    <div className="flex min-h-dvh flex-col overflow-x-hidden bg-paper text-ink">
       <SiteHeader inverted={invertedHeader} />
-      <div className="flex-1">{children}</div>
+      <div id="main" tabIndex={-1} className="flex-1 outline-none">
+        {children}
+      </div>
       <SiteFooter />
     </div>
   );

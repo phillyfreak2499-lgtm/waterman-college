@@ -74,7 +74,13 @@ export function acceptsHtml(accept) {
 
 /** The same URL without the install-tutorial params (used as the app link). */
 export function stripInstallParams(url) {
-  const [path = "/", query = ""] = String(url ?? "/").split("?", 2);
+  const [rawPath = "/", query = ""] = String(url ?? "/").split("?", 2);
+  // Open-redirect guard. `escapeHtml` stops attribute breakout but does nothing
+  // about a URL's scheme or authority, so a request for `//evil.com/?install=1`
+  // rendered `href="//evil.com/"` — a protocol-relative ABSOLUTE url that takes
+  // the visitor off-site when they click "Open <App>". Only ever emit a
+  // single-slash-prefixed, same-origin path.
+  const path = rawPath.startsWith("/") && !rawPath.startsWith("//") ? rawPath : "/";
   const params = new URLSearchParams(query);
   params.delete("install");
   params.delete("platform");

@@ -53,25 +53,19 @@ export function UserButton() {
   const user = useCurrentUser();
   if (!user) return null;
   const label = user.displayName ?? user.primaryEmail ?? "Account";
+  const parts = label.trim().split(/\s+/).filter(Boolean);
+  const initials = ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "A";
   return (
-    <div className="flex items-center gap-2">
-      {user.profileImageUrl ? (
-        <img
-          src={user.profileImageUrl}
-          alt=""
-          className="h-8 w-8 rounded-full object-cover"
-        />
-      ) : (
-        <span className="grid h-8 w-8 place-items-center rounded-full bg-black/10 text-sm font-medium dark:bg-white/20">
-          {label.charAt(0).toUpperCase()}
-        </span>
-      )}
-      <span className="text-sm font-medium">{label}</span>
+    <div className="flex items-center gap-2.5">
+      <span className="grid size-8 place-items-center rounded-full bg-brass-soft text-[0.7rem] font-semibold tracking-wide text-navy">
+        {initials}
+      </span>
+      <span className="max-w-[10rem] truncate text-sm font-medium">{label}</span>
       {authEnabled && (
         <button
           type="button"
           onClick={() => void signOut()}
-          className="cursor-pointer text-sm underline-offset-4 opacity-70 hover:underline"
+          className="h-11 text-sm opacity-70 underline-offset-4 transition-opacity hover:opacity-100 hover:underline"
         >
           Sign out
         </button>

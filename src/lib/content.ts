@@ -1,11 +1,10 @@
-export type TrackId =
-  | "client-experience"
-  | "flow"
-  | "product"
-  | "culture"
-  | "onboarding"
-  | "management"
-  | "mit";
+import type { DeckSlide } from "@/lib/decks";
+import { ONBOARDING_LESSONS } from "./onboarding";
+import { SLIDE_TRACKS } from "./slide-tracks";
+
+export type RoleId = "new-hires" | "specialist" | "mit" | "managers";
+
+export type TrackId = string;
 
 export type Lesson = {
   slug: string;
@@ -14,10 +13,14 @@ export type Lesson = {
   kicker?: string;
   body: string[];
   takeaway?: string;
+  slides?: DeckSlide[];
+  /** Presentation-eval phases this lesson strengthens (welcome, interview, …). */
+  evalPhases?: string[];
 };
 
 export type Track = {
   id: TrackId;
+  role: RoleId;
   title: string;
   nav: string;
   href: string;
@@ -36,13 +39,65 @@ export const SITE = {
   adminEmail: "mhudson@goodfeetdfw.com",
 } as const;
 
+export const roles: {
+  id: RoleId;
+  label: string;
+  kicker: string;
+  title: string;
+  summary: string;
+}[] = [
+  {
+    id: "new-hires",
+    label: "New Hires",
+    kicker: "First 30 days",
+    title: "Your first thirty days, on purpose.",
+    summary:
+      "Week 1 at the Learning Center. Weeks 2–4 in your store. Check-ins replace the old Google folders.",
+  },
+  {
+    id: "specialist",
+    label: "Specialist",
+    kicker: "Specialist Training",
+    title: "You are the first thing our Clients experience.",
+    summary:
+      "Before any product changes hands, a Specialist changes the room. Client Experience, Flow, Product, and Culture.",
+  },
+  {
+    id: "mit",
+    label: "MIT",
+    kicker: "By approval",
+    title: "Lead yourself before you lead others.",
+    summary:
+      "For Specialists preparing to serve as a Manager. Seek approval from your District Manager before you begin.",
+  },
+  {
+    id: "managers",
+    label: "Managers",
+    kicker: "Management Development",
+    title: "People are how we win.",
+    summary:
+      "Great products get Clients through the door. Great managers keep them coming back. Lead with compassion and confidence.",
+  },
+];
+
+const ROLE_IDS: RoleId[] = ["new-hires", "specialist", "mit", "managers"];
+
+export function isRoleId(value: unknown): value is RoleId {
+  return typeof value === "string" && (ROLE_IDS as string[]).includes(value);
+}
+
+export function getRole(id: RoleId) {
+  return roles.find((r) => r.id === id) ?? roles[0];
+}
+
 export const tracks: Track[] = [
   {
     id: "client-experience",
+    role: "specialist",
     title: "Client Experience",
     nav: "Client Experience",
     href: "/training/client-experience",
-    image: "/media/campus-front.jpg",
+    image: "/media/campus-cogs.jpg",
     audience: "Every Specialist",
     summary:
       "The way a Client feels when they leave our store matters just as much as the product they walk out with. Listen deeply, respond with care, and turn a first visit into a lifelong relationship.",
@@ -95,6 +150,7 @@ export const tracks: Track[] = [
   },
   {
     id: "flow",
+    role: "specialist",
     title: "Flow Training",
     nav: "Flow",
     href: "/training/flow",
@@ -140,6 +196,7 @@ export const tracks: Track[] = [
   },
   {
     id: "product",
+    role: "specialist",
     title: "Product Training",
     nav: "Product",
     href: "/training/product",
@@ -184,6 +241,7 @@ export const tracks: Track[] = [
   },
   {
     id: "culture",
+    role: "specialist",
     title: "Culture",
     nav: "Culture",
     href: "/training/culture",
@@ -227,53 +285,23 @@ export const tracks: Track[] = [
   },
   {
     id: "onboarding",
-    title: "Onboarding Program",
+    role: "new-hires",
+    title: "30-Day Onboarding",
     nav: "Onboarding",
     href: "/training/onboarding",
     image: "/media/classroom.jpg",
-    audience: "New Specialists · first 6 weeks",
+    audience: "New Specialists · first 30 days",
     summary:
-      "Courses designed for Specialists joining Waterman as their new career. This program lasts for your first six weeks with us.",
-    lessons: [
-      {
-        slug: "week-1-belong",
-        title: "Weeks 1–2: Belong here",
-        minutes: 15,
-        body: [
-          "Your first two weeks are about the room, the people, and the standard — not about being fast.",
-          "Shadow the full flow. Learn names. Learn the chair. Complete Client Experience lessons 1–3 and Culture: Teaching vs. training.",
-          "You are not behind. You are being built on purpose.",
-        ],
-      },
-      {
-        slug: "week-3-flow",
-        title: "Weeks 3–4: Own the flow",
-        minutes: 15,
-        body: [
-          "Run the greeting and history yourself. Operate the scanner with a trainer beside you. Close with a recap even if a senior Specialist handles the product decision.",
-          "Complete Flow Training and Product: Why the arch comes first.",
-          "Ask for one observed visit per shift. Notes beat vibes.",
-        ],
-      },
-      {
-        slug: "week-5-advise",
-        title: "Weeks 5–6: Advise with confidence",
-        minutes: 15,
-        body: [
-          "By week six you should be able to take a Client from the door to a recommendation with a trainer in earshot, not in the chair.",
-          "Finish Product: OS1st hosiery and Culture: People are how we win.",
-          "Your District Manager will review progress with your store manager. Come with questions, not a performance.",
-        ],
-        takeaway: "Six weeks to confident. Not six weeks to perfect.",
-      },
-    ],
+      "Week 1 at the Learning Center. Weeks 2–4 in your store. Each day lists the videos, GFA, roleplays, and a check-in the office can see in one place.",
+    lessons: ONBOARDING_LESSONS,
   },
   {
     id: "management",
+    role: "managers",
     title: "Management Development",
     nav: "Management",
     href: "/training/management",
-    image: "/media/campus-front.jpg",
+    image: "/media/campus-cogs.jpg",
     audience: "Managers",
     summary:
       "We invest in you because people are how we win. Great products get Clients through the door. Great managers keep them coming back.",
@@ -334,6 +362,7 @@ export const tracks: Track[] = [
   },
   {
     id: "mit",
+    role: "mit",
     title: "MIT Program",
     nav: "MIT",
     href: "/training/mit",
@@ -373,6 +402,7 @@ export const tracks: Track[] = [
       },
     ],
   },
+  ...SLIDE_TRACKS,
 ];
 
 export const tips = [

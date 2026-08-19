@@ -8,19 +8,35 @@ import {
   computeBrandWarnings,
   rootDeclaresGameImage,
   rootDeclaresOgTypeGame,
+  rootUsesBannerPlaceholder,
+  rootUsesCardPlaceholder,
 } from "./brand-check.mjs";
 
 const PLACEHOLDER_ROOT = `
 const ogImage = host
   ? \`https://og.grok.me/v1/card.png?host=\${encodeURIComponent(host)}\`
   : undefined;
+const xBanner = host
+  ? \`https://og.grok.me/v1/banner.png?host=\${encodeURIComponent(host)}\`
+  : undefined;
+meta: [{ property: "x:game:image", content: xBanner }],
 `;
 
-const CUSTOM_ROOT = "const ogImage = host ? `https://${host}/og.jpg` : undefined;";
+const CUSTOM_ROOT = `
+const ogImage = host ? \`https://\${host}/og.jpg\` : undefined;
+const xBanner = host
+  ? \`https://og.grok.me/v1/banner.png?host=\${encodeURIComponent(host)}\`
+  : undefined;
+meta: [{ property: "x:game:image", content: xBanner }],
+`;
 
 const GAME_OG_TYPE = '{ property: "og:type", content: "x:game" }';
 const GAME_IMAGE = '{ property: "x:game:image", content: xBanner }';
-const CUSTOM_GAME_ROOT = `${CUSTOM_ROOT}\nmeta: [${GAME_OG_TYPE}, ${GAME_IMAGE}],`;
+const CUSTOM_GAME_ROOT = `
+const ogImage = host ? \`https://\${host}/og.jpg\` : undefined;
+const xBanner = host ? \`https://\${host}/x-banner.jpg\` : undefined;
+meta: [${GAME_OG_TYPE}, ${GAME_IMAGE}],
+`;
 
 function makeWorkspace({
   rootTsx,
@@ -228,4 +244,59 @@ test("rootDeclaresGameImage requires a live x:game:image property", () => {
     rootDeclaresGameImage('// { property: "x:game:image", content: xBanner }'),
     false,
   );
+});
+
+test("rootUsesCardPlaceholder ignores banner-only og.grok.me URLs", () => {
+  assert.equal(
+    rootUsesCardPlaceholder(
+      'const ogImage = host ? `https://${host}/og.jpg` : undefined;\n'
+        + 'const xBanner = `https://og.grok.me/v1/banner.png?host=demo.grok.me`;\n',
+    ),
+    false,
+  );
+  assert.equal(
+    rootUsesCardPlaceholder(
+      "const ogImage = `https://og.grok.me/v1/card.png?host=demo.grok.me`;\n",
+    ),
+    true,
+  );
+});
+
+test("rootUsesBannerPlaceholder detects the default feed-card URL", () => {
+  assert.equal(
+    rootUsesBannerPlaceholder(
+      "const xBanner = `https://og.grok.me/v1/banner.png?host=demo.grok.me`;\n",
+    ),
+    true,
+  );
+  assert.equal(
+    rootUsesBannerPlaceholder(
+      "const xBanner = host ? `https://${host}/x-banner.jpg` : undefined;\n",
+    ),
+    false,
+  );
+});
+
+test("non-canvas app with banner placeholder + custom og is silent", () => {
+  // Non-games keep og.grok.me/v1/banner.png forever; only games Imagine a custom file.
+  const root = makeWorkspace({ rootTsx: CUSTOM_ROOT, cardFile: "og.jpg" });
+  assert.deepEqual(computeBrandWarnings({ hasCanvas: false, workspaceRoot: root }), []);
+});
+
+test("canvas app with custom banner file still on banner.png placeholder warns to rewire", () => {
+  const root = makeWorkspace({
+    rootTsx: `
+const ogImage = host ? \`https://\${host}/og.jpg\` : undefined;
+const xBanner = host
+  ? \`https://og.grok.me/v1/banner.png?host=\${encodeURIComponent(host)}\`
+  : undefined;
+meta: [{ property: "og:type", content: "x:game" }, { property: "x:game:image", content: xBanner }],
+`,
+    cardFile: "og.jpg",
+    narrowFile: "x-banner.jpg",
+  });
+  const warnings = computeBrandWarnings({ hasCanvas: true, workspaceRoot: root });
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /still points.*x:game:image/);
+  assert.match(warnings[0], /banner\.png/);
 });

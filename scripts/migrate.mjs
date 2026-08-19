@@ -2,7 +2,7 @@
 /**
  * Deploy-time database migrator (node-postgres, `pg`).
  *
- * Runs during `npm run build` — on every Vercel deploy — applying pending files
+ * Runs as an explicit release step — applying pending files
  * in ../migrations to DATABASE_URL. Each file is applied in one transaction and
  * recorded in a `_migrations` table, so it runs once and is safe to re-run.
  *
@@ -16,18 +16,27 @@ import pg from "pg";
 
 const databaseUrl = process.env.DATABASE_URL;
 if (!databaseUrl) {
-  console.log(
-    "[migrate] DATABASE_URL not set — skipping (the PGLite fallback migrates itself).",
-  );
+  if (process.env.MIGRATIONS_REQUIRED === "true" || process.env.NODE_ENV === "production") {
+    console.error("[migrate] DATABASE_URL is required for a production migration.");
+    process.exit(1);
+  }
+  console.log("[migrate] DATABASE_URL not set — skipping (the PGLite fallback migrates itself).");
   process.exit(0);
 }
 
 const migrationsDir = join(dirname(fileURLToPath(import.meta.url)), "..", "migrations");
 
 async function main() {
-  const pool = new pg.Pool({ connectionString: databaseUrl, max: 1 });
+  const pool = new pg.Pool({
+    connectionString: databaseUrl,
+    max: 1,
+    connectionTimeoutMillis: 10_000,
+    statement_timeout: 60_000,
+  });
   const client = await pool.connect();
+  const lockId = "8487614362054001";
   try {
+    await client.query("SELECT pg_advisory_lock($1::bigint)", [lockId]);
     await client.query(
       "CREATE TABLE IF NOT EXISTS _migrations (name TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT now())",
     );
@@ -65,8 +74,11 @@ async function main() {
       console.log(`[migrate] applied ${name}`);
       count += 1;
     }
-    console.log(count ? `[migrate] done — ${count} migration(s) applied.` : "[migrate] up to date.");
+    console.log(
+      count ? `[migrate] done — ${count} migration(s) applied.` : "[migrate] up to date.",
+    );
   } finally {
+    await client.query("SELECT pg_advisory_unlock($1::bigint)", [lockId]).catch(() => undefined);
     client.release();
     await pool.end();
   }

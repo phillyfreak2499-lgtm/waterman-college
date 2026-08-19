@@ -48,7 +48,10 @@ export function isGrokEmbedderOrigin(origin: string): boolean {
     const host = url.hostname.toLowerCase();
     if (host === "grok.com" || host.endsWith(".grok.com")) return true;
     // Local grok-web against a sandbox iframe (rare; http only).
-    if (host === "localhost" || host === "127.0.0.1" || host === "[::1]") return true;
+    if (
+      import.meta.env.DEV &&
+      (host === "localhost" || host === "127.0.0.1" || host === "[::1]")
+    ) return true;
     return false;
   } catch {
     return false;

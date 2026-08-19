@@ -1,0 +1,50 @@
+export const QUAD_GAMES = [
+  {
+    slug: "fit-clue",
+    title: "Fit Clue",
+    file: "/games/fit-clue.html",
+    blurb: "Deduce the right fit. A campus mystery with arch supports.",
+  },
+  {
+    slug: "arch-quest",
+    title: "Arch Quest",
+    file: "/games/arch-quest.html",
+    blurb: "New-hire training as a quest through the three supports.",
+  },
+  {
+    slug: "three-step-showdown",
+    title: "3-Step Showdown",
+    file: "/games/three-step-showdown.html",
+    blurb: "Strengthener, Maintainer, Relaxer — call it under pressure.",
+  },
+  {
+    slug: "new-client-roleplay",
+    title: "New Client Roleplay",
+    file: "/games/new-client-roleplay.html",
+    blurb: "Walk a first visit without a manager in the chair.",
+  },
+  {
+    slug: "keep-the-client",
+    title: "Keep the Client",
+    file: "/games/keep-the-client.html",
+    blurb: "Returns, reviews, and the visit after the sale.",
+  },
+  {
+    slug: "good-feet-land",
+    title: "Good Feet Land",
+    file: "/games/good-feet-land.html",
+    blurb: "A campus boardwalk through product and flow.",
+  },
+  {
+    slug: "client-case-file",
+    title: "Client Case File",
+    file: "/games/client-case-file.html",
+    blurb: "Read the file. Prescribe from what you heard.",
+  },
+  {
+    slug: "care-floor-commander",
+    title: "CARE Floor Commander",
+    file: "/games/care-floor-commander.html",
+    blurb: "Run the floor when it is busy. Protect the chair.",
+  },
+] as const;

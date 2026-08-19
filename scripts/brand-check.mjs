@@ -6,7 +6,9 @@
  *
  * Games must also emit og:type="x:game" in the root head so X can present the
  * unfurl as a game card (see og skill § "og:type for games"), and
- * x:game:image pointing at public/x-banner.jpg for the 50:11 X feed card.
+ * x:game:image pointing at public/x-banner.jpg for the 50:11 X feed card
+ * (every app wires x:game:image; non-games keep the og.grok.me/v1/banner.png
+ * placeholder and only games generate a custom file via Imagine).
  *
  * Checked on the filesystem (not the served head) because live preview has no
  * VITE_PUBLIC_HOSTNAME and renders no og:image tag at all, so the page alone
@@ -60,6 +62,27 @@ export function rootDeclaresGameImage(rootTsx) {
   return /property\s*:\s*["']x:game:image["']/i.test(code);
 }
 
+/**
+ * True when og:image still points at the og.grok.me *card* placeholder.
+ * A banner-only `og.grok.me/v1/banner.png` URL must not trip this — every app
+ * keeps that as the default x:game:image until (games only) public/x-banner.jpg
+ * exists.
+ */
+export function rootUsesCardPlaceholder(rootTsx) {
+  if (!rootTsx) return false;
+  // Raw source — `https://` contains `//`, so stripJsComments would eat the URL.
+  return /og\.grok\.me\/v\d+\/card\.png/i.test(rootTsx);
+}
+
+/**
+ * True when x:game:image still points at the og.grok.me banner placeholder
+ * (or has no custom /x-banner.jpg URL yet).
+ */
+export function rootUsesBannerPlaceholder(rootTsx) {
+  if (!rootTsx) return false;
+  return /og\.grok\.me\/v\d+\/banner\.png/i.test(rootTsx);
+}
+
 export function computeBrandWarnings({ hasCanvas, workspaceRoot = "/workspace" }) {
   const skillPath = join(workspaceRoot, ".grok/skills/og/SKILL.md");
   const rootTsxPath = join(workspaceRoot, "src/routes/__root.tsx");
@@ -72,7 +95,7 @@ export function computeBrandWarnings({ hasCanvas, workspaceRoot = "/workspace" }
 
   // A shipped card is validated the same way for every app type.
   if (cardPath !== undefined) {
-    if (rootTsx.includes("og.grok.me")) {
+    if (rootUsesCardPlaceholder(rootTsx)) {
       warnings.push(
         `BRAND WARNING: ${cardPath} exists but src/routes/__root.tsx still points og:image `
           + 'at the og.grok.me placeholder. Wire og:image to "https://${host}/og.jpg" per '
@@ -94,7 +117,7 @@ export function computeBrandWarnings({ hasCanvas, workspaceRoot = "/workspace" }
         + `acceptable for them. You are not done: open ${skillPath} and finish the `
         + "brand-asset pass.",
     );
-  } else if (rootTsx.includes("og.grok.me")) {
+  } else if (rootUsesCardPlaceholder(rootTsx)) {
     // No canvas but the placeholder is wired: custom cards are the DEFAULT
     // (DOM games, whimsical apps, creative tools, brand-forward pages) — only
     // plain utilities keep the placeholder. Softer prefix: for a genuine
@@ -121,17 +144,19 @@ export function computeBrandWarnings({ hasCanvas, workspaceRoot = "/workspace" }
     );
   }
 
-  // Games with a custom link card must also ship the 50:11 X feed card and
-  // declare it as x:game:image. Skip while still on the og.grok.me placeholder
-  // — that pass has not started yet.
-  const customCardWired = cardPath !== undefined && !rootTsx.includes("og.grok.me");
+  // Games with a custom link card must also ship the 50:11 X feed card via
+  // Imagine and declare it as x:game:image pointed at /x-banner.jpg. Skip while
+  // still on the og.grok.me *card* placeholder — that pass has not started yet.
+  // Non-games keep the banner.png placeholder and are not gated here.
+  const customCardWired = cardPath !== undefined && !rootUsesCardPlaceholder(rootTsx);
   if (hasCanvas && customCardWired) {
     const bannerPath = join(workspaceRoot, "public/x-banner.jpg");
     if (!existsSync(bannerPath)) {
       warnings.push(
         `BRAND WARNING: this looks like a game/canvas app but ${bannerPath} is missing. `
-          + "Games need a 50:11 X feed card (1200×264 JPEG) declared as x:game:image — "
-          + `open ${skillPath} and finish the brand-asset pass.`,
+          + "Games need a 50:11 X feed card (1200×264 JPEG via Imagine) declared as "
+          + `x:game:image — open ${skillPath} and finish the brand-asset pass. Non-games `
+          + "keep the og.grok.me/v1/banner.png placeholder.",
       );
     } else if (statSync(bannerPath).size > MAX_CARD_BYTES) {
       // Same scraper budget as og.jpg: an oversized banner validates locally
@@ -141,13 +166,21 @@ export function computeBrandWarnings({ hasCanvas, workspaceRoot = "/workspace" }
           + "included) time out or skip images this heavy, so the feed card silently fails "
           + `to unfurl. Re-encode as JPEG (ffmpeg -q:v 4) per ${skillPath}.`,
       );
+    } else if (rootUsesBannerPlaceholder(rootTsx)) {
+      warnings.push(
+        `BRAND WARNING: ${bannerPath} exists but src/routes/__root.tsx still points `
+          + "x:game:image at the og.grok.me/v1/banner.png placeholder. Wire x:game:image "
+          + 'to "https://${host}/x-banner.jpg" per '
+          + `${skillPath}.`,
+      );
     }
     if (!rootDeclaresGameImage(rootTsx)) {
       warnings.push(
         'BRAND WARNING: this looks like a game/canvas app but src/routes/__root.tsx is missing '
           + 'x:game:image. Set { property: "x:game:image", content: xBanner } pointing at '
           + `"https://\${host}/x-banner.jpg" with x:game:image:width/height 1200/264 `
-          + `(same host guard as og:image) per ${skillPath}.`,
+          + `(same host guard as og:image) per ${skillPath}. Every app wires this tag; `
+          + "games point it at the custom file after Imagine.",
       );
     }
   }

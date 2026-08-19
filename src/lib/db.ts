@@ -7,6 +7,10 @@ const rawDatabaseUrl =
   typeof process !== "undefined" ? process.env.DATABASE_URL : undefined;
 const databaseUrl =
   rawDatabaseUrl && rawDatabaseUrl.trim() ? rawDatabaseUrl : undefined;
+const pgliteAllowed =
+  typeof process === "undefined" ||
+  process.env.NODE_ENV !== "production" ||
+  process.env.ALLOW_PGLITE_PREVIEW === "true";
 
 /**
  * Active backend: real **Neon** when `DATABASE_URL` is set (deployed / configured
@@ -33,6 +37,7 @@ export interface Sql {
     text: string,
     params?: unknown[],
   ): Promise<T[]>;
+  transaction<T>(work: (sql: Sql) => Promise<T>): Promise<T>;
 }
 
 /**
@@ -66,9 +71,10 @@ const OID_INTERVAL = 1186;
 const identity = (v: string) => v;
 
 type Run = <T>(text: string, params: unknown[]) => Promise<T[]>;
+type RunTransaction = <T>(work: (sql: Sql) => Promise<T>) => Promise<T>;
 
 /** Wrap a query runner in the tagged-template + `.query()` `Sql` surface. */
-function toSql(run: Run): Sql {
+function toSql(run: Run, runTransaction?: RunTransaction): Sql {
   const sql = (async <T = Record<string, unknown>>(
     strings: TemplateStringsArray,
     ...values: unknown[]
@@ -80,6 +86,7 @@ function toSql(run: Run): Sql {
   }) as unknown as Sql;
   sql.query = <T = Record<string, unknown>>(text: string, params: unknown[] = []) =>
     run<T>(text, params);
+  sql.transaction = runTransaction ?? (async (work) => work(sql));
   return sql;
 }
 
@@ -91,10 +98,32 @@ function createNeonSql(): Promise<Sql> {
     types.setTypeParser(OID_INT8, Number);
     types.setTypeParser(OID_DATE, identity);
     types.setTypeParser(OID_INTERVAL, identity);
-    const pool = new Pool({ connectionString: databaseUrl });
-    return toSql(async <T>(text: string, params: unknown[]) => {
+    const pool = new Pool({
+      connectionString: databaseUrl,
+      connectionTimeoutMillis: 10_000,
+      statement_timeout: 30_000,
+    });
+    const run = async <T>(text: string, params: unknown[]) => {
       const res = await pool.query(text, params);
       return res.rows as T[];
+    };
+    return toSql(run, async <T>(work: (sql: Sql) => Promise<T>) => {
+      const client = await pool.connect();
+      const tx = toSql(async <Row>(text: string, params: unknown[]) => {
+        const result = await client.query(text, params);
+        return result.rows as Row[];
+      });
+      try {
+        await client.query("begin");
+        const result = await work(tx);
+        await client.query("commit");
+        return result;
+      } catch (error) {
+        await client.query("rollback").catch(() => undefined);
+        throw error;
+      } finally {
+        client.release();
+      }
     });
   })().catch((err) => {
     globalRef.__pgSqlPromise__ = undefined;
@@ -161,10 +190,19 @@ async function createPgliteSql(): Promise<Sql> {
   globalRef.__pgliteMigrateChain__ = pass;
   await pass;
 
-  return toSql(async <T>(text: string, params: unknown[]) => {
+  const run = async <T>(text: string, params: unknown[]) => {
     const result = await pg.query<T>(text, params);
     return result.rows;
-  });
+  };
+  return toSql(run, async <T>(work: (sql: Sql) => Promise<T>) =>
+    pg.transaction(async (transaction) => {
+      const tx = toSql(async <Row>(text: string, params: unknown[]) => {
+        const result = await transaction.query<Row>(text, params);
+        return result.rows;
+      });
+      return work(tx);
+    }),
+  );
 }
 
 let sqlPromise: Promise<Sql> | null = null;
@@ -174,6 +212,11 @@ async function createSql(): Promise<Sql> {
     throw new Error(
       "@/lib/db is server-only — call getSql() from a createServerFn handler " +
         "or a server route loader, never from client code.",
+    );
+  }
+  if (dbSource === "pglite" && !pgliteAllowed) {
+    throw new Error(
+      "DATABASE_URL is required in production. PGLite is available only in development and the local preview command.",
     );
   }
   return dbSource === "neon" ? createNeonSql() : createPgliteSql();

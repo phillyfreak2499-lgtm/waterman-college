@@ -11,4 +11,13 @@ screenshots
 *.log
 .env
 .env.*
+!.env.example
 .node_modules.lock
+.pglite
+.data
+*.local
+.idea
+.vscode
+.grok
+AGENTS.md
+attachments

@@ -1,49 +1,72 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { SiteShell } from "@/components/site-shell";
 import { Button } from "@/components/ui/button";
-import {
-  GROK_PROVIDERS,
-  authClient,
-  authEnabled,
-  signIn,
-} from "@/lib/auth/client";
+import { Field, FormError, Notice } from "@/components/ui/field";
+import { recordLogin, usernameToEmail, readMyAccount } from "@/lib/accounts";
+import { authClient } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
-import { SITE } from "@/lib/content";
+import { useAccess } from "@/components/access-provider";
+import { pageHead } from "@/lib/page-title";
 
-export const Route = createFileRoute("/login")({ component: Login });
+export const Route = createFileRoute("/login")({
+  component: Login,
+  head: () => pageHead("Sign in", "Sign in to Waterman College with the username you created."),
+});
 
 function Login() {
   const { user, isPending } = useCurrentUserState();
-  const [mode, setMode] = useState<"in" | "up">("in");
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
+  const { access } = useAccess();
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState<"pending" | "denied" | "deactivated" | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
+    setStatus(null);
     setBusy(true);
     try {
-      if (mode === "up") {
-        const { error: err } = await authClient.signUp.email({
-          name: name.trim() || email.split("@")[0],
-          email: email.trim(),
-          password,
-        });
-        if (err) throw new Error(err.message ?? "Could not create account");
-      } else {
-        const { error: err } = await authClient.signIn.email({
-          email: email.trim(),
-          password,
-        });
-        if (err) throw new Error(err.message ?? "Could not sign in");
+      const { error: err } = await authClient.signIn.email({
+        email: username.includes("@") ? username.trim() : usernameToEmail(username),
+        password,
+      });
+      if (err) throw new Error("That username or password did not match.");
+      const account = await readMyAccount();
+      await recordLogin().catch(() => undefined);
+      if (account.status === "denied") {
+        await authClient.signOut();
+        setStatus("denied");
+        return;
+      }
+      if (account.status === "deactivated") {
+        await authClient.signOut();
+        setStatus("deactivated");
+        return;
+      }
+      if (account.mustChangePassword) {
+        window.location.href = "/change-password";
+        return;
+      }
+      if (account.chancellor) {
+        window.location.href = "/chancellor";
+        return;
+      }
+      if (account.status === "pending") {
+        await authClient.signOut();
+        setStatus("pending");
+        return;
       }
       window.location.href = "/training";
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
+      setError(err instanceof Error ? err.message : "Could not sign in");
     } finally {
       setBusy(false);
     }
@@ -51,129 +74,108 @@ function Login() {
 
   return (
     <SiteShell>
-      <div className="mx-auto grid max-w-5xl items-stretch gap-0 px-5 py-12 sm:px-8 lg:grid-cols-2 lg:py-20">
-        <div className="hidden overflow-hidden rounded-l-lg border border-r-0 border-line lg:block">
+      <div className="mx-auto grid max-w-5xl items-stretch gap-0 px-5 py-12 sm:px-8 md:grid-cols-2 md:py-20">
+        <div className="relative hidden overflow-hidden rounded-l-lg shadow-card md:block">
           <img
             src="/media/classroom-circle.jpg"
-            alt=""
+            alt="Specialists in a Waterman training circle"
             className="h-full min-h-[32rem] w-full object-cover"
           />
+          <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-navy/15 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 p-8 text-paper">
+            <p className="kicker text-brass-soft">Private campus</p>
+            <p className="mt-3 font-display text-3xl leading-tight">
+              Accounts live only here. There is no outside login.
+            </p>
+          </div>
         </div>
-        <div className="rounded-lg border border-line bg-surface p-7 sm:p-10 lg:rounded-l-none">
-          <p className="text-xs font-medium uppercase tracking-[0.22em] text-brass">
-            Employee access
-          </p>
-          <h1 className="mt-3 font-display text-4xl leading-none">
-            {mode === "in" ? "Sign in" : "Create an account"}
-          </h1>
+        <div className="rounded-lg border border-line bg-surface p-7 shadow-card sm:p-10 md:rounded-l-none">
+          <p className="kicker">Admission</p>
+          <span className="rule-brass mt-3" />
+          <h1 className="mt-4 font-display text-4xl leading-none">Sign in</h1>
           <p className="mt-3 text-sm leading-relaxed text-muted">
-            For employees of {SITE.company} only. After you register, start with
-            Specialist Training.
+            Use the username and password you created. Accounts live only on this
+            campus — there is no outside login.
           </p>
 
-          {isPending ? (
-            <div className="mt-8 h-24 animate-pulse rounded-md bg-navy/5" />
-          ) : user ? (
+          {!mounted || isPending ? (
+            <div className="mt-8 space-y-3" aria-busy="true" aria-label="Loading sign-in form">
+              <div className="h-11 w-full animate-pulse rounded-sm bg-navy/5" />
+              <div className="h-11 w-full animate-pulse rounded-sm bg-navy/5" />
+              <div className="h-11 w-32 animate-pulse rounded-sm bg-navy/5" />
+            </div>
+          ) : user && !status ? (
             <div className="mt-8">
-              <p className="text-sm">
-                You’re signed in as {user.displayName ?? user.primaryEmail}.
-              </p>
+              <p className="text-sm">You’re already signed in as {user.displayName}.</p>
               <Button asChild className="mt-5">
-                <Link to="/training">Go to campus</Link>
+                <Link to={access.isChancellor ? "/chancellor" : "/training"} search={access.isChancellor ? undefined : {}}>
+                  {access.isChancellor ? "Chancellor’s Office" : "Enter the hall"}
+                </Link>
               </Button>
             </div>
+          ) : status === "pending" ? (
+            <div className="mt-8">
+              <Notice kicker="Awaiting the Chancellor" title="Your request is in.">
+                The Chancellor’s Office will approve or deny this account. You
+                can sign in with this username after they do. The hall stays
+                closed until then.
+              </Notice>
+            </div>
+          ) : status === "denied" ? (
+            <FormError>
+              The office did not approve this account. Ask the training office if
+              that was a mistake.
+            </FormError>
+          ) : status === "deactivated" ? (
+            <FormError>
+              This account has been deactivated. Ask the Chancellor’s Office to
+              restore it.
+            </FormError>
           ) : (
             <>
-              <form onSubmit={onSubmit} className="mt-8 space-y-4">
-                {mode === "up" && (
-                  <Field label="Full name">
-                    <input
-                      required
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="h-11 w-full rounded-sm border border-line bg-paper px-3 text-ink focus:outline-2 focus:outline-offset-1 focus:outline-navy"
-                      autoComplete="name"
-                    />
-                  </Field>
-                )}
-                <Field label="Work email">
+              <form onSubmit={(e) => void onSubmit(e)} className="mt-8 space-y-4">
+                <Field label="Username">
                   <input
                     required
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="h-11 w-full rounded-sm border border-line bg-paper px-3 text-ink focus:outline-2 focus:outline-offset-1 focus:outline-navy"
-                    autoComplete="email"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    className="field-input"
+                    autoComplete="username"
                   />
                 </Field>
                 <Field label="Password">
                   <input
                     required
                     type="password"
-                    minLength={8}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="h-11 w-full rounded-sm border border-line bg-paper px-3 text-ink focus:outline-2 focus:outline-offset-1 focus:outline-navy"
-                    autoComplete={mode === "up" ? "new-password" : "current-password"}
+                    className="field-input"
+                    autoComplete="current-password"
                   />
                 </Field>
-                {error && (
-                  <p className="text-sm text-red-800" role="alert">
-                    {error}
-                  </p>
-                )}
+                <FormError>{error}</FormError>
                 <Button type="submit" className="w-full" disabled={busy}>
-                  {busy ? "Please wait…" : mode === "in" ? "Sign in" : "Create account"}
+                  {busy ? "Signing in…" : "Sign in"}
                 </Button>
               </form>
-
-              <button
-                type="button"
-                className="mt-4 text-sm text-muted underline-offset-4 hover:underline"
-                onClick={() => {
-                  setMode((m) => (m === "in" ? "up" : "in"));
-                  setError(null);
-                }}
-              >
-                {mode === "in"
-                  ? "New Specialist? Create an account"
-                  : "Already have an account? Sign in"}
-              </button>
-
-              {authEnabled && (
-                <div className="mt-8 border-t border-line pt-6">
-                  <p className="mb-3 text-xs uppercase tracking-[0.16em] text-muted">
-                    Or continue with
-                  </p>
-                  <div className="grid gap-2">
-                    {GROK_PROVIDERS.map((p) => (
-                      <Button
-                        key={p.providerId}
-                        type="button"
-                        variant="outline"
-                        onClick={() => void signIn(p.providerId, { callbackURL: "/training" })}
-                      >
-                        Continue with {p.label}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-              )}
+              <p className="mt-5 text-sm text-muted">
+                New to campus?{" "}
+                <Link to="/register" className="text-navy underline-offset-4 hover:underline">
+                  Create an account
+                </Link>
+              </p>
+              <p className="mt-2 text-sm text-muted">
+                <Link
+                  to="/forgot-password"
+                  className="text-navy underline-offset-4 hover:underline"
+                >
+                  Forgot your password?
+                </Link>
+              </p>
             </>
           )}
         </div>
       </div>
     </SiteShell>
-  );
-}
-
-function Field({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <label className="block">
-      <span className="mb-1.5 block text-xs font-medium uppercase tracking-[0.14em] text-muted">
-        {label}
-      </span>
-      {children}
-    </label>
   );
 }
