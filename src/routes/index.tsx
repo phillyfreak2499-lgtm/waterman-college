@@ -19,11 +19,11 @@ function Home() {
       <section className="relative isolate min-h-[30rem] overflow-hidden bg-navy text-paper sm:min-h-[44rem]">
         <img
           src={pages.homeHeroImage || "/media/campus-cogs.jpg"}
-          alt="Waterman College campus hall"
-          className="absolute inset-0 h-full w-full object-cover object-[78%_center] sm:object-[70%_center]"
+          alt="Waterman College of Getting Smarter campus"
+          className="absolute inset-0 h-full w-full object-cover object-[center_42%] sm:object-[22%_center] lg:object-[18%_center]"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-navy/92 via-navy/62 to-navy/20" />
-        <div className="absolute inset-0 bg-gradient-to-t from-navy via-navy/35 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-navy/55 via-navy/12 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-navy/88 via-navy/20 to-transparent" />
         <div className="relative mx-auto flex min-h-[30rem] max-w-6xl items-end px-5 pb-14 pt-16 sm:min-h-[44rem] sm:px-8 sm:pb-24 sm:pt-28">
           <div className="max-w-2xl">
             <p className="kicker text-brass-soft">Why we exist</p>
