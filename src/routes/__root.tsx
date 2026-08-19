@@ -7,7 +7,7 @@ import { ProgressProvider } from "@/components/progress-provider";
 import { Toaster } from "sonner";
 import appCss from "../styles.css?url";
 
-const APP_NAME = "Waterman College";
+const APP_NAME = "COGS";
 const host = import.meta.env.VITE_PUBLIC_HOSTNAME;
 const ogImage = host ? `https://${host}/og.jpg` : undefined;
 const xBanner = host
@@ -20,13 +20,13 @@ export const Route = createRootRoute({
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: APP_NAME },
-      { name: "description", content: "Pain Free Learning for Pain Free Living — private training for Waterman Arch Supports." },
+      { name: "description", content: "COGS — College of Getting Smarter. Private training for Waterman Arch Supports." },
       { name: "apple-mobile-web-app-title", content: APP_NAME },
       { name: "theme-color", content: "#020048" },
       { name: "twitter:card", content: "summary_large_image" },
       { property: "og:type", content: "website" },
       { property: "og:title", content: APP_NAME },
-      { property: "og:description", content: "Private employee campus for Waterman Arch Supports and The Good Feet Store." },
+      { property: "og:description", content: "College of Getting Smarter — private employee campus for Waterman Arch Supports and The Good Feet Store." },
       ...(ogImage
         ? [
             { property: "og:image", content: ogImage },

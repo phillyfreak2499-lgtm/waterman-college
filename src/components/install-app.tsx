@@ -56,7 +56,7 @@ export function InstallBanner() {
   return (
     <div className="border-t border-paper/10 bg-navy-deep px-5 py-3 text-center sm:hidden">
       <a href="/install" className="text-sm text-brass-soft underline-offset-4 hover:text-paper hover:underline">
-        Add Waterman College to your Home Screen
+        Add COGS to your Home Screen
       </a>
     </div>
   );

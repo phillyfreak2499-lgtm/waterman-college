@@ -6,7 +6,7 @@ import { pageHead } from "@/lib/page-title";
 
 export const Route = createFileRoute("/why")({
   component: WhyPage,
-  head: () => pageHead("Why we exist", "Start with why. Waterman College exists so a Client can live with less pain."),
+  head: () => pageHead("Why we exist", "Start with why. COGS exists so a Client can live with less pain."),
 });
 
 function WhyPage() {
@@ -15,7 +15,7 @@ function WhyPage() {
       <section className="relative isolate overflow-hidden bg-navy text-paper">
         <img
           src="/media/classroom-wide.jpg"
-          alt="A Waterman training room"
+          alt="A COGS training hall"
           className="absolute inset-0 h-full w-full object-cover object-center"
         />
         <div className="absolute inset-0 bg-navy/72" />
@@ -24,7 +24,7 @@ function WhyPage() {
             invert
             kicker="The Golden Circle"
             title="Start with why."
-            lede="People don’t buy what you do. They buy why you do it. Waterman College is built on that order — why, then how, then what."
+            lede="People don’t buy what you do. They buy why you do it. COGS is built on that order — why, then how, then what."
           />
         </div>
       </section>
@@ -65,7 +65,7 @@ function WhyPage() {
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-16 sm:px-8 lg:grid-cols-2 lg:gap-16">
           <img
             src="/media/classroom-circle.jpg"
-            alt="Specialists training together in a Waterman classroom"
+            alt="Specialists training together at COGS"
             className="aspect-[4/3] w-full rounded-lg object-cover shadow-card"
           />
           <div>

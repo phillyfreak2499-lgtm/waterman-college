@@ -44,7 +44,7 @@ function HowItWorks() {
         <PageIntro
           kicker={pages.howKicker}
           title={pages.howTitle}
-          lede={`${pages.howIntro} ${site.name} is reserved for employees of ${site.company}.`}
+          lede={`${pages.howIntro} Reserved for employees of ${site.company}.`}
         />
         <ol className="relative mt-16">
           <span

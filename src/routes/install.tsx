@@ -9,7 +9,7 @@ export const Route = createFileRoute("/install")({
   head: () =>
     pageHead(
       "Get the app",
-      "Add Waterman College to your phone’s Home Screen. Opens like an app — no App Store needed.",
+      "Add COGS to your phone’s Home Screen. Opens like an app — no App Store needed.",
     ),
 });
 
@@ -43,7 +43,7 @@ function InstallPage() {
                 void install();
               }}
             >
-              Install Waterman College
+              Install COGS
             </Button>
             <p className="mt-3 text-center text-sm text-muted">Your phone will ask you to confirm.</p>
           </div>

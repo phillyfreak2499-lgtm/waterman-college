@@ -7,7 +7,7 @@ import { pageHead } from "@/lib/page-title";
 
 export const Route = createFileRoute("/")({
   component: Home,
-  head: () => pageHead("People first", "Private employee campus for Waterman Arch Supports and The Good Feet Store."),
+  head: () => pageHead("People first", "COGS — College of Getting Smarter. Private employee campus for Waterman Arch Supports and The Good Feet Store."),
 });
 
 function Home() {
@@ -19,7 +19,7 @@ function Home() {
       <section className="relative isolate min-h-[30rem] overflow-hidden bg-navy text-paper sm:min-h-[44rem]">
         <img
           src={pages.homeHeroImage || "/media/campus-cogs.jpg"}
-          alt="Waterman College of Getting Smarter campus"
+          alt="COGS campus — College of Getting Smarter"
           className="absolute inset-0 h-full w-full object-cover object-[center_42%] sm:object-[22%_center] lg:object-[18%_center]"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-navy/55 via-navy/12 to-transparent" />
@@ -87,7 +87,7 @@ function Home() {
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-16 sm:px-8 lg:grid-cols-2 lg:gap-16">
           <img
             src={pages.homeTeachImage || "/media/teaching-vs-training.jpg"}
-            alt="A notebook, brass pen, and gear on a Waterman training desk"
+            alt="A notebook, brass pen, and gear on a COGS training desk"
             className="aspect-[4/3] w-full rounded-lg object-cover shadow-card"
             loading="lazy"
             decoding="async"
@@ -103,7 +103,7 @@ function Home() {
             </p>
             <Button asChild className="mt-8">
               <Link to="/how-it-works">
-                How the college works <ArrowRight className="size-4" />
+                How COGS works <ArrowRight className="size-4" />
               </Link>
             </Button>
           </div>
@@ -124,7 +124,7 @@ function Home() {
           </div>
           <img
             src={pages.homeOnboardImage || "/media/classroom.jpg"}
-            alt="The Waterman College training room where new Specialists begin"
+            alt="The COGS training room where new Specialists begin"
             className="aspect-[4/3] w-full rounded-lg object-cover object-center shadow-card"
             loading="lazy"
             decoding="async"

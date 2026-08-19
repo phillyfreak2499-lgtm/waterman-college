@@ -82,7 +82,7 @@ function CertificateGate() {
           <img src="/media/waterman-logo.png" alt="" className="mx-auto h-6 w-auto object-contain" />
           <img src="/media/seal.png" alt="" className="mx-auto mt-5 h-14 w-14 object-contain" />
           <p className="mt-5 text-[0.68rem] font-medium uppercase tracking-[0.24em] text-brass">
-            Waterman College of Getting Smarter
+            COGS · College of Getting Smarter
           </p>
           <h1 className="mt-4 font-display text-4xl leading-none sm:text-5xl">Certificate of Completion</h1>
           <p className="mt-8 text-sm uppercase tracking-[0.16em] text-muted">This certifies that</p>

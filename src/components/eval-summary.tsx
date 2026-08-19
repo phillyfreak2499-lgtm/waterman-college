@@ -257,7 +257,7 @@ export function EvalSummary({
       )}
 
       <footer className="mt-10 border-t border-line pt-4 text-xs text-muted">
-        Waterman College · Coaching brief · Print or save for the Specialist’s next shift
+        COGS · Coaching brief · Print or save for the Specialist’s next shift
       </footer>
     </article>
   );

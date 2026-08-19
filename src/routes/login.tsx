@@ -11,7 +11,7 @@ import { pageHead } from "@/lib/page-title";
 
 export const Route = createFileRoute("/login")({
   component: Login,
-  head: () => pageHead("Sign in", "Sign in to Waterman College with the username you created."),
+  head: () => pageHead("Sign in", "Sign in to COGS with the username you created."),
 });
 
 function Login() {
@@ -78,7 +78,7 @@ function Login() {
         <div className="relative overflow-hidden rounded-t-lg shadow-card md:rounded-l-lg md:rounded-tr-none">
           <img
             src="/media/classroom-circle.jpg"
-            alt="Specialists training together in a Waterman classroom"
+            alt="Specialists training together at COGS"
             className="h-48 w-full object-cover object-[center_22%] sm:h-64 md:h-full md:min-h-[32rem] md:object-[center_20%]"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-navy/15 to-transparent" />

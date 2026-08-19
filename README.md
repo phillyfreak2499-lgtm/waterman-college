@@ -1,4 +1,4 @@
-# Waterman College of Getting Smarter
+# COGS — College of Getting Smarter
 
 Private employee training campus for **Waterman Arch Supports** / The Good Feet Store.
 

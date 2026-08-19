@@ -8,7 +8,7 @@ import { pageHead } from "@/lib/page-title";
 
 export const Route = createFileRoute("/register")({
   component: Register,
-  head: () => pageHead("Create an account", "Ask to join Waterman College. The office approves each person."),
+  head: () => pageHead("Create an account", "Ask to join COGS. The office approves each person."),
 });
 
 function Register() {
@@ -48,7 +48,7 @@ function Register() {
         <div className="relative overflow-hidden rounded-t-lg shadow-card md:rounded-l-lg md:rounded-tr-none">
           <img
             src="/media/campus-lawn.jpg"
-            alt="Waterman College of Getting Smarter campus"
+            alt="COGS campus — College of Getting Smarter"
             className="h-48 w-full object-cover object-[18%_center] sm:h-64 md:h-full md:min-h-[32rem]"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-navy/20 to-transparent" />

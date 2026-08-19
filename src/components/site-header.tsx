@@ -71,7 +71,7 @@ export function SiteHeader({ inverted = false }: { inverted?: boolean }) {
         )}
       >
         <div className="mx-auto flex max-w-[90rem] items-center justify-between gap-4">
-          <span>Waterman College of Getting Smarter</span>
+          <span>COGS · College of Getting Smarter</span>
           <span className="hidden md:inline">A private campus · Employees only</span>
         </div>
       </div>
@@ -88,11 +88,8 @@ export function SiteHeader({ inverted = false }: { inverted?: boolean }) {
             alt=""
             className="h-5 w-5 shrink-0 object-contain sm:h-5 sm:w-5"
           />
-          <span className="font-display text-lg leading-none tracking-tight sm:text-xl 2xl:hidden">
-            College
-          </span>
-          <span className="hidden font-display text-xl leading-none tracking-tight 2xl:inline 2xl:text-[1.35rem]">
-            {catalog.site.name}
+          <span className="font-display text-lg leading-none tracking-tight sm:text-xl">
+            {catalog.site.short || "COGS"}
           </span>
         </Link>
 

@@ -21,11 +21,11 @@ export function SiteFooter() {
           </div>
           <p className="mt-5 font-display text-2xl leading-none">{site.name}</p>
           <p className="mt-1 text-xs uppercase tracking-[0.18em] text-brass-soft">
-            Of Getting Smarter
+            College of Getting Smarter
           </p>
           <p className="mt-5 max-w-sm text-sm leading-relaxed text-paper/70">
             We start with why a Client walked in. Then we train the person who
-            will meet them. Private campus for employees of {site.company}.
+            will meet them. COGS is the private campus for employees of {site.company}.
           </p>
         </div>
         <div>

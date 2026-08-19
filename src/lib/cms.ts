@@ -72,7 +72,7 @@ export type Catalog = {
 
 export const DEFAULT_PAGES: PageContent = {
   homeHeroBody:
-    "You are the first thing our Clients experience. Waterman College trains Specialists and managers to own the relationship — not just the sale.",
+    "You are the first thing our Clients experience. COGS — the College of Getting Smarter — trains Specialists and managers to own the relationship, not just the sale.",
   homeHeroImage: "/media/campus-cogs.jpg",
   homeStandardTitle: "We don’t train Specialists to fill a role. We train them to own a relationship.",
   homeStandardBody:
@@ -87,7 +87,7 @@ export const DEFAULT_PAGES: PageContent = {
   homeOnboardImage: "/media/classroom.jpg",
   howKicker: "Admission",
   howTitle: "How it works",
-  howIntro: "Waterman College is a private training ground. Four steps from hire to the chair.",
+  howIntro: "COGS — the College of Getting Smarter — is a private training ground. Four steps from hire to the chair.",
 };
 
 export function withPageDefaults(pages: Partial<PageContent> | null | undefined): PageContent {
@@ -101,6 +101,12 @@ export function withPageDefaults(pages: Partial<PageContent> | null | undefined)
   if (!next.homeOnboardImage || next.homeOnboardImage.includes("campus-front")) {
     next.homeOnboardImage = DEFAULT_PAGES.homeOnboardImage;
   }
+  if (next.homeHeroBody.includes("Waterman College trains")) {
+    next.homeHeroBody = DEFAULT_PAGES.homeHeroBody;
+  }
+  if (next.howIntro.includes("Waterman College is a private")) {
+    next.howIntro = DEFAULT_PAGES.howIntro;
+  }
   return next;
 }
 
@@ -112,6 +118,17 @@ export const DEFAULT_SITE: SiteSettings = {
   stores: defaultSite.stores,
   adminEmail: defaultSite.adminEmail,
 };
+
+export function withSiteDefaults(site: Partial<SiteSettings> | null | undefined): SiteSettings {
+  const next = { ...DEFAULT_SITE, ...(site ?? {}) };
+  if (next.name === "Waterman College" || next.name === "Waterman College of Getting Smarter") {
+    next.name = DEFAULT_SITE.name;
+  }
+  if (next.short === "WCOGS" || next.short === "Waterman") {
+    next.short = DEFAULT_SITE.short;
+  }
+  return next;
+}
 
 export function slugify(value: string) {
   const slug = value
@@ -464,7 +481,7 @@ export async function readCatalog(): Promise<Catalog> {
   }));
 
   return {
-    site: parseJson(map.site, DEFAULT_SITE),
+    site: withSiteDefaults(parseJson(map.site, DEFAULT_SITE)),
     roles: roleRows.length ? roleRows.map(({ ...r }) => r) : defaultRoles,
     tracks,
     news: newsRows,

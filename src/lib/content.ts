@@ -31,8 +31,8 @@ export type Track = {
 };
 
 export const SITE = {
-  name: "Waterman College",
-  short: "WCOGS",
+  name: "COGS",
+  short: "COGS",
   tagline: "Pain Free Learning for Pain Free Living",
   company: "Waterman Arch Supports",
   stores: 11,
@@ -256,7 +256,7 @@ export const tracks: Track[] = [
         minutes: 7,
         body: [
           "Teaching is what we do to others. Training is what we do with others.",
-          "Waterman College is a training ground, not a lecture hall. You will be asked to practice, to be observed, and to try again. That is the point.",
+          "COGS is a training ground, not a lecture hall. You will be asked to practice, to be observed, and to try again. That is the point.",
           "If you leave a session only knowing something, we failed. If you leave able to do something with a Client tomorrow, we did our job.",
         ],
         takeaway: "We train with you. We do not lecture at you.",

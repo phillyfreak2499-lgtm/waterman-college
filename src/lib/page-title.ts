@@ -1,5 +1,5 @@
 export function pageTitle(title: string) {
-  return `${title} · Waterman College`;
+  return `${title} · COGS`;
 }
 
 export function pageHead(title: string, description?: string) {

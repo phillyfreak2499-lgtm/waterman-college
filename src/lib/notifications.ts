@@ -93,7 +93,7 @@ export const sendTestNotice = createServerFn({ method: "POST" })
   .handler(async ({ context }) => {
     await dispatchNotice({
       kind: "account",
-      title: "Waterman College",
+      title: "COGS",
       body: "Push is on. You will hear from the office here.",
       href: "/notifications",
       userIds: [context.userId],
