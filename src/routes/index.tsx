@@ -20,7 +20,7 @@ function Home() {
         <img
           src={pages.homeHeroImage || "/media/campus-cogs.jpg"}
           alt="Waterman College campus hall"
-          className="absolute inset-0 h-full w-full object-cover object-[center_42%]"
+          className="absolute inset-0 h-full w-full object-cover object-[78%_center] sm:object-[70%_center]"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-navy/92 via-navy/62 to-navy/20" />
         <div className="absolute inset-0 bg-gradient-to-t from-navy via-navy/35 to-transparent" />
@@ -87,7 +87,7 @@ function Home() {
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-16 sm:px-8 lg:grid-cols-2 lg:gap-16">
           <img
             src={pages.homeTeachImage || "/media/teaching-vs-training.jpg"}
-            alt="Teaching versus training in a Waterman classroom"
+            alt="A notebook, brass pen, and gear on a Waterman training desk"
             className="aspect-[4/3] w-full rounded-lg object-cover shadow-card"
             loading="lazy"
             decoding="async"
@@ -124,11 +124,8 @@ function Home() {
           </div>
           <img
             src={pages.homeOnboardImage || "/media/classroom.jpg"}
-            alt="The Good Feet Store shopfront where new Specialists begin"
-            /* The source photo is portrait (1200x1600); a centred 4:3 crop cut
-               through the storefront sign. Bias the crop upward so the sign and
-               the windows both stay in frame. */
-            className="aspect-[4/3] w-full rounded-lg object-cover object-[center_20%] shadow-card"
+            alt="The Waterman College training room where new Specialists begin"
+            className="aspect-[4/3] w-full rounded-lg object-cover object-center shadow-card"
             loading="lazy"
             decoding="async"
           />

@@ -65,7 +65,7 @@ function WhyPage() {
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-16 sm:px-8 lg:grid-cols-2 lg:gap-16">
           <img
             src="/media/classroom-circle.jpg"
-            alt="Specialists seated in a circle during training"
+            alt="Specialists training together in a Waterman classroom"
             className="aspect-[4/3] w-full rounded-lg object-cover shadow-card"
           />
           <div>

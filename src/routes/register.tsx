@@ -44,22 +44,22 @@ function Register() {
 
   return (
     <SiteShell>
-      <div className="mx-auto grid max-w-5xl items-stretch gap-0 px-5 py-12 sm:px-8 md:grid-cols-2 md:py-20">
-        <div className="relative hidden overflow-hidden rounded-l-lg shadow-card md:block">
+      <div className="mx-auto grid max-w-5xl items-stretch gap-0 px-5 py-8 sm:px-8 sm:py-12 md:grid-cols-2 md:py-20">
+        <div className="relative overflow-hidden rounded-t-lg shadow-card md:rounded-l-lg md:rounded-tr-none">
           <img
             src="/media/campus-lawn.jpg"
             alt="The Waterman College lawn"
-            className="h-full min-h-[32rem] w-full object-cover"
+            className="h-48 w-full object-cover object-center sm:h-64 md:h-full md:min-h-[32rem]"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-navy/20 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 p-8 text-paper">
+          <div className="absolute inset-x-0 bottom-0 p-5 text-paper sm:p-8">
             <p className="kicker text-brass-soft">Ask to join</p>
-            <p className="mt-3 font-display text-3xl leading-tight">
+            <p className="mt-2 font-display text-2xl leading-tight sm:mt-3 sm:text-3xl">
               The office approves each person. Then the hall opens.
             </p>
           </div>
         </div>
-        <div className="rounded-lg border border-line bg-surface p-7 shadow-card sm:p-10 md:rounded-l-none">
+        <div className="rounded-t-none rounded-b-lg border border-line bg-surface p-7 shadow-card sm:p-10 md:rounded-t-lg md:rounded-l-none">
           <p className="kicker">Admission</p>
           <span className="rule-brass mt-3" />
           <h1 className="mt-4 font-display text-4xl leading-none">Create an account</h1>

@@ -74,22 +74,22 @@ function Login() {
 
   return (
     <SiteShell>
-      <div className="mx-auto grid max-w-5xl items-stretch gap-0 px-5 py-12 sm:px-8 md:grid-cols-2 md:py-20">
-        <div className="relative hidden overflow-hidden rounded-l-lg shadow-card md:block">
+      <div className="mx-auto grid max-w-5xl items-stretch gap-0 px-5 py-8 sm:px-8 sm:py-12 md:grid-cols-2 md:py-20">
+        <div className="relative overflow-hidden rounded-t-lg shadow-card md:rounded-l-lg md:rounded-tr-none">
           <img
             src="/media/classroom-circle.jpg"
-            alt="Specialists in a Waterman training circle"
-            className="h-full min-h-[32rem] w-full object-cover"
+            alt="Specialists training together in a Waterman classroom"
+            className="h-48 w-full object-cover object-[center_22%] sm:h-64 md:h-full md:min-h-[32rem] md:object-[center_20%]"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-navy/15 to-transparent" />
-          <div className="absolute inset-x-0 bottom-0 p-8 text-paper">
+          <div className="absolute inset-x-0 bottom-0 p-5 text-paper sm:p-8">
             <p className="kicker text-brass-soft">Private campus</p>
-            <p className="mt-3 font-display text-3xl leading-tight">
+            <p className="mt-2 font-display text-2xl leading-tight sm:mt-3 sm:text-3xl">
               Accounts live only here. There is no outside login.
             </p>
           </div>
         </div>
-        <div className="rounded-lg border border-line bg-surface p-7 shadow-card sm:p-10 md:rounded-l-none">
+        <div className="rounded-t-none rounded-b-lg border border-line bg-surface p-7 shadow-card sm:p-10 md:rounded-t-lg md:rounded-l-none">
           <p className="kicker">Admission</p>
           <span className="rule-brass mt-3" />
           <h1 className="mt-4 font-display text-4xl leading-none">Sign in</h1>

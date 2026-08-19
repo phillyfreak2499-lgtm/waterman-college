@@ -88,6 +88,9 @@ export function SiteHeader({ inverted = false }: { inverted?: boolean }) {
             alt=""
             className="h-5 w-5 shrink-0 object-contain sm:h-5 sm:w-5"
           />
+          <span className="font-display text-lg leading-none tracking-tight sm:text-xl 2xl:hidden">
+            College
+          </span>
           <span className="hidden font-display text-xl leading-none tracking-tight 2xl:inline 2xl:text-[1.35rem]">
             {catalog.site.name}
           </span>
