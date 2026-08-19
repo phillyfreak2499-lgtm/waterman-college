@@ -19,7 +19,7 @@ function InstallPage() {
   return (
     <SiteShell>
       <div className="mx-auto max-w-lg px-5 py-14 sm:px-8 sm:py-20">
-        <img src="/icon-180.png" alt="" className="size-16 rounded-2xl shadow-card" />
+        <img src="/icon-180.png" alt="COGS" className="size-16 rounded-2xl shadow-card" />
         <p className="kicker mt-6">Phone</p>
         <span className="rule-brass mt-3" />
         <h1 className="mt-4 font-display text-4xl leading-[0.95] sm:text-5xl">Get the campus on your phone.</h1>
@@ -57,7 +57,7 @@ function InstallPage() {
                   <li>1. Open this campus in <strong>Safari</strong> — not inside another app’s browser.</li>
                   <li>2. Tap the <strong>Share</strong> button at the bottom (the square with the arrow).</li>
                   <li>3. Scroll and tap <strong>Add to Home Screen</strong>.</li>
-                  <li>4. Tap <strong>Add</strong>. The navy W is your icon.</li>
+                  <li>4. Tap <strong>Add</strong>. The COGS seal is your icon.</li>
                 </ol>
               </li>
             ) : null}
@@ -69,7 +69,7 @@ function InstallPage() {
                   <li>1. Open this campus in <strong>Chrome</strong>.</li>
                   <li>2. Tap the menu (three dots).</li>
                   <li>3. Tap <strong>Install app</strong> or <strong>Add to Home screen</strong>.</li>
-                  <li>4. Confirm. The navy W is your icon.</li>
+                  <li>4. Confirm. The COGS seal is your icon.</li>
                 </ol>
               </li>
             ) : null}
