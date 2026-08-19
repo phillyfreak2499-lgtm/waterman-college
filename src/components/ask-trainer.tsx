@@ -20,7 +20,7 @@ export function AskTrainer({ lessonKey }: { lessonKey: string }) {
       await sendTrainerNote({ data: { lessonKey, body } });
       setSent(true);
       setBody("");
-      toast.success("Sent to the trainer.");
+      toast.success("Sent to the professor.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not send");
     } finally {
@@ -30,13 +30,13 @@ export function AskTrainer({ lessonKey }: { lessonKey: string }) {
 
   return (
     <section className="mt-12 rounded-lg border border-line bg-surface p-6 shadow-card">
-      <p className="kicker">Ask the trainer</p>
+      <p className="kicker">Ask the professor</p>
       <h2 className="mt-3 font-display text-2xl leading-none">Stuck on this lesson?</h2>
       <p className="mt-2 text-sm leading-relaxed text-muted">
         One box. It lands in the Chancellor’s inbox next to the check-ins.
       </p>
       {sent ? (
-        <p className="mt-4 text-sm text-navy">The trainer has it. Keep going when you can.</p>
+        <p className="mt-4 text-sm text-navy">The professor has it. Keep going when you can.</p>
       ) : (
         <form onSubmit={(e) => void onSubmit(e)} className="mt-4 space-y-3">
           <textarea
@@ -49,7 +49,7 @@ export function AskTrainer({ lessonKey }: { lessonKey: string }) {
             className="field-input"
           />
           <Button type="submit" size="sm" disabled={busy}>
-            {busy ? "Sending…" : "Send to the trainer"}
+            {busy ? "Sending…" : "Send to the professor"}
           </Button>
         </form>
       )}

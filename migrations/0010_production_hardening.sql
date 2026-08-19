@@ -124,7 +124,7 @@ insert into rbac_roles (id, name, description, locked, access_role, perms) value
     '{"chancellor":false,"viewWhy":true,"viewHow":true,"viewTraining":true,"viewDirectory":true,"viewQuad":true,"viewRemarkable":true,"viewTeam":true,"trainNewHires":true,"trainSpecialist":true,"trainMit":true,"trainManagers":true,"manageUsers":true,"manageTraining":false,"editSite":false}'
   ),
   (
-    'trainer', 'Trainer', 'The whole catalog and the huddle.', false, 'trainer',
+    'trainer', 'Professor', 'The whole catalog and the huddle.', false, 'trainer',
     '{"chancellor":false,"viewWhy":true,"viewHow":true,"viewTraining":true,"viewDirectory":true,"viewQuad":true,"viewRemarkable":true,"viewTeam":true,"trainNewHires":true,"trainSpecialist":true,"trainMit":true,"trainManagers":true,"manageUsers":false,"manageTraining":true,"editSite":true}'
   ),
   (

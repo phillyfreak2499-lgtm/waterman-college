@@ -216,7 +216,7 @@ export function QuizInbox() {
       .then(setNotes)
       .catch((error) => {
         setNotes([]);
-        toast.error(error instanceof Error ? error.message : "Could not load trainer notes");
+        toast.error(error instanceof Error ? error.message : "Could not load professor notes");
       });
   }, []);
 
@@ -229,7 +229,7 @@ export function QuizInbox() {
     <div className="space-y-10">
       {notes.length > 0 && (
         <div>
-          <h2 className="font-display text-3xl">Ask the trainer</h2>
+          <h2 className="font-display text-3xl">Ask the professor</h2>
           <p className="mt-1 text-sm text-muted">Questions from lessons, next to the check-ins.</p>
           <ul className="mt-4 divide-y divide-line border-t border-line">
             {notes.map((note) => (

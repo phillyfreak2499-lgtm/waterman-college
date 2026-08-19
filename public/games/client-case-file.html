@@ -3388,7 +3388,7 @@ function downloadGame(){
       const html = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
       done(new Blob([html], { type: "text/html;charset=utf-8" }));
     } catch (e) {
-      toast("Download blocked", "Use the file link from your trainer, or right-click → Save As");
+      toast("Download blocked", "Use the file link from your professor, or right-click → Save As");
     }
   })();
 }

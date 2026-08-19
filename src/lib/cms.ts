@@ -83,7 +83,7 @@ export const DEFAULT_PAGES: PageContent = {
   homeTeachImage: "/media/teaching-vs-training.jpg",
   homeOnboardTitle: "Your first six weeks, on purpose.",
   homeOnboardBody:
-    "New Specialists follow a six-week path from belonging to advising — Client Experience, Flow, Product, and Culture — with a trainer in earshot, not in the chair.",
+    "New Specialists follow a six-week path from belonging to advising — Client Experience, Flow, Product, and Culture — with a professor in earshot, not in the chair.",
   homeOnboardImage: "/media/classroom.jpg",
   howKicker: "Admission",
   howTitle: "How it works",
@@ -106,6 +106,9 @@ export function withPageDefaults(pages: Partial<PageContent> | null | undefined)
   }
   if (next.howIntro.includes("Waterman College is a private")) {
     next.howIntro = DEFAULT_PAGES.howIntro;
+  }
+  if (next.homeOnboardBody.includes("a trainer in earshot")) {
+    next.homeOnboardBody = next.homeOnboardBody.replace("a trainer in earshot", "a professor in earshot");
   }
   return next;
 }

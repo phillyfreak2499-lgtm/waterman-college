@@ -117,7 +117,7 @@ function EvaluateForm() {
         <p className="kicker">Presentation Evaluation</p>
         <h1 className="mt-3 font-display text-4xl">Leaders only</h1>
         <p className="mt-4 text-muted">
-          Managers, regional managers, and trainers submit presentation evaluations.
+          Managers, regional managers, and professors submit presentation evaluations.
         </p>
         <Button asChild className="mt-6" variant="outline">
           <Link to="/team">Back to Team</Link>

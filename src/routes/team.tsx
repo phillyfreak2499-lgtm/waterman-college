@@ -76,7 +76,7 @@ function TeamDesk() {
         <h1 className="mt-3 font-display text-4xl leading-none">This desk is for leaders.</h1>
         <p className="mt-4 text-muted">
           Managers see their Specialists. Regional managers see the managers under them.
-          Trainer, Sales Manager, and CEO see the whole company.
+          Professor, Sales Manager, and CEO see the whole company.
         </p>
         <Button asChild className="mt-8">
           <Link to="/training">Back to campus</Link>

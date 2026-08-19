@@ -111,7 +111,7 @@ render dependency on an external host:
 ## Installable app and notifications
 
 The campus ships as an installable PWA and can notify staff about approvals,
-assignments and trainer replies.
+assignments and professor replies.
 
 - `public/manifest.webmanifest`, `public/sw.js` and the `icon-*.png` set provide
   the install metadata and offline shell.

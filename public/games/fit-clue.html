@@ -65,7 +65,7 @@ header.bar{display:flex;flex-wrap:wrap;gap:.75rem;justify-content:space-between;
       <div class="grid3">
         <div class="card"><h3>Deduce</h3><p>Clue logic with real Good Feet product cards.</p></div>
         <div class="card"><h3>Clue drops</h3><p>Visit rooms to unlock arch, lifestyle, and shoe facts.</p></div>
-        <div class="card"><h3>Trainer tips</h3><p>A new product-knowledge tip every round.</p></div>
+        <div class="card"><h3>Professor tips</h3><p>A new product-knowledge tip every round.</p></div>
       </div>
       <div class="row">
         <button type="button" class="btn btn-p" id="btn-start">Open a new case</button>
@@ -82,7 +82,7 @@ header.bar{display:flex;flex-wrap:wrap;gap:.75rem;justify-content:space-between;
         <li><b>Your hand</b> cannot be in the envelope - mark them in the notebook.</li>
         <li><b>Explore rooms</b> for clue drops. Hallways connect rooms like Clue.</li>
         <li><b>Suggest</b> only from a room. Cards you hold or have seen are hidden.</li>
-        <li><b>Trainer tips</b> rotate each of your rounds.</li>
+        <li><b>Professor tips</b> rotate each of your rounds.</li>
         <li><b>Accuse</b> only when sure - a wrong final accusation ends the case.</li>
       </ol>
       <div class="row" style="margin-top:1rem">
@@ -104,7 +104,7 @@ header.bar{display:flex;flex-wrap:wrap;gap:.75rem;justify-content:space-between;
         <button type="button" class="btn-g" id="btn-menu">Menu</button>
       </div>
     </header>
-    <div class="tip"><i>!</i><div><small id="tip-round">Trainer tip</small><p id="tip-text"></p></div></div>
+    <div class="tip"><i>!</i><div><small id="tip-round">Professor tip</small><p id="tip-text"></p></div></div>
     <div id="action-area"></div>
     <div class="layout">
       <div class="stack">
@@ -264,7 +264,7 @@ header.bar{display:flex;flex-wrap:wrap;gap:.75rem;justify-content:space-between;
     ];
     var FN = ["Alex", "Jordan", "Casey", "Morgan", "Riley", "Avery", "Quinn", "Cameron", "Taylor", "Jamie", "Skyler", "Reese", "Parker", "Hayden", "Drew", "Sam", "Charlie", "Blake"];
     var LN = ["Brooks", "Nguyen", "Patel", "Garcia", "Wright", "Foster", "Reed", "Coleman", "Hughes", "Bennett", "Rivera", "Kim", "Torres", "Bailey", "Cooper", "Hayes"];
-    var TITLES = ["Store Associate", "Sales Trainer", "Fitting Specialist", "Floor Lead", "New Hire Buddy"];
+    var TITLES = ["Store Associate", "Sales Professor", "Fitting Specialist", "Floor Lead", "New Hire Buddy"];
     var COLORS = ["#0a3a4a", "#c4782a", "#3d7a4a", "#6b3fa0", "#a33b3b"];
 
     function cellId(r, c) {
@@ -561,7 +561,7 @@ header.bar{display:flex;flex-wrap:wrap;gap:.75rem;justify-content:space-between;
       logSeq = 0;
       pushLog("Case opened: a mystery customer left without their 3-Step System on file.", "neutral");
       pushLog("Investigating with " + a1 + " and " + a2 + ". You hold " + hands[0].length + " product cards.", "you");
-      pushLog("Trainer tip: " + tip, "tip");
+      pushLog("Professor tip: " + tip, "tip");
       if (discover(ROOM_CELL.welcome)) sfx.clue();
     }
     function endTurn() {
@@ -581,7 +581,7 @@ header.bar{display:flex;flex-wrap:wrap;gap:.75rem;justify-content:space-between;
       pushLog(p.human ? "Your turn." : p.name + "'s turn.", p.human ? "you" : "ai");
       if (p.human) {
         G.tip = TIPS[(G.turn - 1) % TIPS.length];
-        pushLog("Trainer tip: " + G.tip, "tip");
+        pushLog("Professor tip: " + G.tip, "tip");
       }
       render();
       if (!p.human) aiTimer = setTimeout(aiTurn, 700);
@@ -791,7 +791,7 @@ header.bar{display:flex;flex-wrap:wrap;gap:.75rem;justify-content:space-between;
           return '<span class="pill"><span class="dot" style="background:' + p.color + '"></span>' + esc(p.human ? "You" : p.name.split(" ")[0]) + "</span>";
         })
         .join("");
-      $("tip-round").textContent = "Trainer tip · Round " + G.turn;
+      $("tip-round").textContent = "Professor tip · Round " + G.turn;
       $("tip-text").textContent = G.tip;
 
       var p = curP();

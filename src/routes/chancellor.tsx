@@ -940,11 +940,11 @@ function DigestCol({ title, rows, empty }: { title: string; rows: WeeklyDigest["
 function InboxDesk() {
   const [notes, setNotes] = useState<TrainerNote[]>([]);
   useEffect(() => {
-    listTrainerNotes().then(setNotes).catch((error) => toast.error(error instanceof Error ? error.message : "Could not load trainer questions"));
+    listTrainerNotes().then(setNotes).catch((error) => toast.error(error instanceof Error ? error.message : "Could not load professor questions"));
   }, []);
   return (
     <div>
-      <h2 className="font-display text-3xl">Ask the trainer</h2>
+      <h2 className="font-display text-3xl">Ask the professor</h2>
       <p className="mt-2 text-sm text-paper/60">
         Questions from lessons land here, next to the check-ins on the training office desk.
       </p>

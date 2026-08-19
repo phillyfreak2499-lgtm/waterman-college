@@ -94,7 +94,7 @@ const DEFAULT_QUIZZES: Omit<Quiz, "sortOrder">[] = [
     id: "day-01-checkin",
     title: "Day 1 check-in",
     lessonSlug: "day-01",
-    intro: "Two takeaways and a quick product check. Your trainer reads every answer here.",
+    intro: "Two takeaways and a quick product check. Your professor reads every answer here.",
     questions: [
       ask("What are your top two takeaways from today?"),
       ask("Where do you want more training or support?"),
@@ -153,7 +153,7 @@ const DEFAULT_QUIZZES: Omit<Quiz, "sortOrder">[] = [
     id: "day-10-week",
     title: "Week 2 wrap",
     lessonSlug: "day-10",
-    intro: "Saturday recap for your trainer.",
+    intro: "Saturday recap for your professor.",
     questions: [
       ask("Top two takeaways from Week 2."),
       ask("What do you want to role-play next week?"),
@@ -163,7 +163,7 @@ const DEFAULT_QUIZZES: Omit<Quiz, "sortOrder">[] = [
     id: "day-15-week",
     title: "Week 3 wrap",
     lessonSlug: "day-15",
-    intro: "Saturday recap for your trainer.",
+    intro: "Saturday recap for your professor.",
     questions: [
       ask("Top two takeaways from Week 3."),
       ask("What presentation gaps are still open?"),

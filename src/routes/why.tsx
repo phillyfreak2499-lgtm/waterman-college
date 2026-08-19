@@ -88,7 +88,7 @@ function WhyPage() {
         <div className="lg:order-2">
           <img
             src="/media/classroom-table.jpg"
-            alt="A trainer working with Specialists at a table"
+            alt="A professor working with Specialists at a table"
             className="aspect-[4/3] w-full rounded-lg object-cover shadow-card"
           />
         </div>
@@ -115,7 +115,7 @@ function WhyPage() {
             A hall with four doors, and a campus around it.
           </h2>
           <p className="mt-5 max-w-2xl leading-relaxed text-pretty text-ink/90">
-            The courses inside those doors are the work your trainers already
+            The courses inside those doors are the work your professors already
             wrote. This website does not rewrite them. It gives them a college
             worthy of the why — a first impression that matches the one we ask
             every Specialist to give a Client.

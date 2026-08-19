@@ -40,7 +40,7 @@ export const ACCESS_ROLES: { id: AccessRole; label: string; blurb: string; rank:
   { id: "mit", label: "MIT", blurb: "Approved for the MIT path.", rank: 1 },
   { id: "managers", label: "Manager", blurb: "A store team and their training.", rank: 2 },
   { id: "regional", label: "Regional / DM", blurb: "Managers and every Specialist under them.", rank: 3 },
-  { id: "trainer", label: "Trainer", blurb: "The whole company.", rank: 4 },
+  { id: "trainer", label: "Professor", blurb: "The whole company.", rank: 4 },
   { id: "sales-manager", label: "Sales Manager", blurb: "The whole company.", rank: 4 },
   { id: "ceo", label: "CEO", blurb: "The whole company.", rank: 4 },
   { id: "admin", label: "Training office", blurb: "Campus, people, and the site.", rank: 5 },

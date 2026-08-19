@@ -75,13 +75,13 @@ export const sendTrainerNote = createServerFn({ method: "POST" })
     if (!input || typeof input.lessonKey !== "string" ||
         !/^[a-z0-9:_-]+\/[a-z0-9:_-]+$/i.test(input.lessonKey) ||
         input.lessonKey.length > 180) throw new Error("Unknown lesson.");
-    if (typeof input.body !== "string") throw new Error("Write a note for the trainer.");
+    if (typeof input.body !== "string") throw new Error("Write a note for the professor.");
     return { lessonKey: input.lessonKey.trim(), body: input.body };
   })
   .middleware([authMiddleware])
   .handler(async ({ context, data }) => {
     const body = data.body.trim();
-    if (body.length < 4) throw new Error("Write a little more so the trainer can help.");
+    if (body.length < 4) throw new Error("Write a little more so the professor can help.");
     if (body.length > 2000) throw new Error("Keep it under 2,000 characters.");
     const [trackId, slug] = data.lessonKey.split("/");
     const { assertTrackAccess } = await import("@/lib/access");

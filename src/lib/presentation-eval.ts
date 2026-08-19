@@ -903,7 +903,7 @@ export const submitPresentationEval = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     const actor = await readAccessRole(context.userId);
     if (!isLeader(actor) && actor !== "admin") {
-      throw new Error("Only managers and trainers can submit presentation evaluations.");
+      throw new Error("Only managers and professors can submit presentation evaluations.");
     }
     await assertCanViewPerson(context.userId, data.presenterId);
     await ensureProfileTable();

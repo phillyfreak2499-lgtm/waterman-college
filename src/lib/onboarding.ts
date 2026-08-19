@@ -22,7 +22,7 @@ export const ONBOARDING_WEEKS = [
   {
     week: 4,
     title: "Independently",
-    summary: "Work the floor on your own. Trainer and Sales Manager pull you for half-day sessions.",
+    summary: "Work the floor on your own. Professor and Sales Manager pull you for half-day sessions.",
     days: [16, 17, 18, 19, 20],
   },
 ] as const;
@@ -144,7 +144,7 @@ export const ONBOARDING_LESSONS: Lesson[] = [
     "With a tablet, shadow a full Client using a Presentation Evaluation Form. Introduce yourself. You are in training.",
     "ROLEPLAY · Build a cart with four supports — features, benefits, and why the fourth. Then build it in ERPLY with the savings promotion.",
     "GFA · Architek Comfort Slip-on. ROLEPLAY · Med Massager features and the flow.",
-    "Email your trainer two takeaways and where you want more help. FORM · Day 6 report.",
+    "Email your professor two takeaways and where you want more help. FORM · Day 6 report.",
   ], "Shadow the whole day. Notes beat memory."),
   day(7, "Closing, shoes, and the till", 60, [
     "PRACTICE · Make an appointment in Appointed.",
@@ -155,7 +155,7 @@ export const ONBOARDING_LESSONS: Lesson[] = [
     "Review return-Client solutions.",
     "GFA · Shoe 101. Adrenaline, Ghost, Beast, Ariel — who each shoe is for. Shoes hit list. Install Caterpy laces.",
     "GFA · OS1st Training Center.",
-    "FORM · Manager completes the Day 6–7 form. Email your trainer two takeaways. Day 7 report.",
+    "FORM · Manager completes the Day 6–7 form. Email your professor two takeaways. Day 7 report.",
   ]),
   day(8, "WRAP back at the Learning Center", 60, [
     "Cracking the Code — personalize the sale. Painting the Picture.",
@@ -227,7 +227,7 @@ export const ONBOARDING_LESSONS: Lesson[] = [
   ]),
 
   day(16, "Referrals and your growth plan", 50, [
-    "This week you work independently. Trainer and Sales Manager will pull you for sessions.",
+    "This week you work independently. Professor and Sales Manager will pull you for sessions.",
     "Manager Presentation Evaluation, one-on-one on the gaps.",
     "GFA · The Power of Referrals. Requesting Client Reviews at POS. ROLEPLAY asking for a review.",
     "Set personal performance goals in your Growth Plan with your manager.",
@@ -250,10 +250,10 @@ export const ONBOARDING_LESSONS: Lesson[] = [
     "End-of-week review: strengths, gaps, next steps in the Growth Plan.",
     "GFA · Converting OneSpaWorld Cruise Clients. ROLEPLAY cruise Clients.",
     "GFA · The Good Feet Store FAQs. Phishing Awareness and Prevention.",
-    "Email your trainer and District Manager the week’s results by end of day.",
+    "Email your professor and District Manager the week’s results by end of day.",
     "FORM · Day 18 report.",
   ]),
-  day(19, "Trainer day — basic training", 70, [
+  day(19, "Professor day — basic training", 70, [
     "GFA · Converting Calls Into Client Visits. ROLEPLAY converting a call into an appointment.",
     "Product knowledge. Fitting and sizing correctly — troubleshooting the fit.",
     "Presentation components. Closing phase. Answer phase.",
