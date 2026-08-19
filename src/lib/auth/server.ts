@@ -222,6 +222,12 @@ export const auth = betterAuth({
       account_data: { name: "__Host-grok-auth.account_data" },
       dont_remember: { name: "__Host-grok-auth.dont_remember" },
     },
+    // Render (and most reverse proxies) forward the real client IP in these
+    // headers. Without them Better Auth falls back to a single shared rate-limit
+    // bucket, which can throttle or hang session / directory fetches for everyone.
+    ipAddress: {
+      ipAddressHeaders: ["x-forwarded-for", "x-real-ip"],
+    },
   },
 
   plugins: [

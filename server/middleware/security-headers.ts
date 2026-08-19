@@ -12,10 +12,12 @@
  *
  * The policy below is deliberately explicit about what the app actually needs:
  *
- *   - `script-src 'self' 'unsafe-inline'` — TanStack Start injects an inline
- *                                  <script> for the $_TSR hydration payload.
- *                                  Without 'unsafe-inline' the browser blocks
- *                                  it → window.$_TSR is undefined → blank page.
+ *   - `script-src 'self' 'unsafe-inline' 'unsafe-eval'` — TanStack Start injects
+ *                                  an inline <script> for the $_TSR hydration
+ *                                  payload. Without 'unsafe-inline' the browser
+ *                                  blocks it → window.$_TSR is undefined → blank
+ *                                  page. 'unsafe-eval' is required by the current
+ *                                  React/TanStack runtime on some routes.
  *   - `style-src` + Google Fonts — the brand faces load from fonts.googleapis
  *                                  (see README "Typography"); `unsafe-inline`
  *                                  covers Tailwind's injected style element.
@@ -43,7 +45,7 @@ const CONTENT_SECURITY_POLICY = [
   "img-src 'self' data: blob:",
   "manifest-src 'self'",
   "object-src 'none'",
-  "script-src 'self' 'unsafe-inline'",
+  "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "worker-src 'self'",
 ].join("; ");
