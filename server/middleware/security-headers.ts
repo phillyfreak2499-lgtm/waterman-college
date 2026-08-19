@@ -12,7 +12,10 @@
  *
  * The policy below is deliberately explicit about what the app actually needs:
  *
- *   - `script-src 'self'`        — no third-party or inline script.
+ *   - `script-src 'self' 'unsafe-inline'` — TanStack Start injects an inline
+ *                                  <script> for the $_TSR hydration payload.
+ *                                  Without 'unsafe-inline' the browser blocks
+ *                                  it → window.$_TSR is undefined → blank page.
  *   - `style-src` + Google Fonts — the brand faces load from fonts.googleapis
  *                                  (see README "Typography"); `unsafe-inline`
  *                                  covers Tailwind's injected style element.
@@ -40,7 +43,7 @@ const CONTENT_SECURITY_POLICY = [
   "img-src 'self' data: blob:",
   "manifest-src 'self'",
   "object-src 'none'",
-  "script-src 'self'",
+  "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "worker-src 'self'",
 ].join("; ");
