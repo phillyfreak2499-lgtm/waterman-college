@@ -73,7 +73,7 @@ export type Catalog = {
 export const DEFAULT_PAGES: PageContent = {
   homeHeroBody:
     "You are the first thing our Clients experience. COGS — the College of Getting Smarter — trains Specialists and managers to own the relationship, not just the sale.",
-  homeHeroImage: "/media/campus-cogs.jpg",
+  homeHeroImage: "/media/campus-night.jpg",
   homeStandardTitle: "We don’t train Specialists to fill a role. We train them to own a relationship.",
   homeStandardBody:
     "Before any product changes hands, a Specialist changes the room. The way you greet, listen, guide, and serve determines whether a Client leaves with the right solution — or leaves at all.",
@@ -92,7 +92,13 @@ export const DEFAULT_PAGES: PageContent = {
 
 export function withPageDefaults(pages: Partial<PageContent> | null | undefined): PageContent {
   const next = { ...DEFAULT_PAGES, ...(pages ?? {}) };
-  if (!next.homeHeroImage || next.homeHeroImage.includes("campus-front")) {
+  if (
+    !next.homeHeroImage ||
+    next.homeHeroImage.includes("campus-front") ||
+    next.homeHeroImage.includes("campus-cogs")
+  ) {
+    // Upgrade the previous default hero (campus-front, then campus-cogs) to the
+    // current one. A hero explicitly set to any other image is left untouched.
     next.homeHeroImage = DEFAULT_PAGES.homeHeroImage;
   }
   if (!next.homeTeachImage || next.homeTeachImage.includes("campus-front")) {

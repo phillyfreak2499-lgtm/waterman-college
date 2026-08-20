@@ -18,9 +18,9 @@ function Home() {
     <SiteShell invertedHeader>
       <section className="relative isolate min-h-[30rem] overflow-hidden bg-navy text-paper sm:min-h-[44rem]">
         <img
-          src={pages.homeHeroImage || "/media/campus-cogs.jpg"}
+          src={pages.homeHeroImage || "/media/campus-night.jpg"}
           alt="COGS campus — College of Getting Smarter"
-          className="absolute inset-0 h-full w-full object-cover object-[center_42%] sm:object-[22%_center] lg:object-[18%_center]"
+          className="absolute inset-0 h-full w-full object-cover object-[center_40%]"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-navy/55 via-navy/12 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-navy/88 via-navy/20 to-transparent" />
