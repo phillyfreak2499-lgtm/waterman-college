@@ -14,7 +14,7 @@ function WhyPage() {
     <SiteShell>
       <section className="relative isolate overflow-hidden bg-navy text-paper">
         <img
-          src="/media/classroom-wide.jpg"
+          src="/media/why-hero.jpg"
           alt="A COGS training hall"
           className="absolute inset-0 h-full w-full object-cover object-center"
         />
@@ -64,7 +64,7 @@ function WhyPage() {
       <section className="border-y border-line bg-paper-2">
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-16 sm:px-8 lg:grid-cols-2 lg:gap-16">
           <img
-            src="/media/classroom-circle.jpg"
+            src="/media/why-fitting.jpg"
             alt="Specialists training together at COGS"
             className="aspect-[4/3] w-full rounded-lg object-cover shadow-card"
           />
@@ -87,7 +87,7 @@ function WhyPage() {
       <section className="mx-auto grid max-w-6xl items-center gap-10 px-5 py-16 sm:px-8 lg:grid-cols-2 lg:gap-16 lg:py-24">
         <div className="lg:order-2">
           <img
-            src="/media/classroom-table.jpg"
+            src="/media/why-consult.jpg"
             alt="A professor working with Specialists at a table"
             className="aspect-[4/3] w-full rounded-lg object-cover shadow-card"
           />

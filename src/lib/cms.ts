@@ -84,7 +84,7 @@ export const DEFAULT_PAGES: PageContent = {
   homeOnboardTitle: "Your first six weeks, on purpose.",
   homeOnboardBody:
     "New Specialists follow a six-week path from belonging to advising — Client Experience, Flow, Product, and Culture — with a professor in earshot, not in the chair.",
-  homeOnboardImage: "/media/classroom.jpg",
+  homeOnboardImage: "/media/home-onboarding.jpg",
   howKicker: "Admission",
   howTitle: "How it works",
   howIntro: "COGS — the College of Getting Smarter — is a private training ground. Four steps from hire to the chair.",
@@ -104,7 +104,14 @@ export function withPageDefaults(pages: Partial<PageContent> | null | undefined)
   if (!next.homeTeachImage || next.homeTeachImage.includes("campus-front")) {
     next.homeTeachImage = DEFAULT_PAGES.homeTeachImage;
   }
-  if (!next.homeOnboardImage || next.homeOnboardImage.includes("campus-front")) {
+  if (
+    !next.homeOnboardImage ||
+    next.homeOnboardImage.includes("campus-front") ||
+    next.homeOnboardImage === "/media/classroom.jpg"
+  ) {
+    // Upgrade off the old onboarding default: classroom.jpg is now a Good Feet
+    // store photo used on interior pages, so the home section keeps the
+    // preserved image (home-onboarding.jpg) instead.
     next.homeOnboardImage = DEFAULT_PAGES.homeOnboardImage;
   }
   if (next.homeHeroBody.includes("Waterman College trains")) {

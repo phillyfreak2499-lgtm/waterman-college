@@ -1067,9 +1067,9 @@ function PagesEditor({
       <ImageField
         label="Home — onboarding photo"
         value={form.homeOnboardImage}
-        onChange={(url) => set("homeOnboardImage", url || "/media/classroom.jpg")}
+        onChange={(url) => set("homeOnboardImage", url || "/media/home-onboarding.jpg")}
         allowClear
-        clearTo="/media/classroom.jpg"
+        clearTo="/media/home-onboarding.jpg"
       />
       <Field label="Home — onboarding heading">
         <input className={inputClass} value={form.homeOnboardTitle} onChange={(e) => set("homeOnboardTitle", e.target.value)} />

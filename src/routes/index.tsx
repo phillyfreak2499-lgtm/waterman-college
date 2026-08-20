@@ -123,7 +123,7 @@ function Home() {
             </p>
           </div>
           <img
-            src={pages.homeOnboardImage || "/media/classroom.jpg"}
+            src={pages.homeOnboardImage || "/media/home-onboarding.jpg"}
             alt="The COGS training room where new Specialists begin"
             className="aspect-[4/3] w-full rounded-lg object-cover object-center shadow-card"
             loading="lazy"
