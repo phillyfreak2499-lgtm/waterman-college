@@ -32,6 +32,7 @@ import {
   type PhaseAverages,
   type SuggestedLesson,
 } from "@/lib/presentation-eval";
+import { listMyGameScores, type GameScore } from "@/lib/quad-scores";
 import { pageHead } from "@/lib/page-title";
 import { cn, errorMessage } from "@/lib/utils";
 
@@ -108,6 +109,7 @@ function LockerDesk() {
   const [assignments, setAssignments] = useState<MyAssignment[]>([]);
   const [favorites, setFavorites] = useState<LockerFavorite[]>([]);
   const [notes, setNotes] = useState<LockerNote[]>([]);
+  const [gameScores, setGameScores] = useState<GameScore[]>([]);
   const [phaseAvgs, setPhaseAvgs] = useState<PhaseAverages | null>(null);
   const [suggestions, setSuggestions] = useState<SuggestedLesson[]>([])
   const [trends, setTrends] = useState<PhaseTrendPoint[]>([]);
@@ -119,15 +121,17 @@ function LockerDesk() {
 
   const reload = useCallback(async () => {
     try {
-      const [a, f, n, scores] = await Promise.all([
+      const [a, f, n, scores, games] = await Promise.all([
         listMyAssignments(),
         listFavorites(),
         listLockerNotes(),
         listMyEvalScores().catch(() => null),
+        listMyGameScores().catch(() => [] as GameScore[]),
       ]);
       setAssignments(a);
       setFavorites(f);
       setNotes(n);
+      setGameScores(games);
       setPhaseAvgs(scores?.averages ?? null);
       setSuggestions(scores?.suggestions ?? []);
       setTrends(scores?.trends ?? []);
@@ -486,6 +490,46 @@ function LockerDesk() {
             )}
           </section>
 
+          {/* The Quad */}
+          <section>
+            <p className="kicker">The Quad</p>
+            <span className="rule-brass mt-3" />
+            {gameScores.length === 0 ? (
+              <div className="mt-5 rounded-lg border border-line bg-surface px-5 py-6 text-center shadow-card">
+                <p className="text-sm text-muted">
+                  Practice a game in{" "}
+                  <Link to="/quad" className="text-navy underline-offset-2 hover:underline">
+                    The Quad
+                  </Link>{" "}
+                  and your plays and best scores show up here.
+                </p>
+              </div>
+            ) : (
+              <div className="mt-5 grid gap-2 sm:grid-cols-2">
+                {gameScores.map((g) => (
+                  <Link
+                    key={g.slug}
+                    to="/quad/$game"
+                    params={{ game: g.slug }}
+                    className="rounded-md border border-line bg-surface px-4 py-3 shadow-card transition-colors hover:border-navy/20"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="min-w-0 truncate font-medium text-ink">{g.title}</span>
+                      {g.bestScore != null && (
+                        <span className="shrink-0 rounded-sm bg-brass-soft px-2 py-0.5 text-xs font-semibold tabular-nums text-navy">
+                          Best {g.bestScore.toLocaleString()}
+                        </span>
+                      )}
+                    </div>
+                    <p className="mt-1 text-[0.7rem] uppercase tracking-[0.12em] text-muted">
+                      {g.plays} {g.plays === 1 ? "play" : "plays"} · {lastPlayedLabel(g.lastPlayedAt)}
+                    </p>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </section>
+
           {/* Quick Actions */}
           <section>
             <p className="kicker">Quick actions</p>
@@ -503,6 +547,16 @@ function LockerDesk() {
       )}
     </div>
   );
+}
+
+function lastPlayedLabel(iso: string): string {
+  const then = new Date(iso).getTime();
+  if (!Number.isFinite(then)) return "";
+  const days = Math.floor((Date.now() - then) / 86_400_000);
+  if (days <= 0) return "today";
+  if (days === 1) return "yesterday";
+  if (days < 7) return `${days} days ago`;
+  return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
 function DueCard({ assignment: a }: { assignment: MyAssignment }) {

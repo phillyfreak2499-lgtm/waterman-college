@@ -1,8 +1,10 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
+import { useEffect } from "react";
 import { AuthGate } from "@/components/auth-gate";
 import { SiteShell } from "@/components/site-shell";
 import { QUAD_GAMES } from "@/lib/quad";
+import { reportGameResult } from "@/lib/quad-scores";
 import { pageHead } from "@/lib/page-title";
 
 export const Route = createFileRoute("/quad_/$game")({
@@ -26,6 +28,26 @@ function GamePage() {
 function GameFrame() {
   const { game: slug } = Route.useParams();
   const game = QUAD_GAMES.find((g) => g.slug === slug);
+
+  // Relay same-origin activity messages from the game (quad-bridge.js) to the
+  // Locker ledger. Best-effort — a failed write never disrupts play.
+  useEffect(() => {
+    if (!game) return;
+    function onMessage(event: MessageEvent) {
+      if (event.origin !== window.location.origin) return;
+      const data = event.data as { type?: string; slug?: string; opened?: boolean; score?: number };
+      if (!data || data.type !== "cogs:quad" || data.slug !== game!.slug) return;
+      const payload: { slug: string; opened?: boolean; score?: number } = { slug: game!.slug };
+      if (data.opened === true) payload.opened = true;
+      if (typeof data.score === "number") payload.score = data.score;
+      if (payload.opened || payload.score != null) {
+        void reportGameResult({ data: payload }).catch(() => undefined);
+      }
+    }
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [game]);
+
   if (!game) throw notFound();
   return (
     <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8 sm:py-10">
