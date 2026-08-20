@@ -1,6 +1,7 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
+import { ClientErrorReporter } from "@/components/client-error-reporter";
 import { AccessProvider } from "@/components/access-provider";
 import { CatalogProvider } from "@/components/catalog-provider";
 import { ProgressProvider } from "@/components/progress-provider";
@@ -65,6 +66,7 @@ export const Route = createRootRoute({
       </head>
       <body>
         <PreviewHostBridge />
+        <ClientErrorReporter />
         <AuthProvider>
           <CatalogProvider>
             <AccessProvider>
