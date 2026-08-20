@@ -2,6 +2,7 @@ import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-r
 import { AuthProvider } from "@/lib/auth/provider";
 import { PreviewHostBridge } from "@/components/preview-host-bridge";
 import { ClientErrorReporter } from "@/components/client-error-reporter";
+import { ActivityPinger } from "@/components/activity-pinger";
 import { AccessProvider } from "@/components/access-provider";
 import { CatalogProvider } from "@/components/catalog-provider";
 import { ProgressProvider } from "@/components/progress-provider";
@@ -71,6 +72,7 @@ export const Route = createRootRoute({
           <CatalogProvider>
             <AccessProvider>
               <ProgressProvider>
+                <ActivityPinger />
                 <Outlet />
                 <Toaster
                   position="top-center"

@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   ArrowRight,
   Check,
+  Flame,
   Minus,
   Pin,
   Plus,
@@ -33,6 +34,7 @@ import {
   type SuggestedLesson,
 } from "@/lib/presentation-eval";
 import { listMyGameScores, type GameScore } from "@/lib/quad-scores";
+import { getMyStreak, type Streak } from "@/lib/activity";
 import { pageHead } from "@/lib/page-title";
 import { cn, errorMessage } from "@/lib/utils";
 
@@ -110,6 +112,7 @@ function LockerDesk() {
   const [favorites, setFavorites] = useState<LockerFavorite[]>([]);
   const [notes, setNotes] = useState<LockerNote[]>([]);
   const [gameScores, setGameScores] = useState<GameScore[]>([]);
+  const [streak, setStreak] = useState<Streak | null>(null);
   const [phaseAvgs, setPhaseAvgs] = useState<PhaseAverages | null>(null);
   const [suggestions, setSuggestions] = useState<SuggestedLesson[]>([])
   const [trends, setTrends] = useState<PhaseTrendPoint[]>([]);
@@ -121,17 +124,19 @@ function LockerDesk() {
 
   const reload = useCallback(async () => {
     try {
-      const [a, f, n, scores, games] = await Promise.all([
+      const [a, f, n, scores, games, streakData] = await Promise.all([
         listMyAssignments(),
         listFavorites(),
         listLockerNotes(),
         listMyEvalScores().catch(() => null),
         listMyGameScores().catch(() => [] as GameScore[]),
+        getMyStreak().catch(() => null),
       ]);
       setAssignments(a);
       setFavorites(f);
       setNotes(n);
       setGameScores(games);
+      setStreak(streakData);
       setPhaseAvgs(scores?.averages ?? null);
       setSuggestions(scores?.suggestions ?? []);
       setTrends(scores?.trends ?? []);
@@ -206,6 +211,17 @@ function LockerDesk() {
         What is due, what leadership wants you to know, and what you want to remember.
       </p>
       <p className="mt-1 text-sm text-muted">Hello, {firstName}.</p>
+      {streak && streak.current > 0 && (
+        <p className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-brass/30 bg-brass-soft/60 px-3 py-1 text-sm font-medium text-navy">
+          <Flame className="size-4 text-brass" aria-hidden />
+          {streak.current}-day practice streak
+          {!streak.todayDone ? (
+            <span className="text-navy/55">· practice today to keep it</span>
+          ) : streak.best > streak.current ? (
+            <span className="text-navy/55">· best {streak.best}</span>
+          ) : null}
+        </p>
+      )}
 
       {loading ? (
         <div className="mt-12 space-y-4">
