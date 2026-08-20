@@ -1,8 +1,9 @@
-import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
 import { useAccess } from "@/components/access-provider";
 import { AuthGate } from "@/components/auth-gate";
+import { Redirect } from "@/lib/auth/gates";
 import { useCatalog } from "@/components/catalog-provider";
 import { Button } from "@/components/ui/button";
 import {
@@ -72,7 +73,7 @@ function Gate() {
   if (!ready) {
     return <div className="grid min-h-dvh place-items-center bg-navy-deep text-brass-soft">Opening the office…</div>;
   }
-  if (!access.isChancellor) return <Navigate to="/" />;
+  if (!access.isChancellor) return <Redirect to="/" />;
   return <Office />;
 }
 

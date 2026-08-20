@@ -1,8 +1,8 @@
-import { Navigate, useLocation } from "@tanstack/react-router";
+import { useLocation } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { useAccess } from "@/components/access-provider";
 import { PageSkeleton } from "@/components/page-skeleton";
-import { RedirectToSignIn } from "@/lib/auth/gates";
+import { Redirect, RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 
 export function AuthGate({ children }: { children: ReactNode }) {
@@ -14,7 +14,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   }
   if (!user) return <RedirectToSignIn />;
   if (access.mustChangePassword && location.pathname !== "/change-password") {
-    return <Navigate to="/change-password" />;
+    return <Redirect to="/change-password" />;
   }
   return <>{children}</>;
 }

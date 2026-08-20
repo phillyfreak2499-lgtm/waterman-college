@@ -1,5 +1,5 @@
-import type { ReactNode } from "react";
-import { Navigate } from "@tanstack/react-router";
+import { useEffect, useRef, type ReactNode } from "react";
+import { useNavigate } from "@tanstack/react-router";
 import { authEnabled, signOut } from "./client";
 import { useCurrentUser, useCurrentUserState } from "./use-current-user";
 
@@ -33,15 +33,36 @@ export function SignedOut({ children }: { children: ReactNode }) {
 }
 
 /**
- * Client-side redirect to the sign-in route (TanStack `<Navigate>` — NOT a full
+ * One-shot client-side redirect (TanStack `useNavigate` — NOT a full
  * `window.location` reload). A hard navigation re-bootstraps the SPA and re-runs
  * session loading, which feels like a second "Loading…" on /login.
+ *
+ * WHY AN EFFECT WITH A `fired` GUARD INSTEAD OF `<Navigate>`:
+ * When this is rendered *inside* `SiteShell` (every gated route does
+ * `<SiteShell><AuthGate>…`), the header/footer subscribe to router state, so
+ * each micro-update during the pending navigation re-renders this subtree. The
+ * declarative `<Navigate>` re-fires on every one of those renders, restarting
+ * the navigation before it can settle — a silent synchronous loop that pegs the
+ * main thread (no "Maximum update depth" warning because it is the router's
+ * external store re-rendering, not React `setState`). Firing exactly once per
+ * mount lets the navigation complete and unmount this subtree.
  *
  * Guard routes by waiting out `isPending` first (see `use-current-user`), then
  * render this.
  */
+export function Redirect({ to, replace = true }: { to: string; replace?: boolean }) {
+  const navigate = useNavigate();
+  const fired = useRef(false);
+  useEffect(() => {
+    if (fired.current) return;
+    fired.current = true;
+    void navigate({ to, replace });
+  }, [navigate, to, replace]);
+  return null;
+}
+
 export function RedirectToSignIn({ to = SIGN_IN_PATH }: { to?: string }) {
-  return <Navigate to={to} />;
+  return <Redirect to={to} />;
 }
 
 /**
