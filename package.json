@@ -21,6 +21,7 @@
     "format": "prettier --write .",
     "build:preview": "NITRO_PRESET=node vite build && node scripts/copy-pglite-assets.mjs",
     "release": "npm run typecheck && npm run build && npm run db:migrate",
+    "optimize:media": "node scripts/optimize-media.mjs",
     "provision:chancellor": "node scripts/provision-chancellor.mjs"
   },
   "dependencies": {

@@ -32,7 +32,10 @@
  *
  * Self-hosting the fonts would let `style-src`/`font-src` drop back to `'self'`.
  */
-type HeaderEvent = { url?: { protocol?: string } };
+type HeaderEvent = {
+  url?: { protocol?: string };
+  req?: { headers?: { get?: (name: string) => string | null } };
+};
 
 const CONTENT_SECURITY_POLICY = [
   "default-src 'self'",
@@ -73,8 +76,16 @@ export default async function securityHeadersMiddleware(
   if (!headers.has("permissions-policy")) {
     headers.set("permissions-policy", "camera=(), microphone=(), geolocation=()");
   }
-  // Only advertise HSTS over a secure connection — never on local http dev.
-  if (event?.url?.protocol === "https:" && !headers.has("strict-transport-security")) {
+  // Advertise HSTS over a secure connection — never on local http dev. Behind a
+  // TLS-terminating proxy (Render, Vercel, Cloudflare) the internal request
+  // protocol is http, so also trust the X-Forwarded-Proto header the proxy sets;
+  // otherwise HSTS never ships on the deployed HTTPS site.
+  const forwardedProto = String(event?.req?.headers?.get?.("x-forwarded-proto") ?? "")
+    .split(",")[0]
+    .trim()
+    .toLowerCase();
+  const isHttps = event?.url?.protocol === "https:" || forwardedProto === "https";
+  if (isHttps && !headers.has("strict-transport-security")) {
     headers.set("strict-transport-security", "max-age=31536000; includeSubDomains");
   }
 
