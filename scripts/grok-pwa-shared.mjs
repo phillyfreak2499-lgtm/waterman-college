@@ -165,8 +165,21 @@ export function grokXCreatorHeadTags(creator = readXCreator(), creatorId = readX
   ];
 }
 
+/**
+ * The platform "Created with Grok" head script is skipped when the deployment
+ * sets ENABLE_GROK_EXTENSIONS=false (the recommended default for real installs —
+ * see README). The CSP already blocks the external grok.com script on such
+ * deploys, so injecting it only produces console errors on every page. Left ON
+ * when the flag is unset so the sandbox live preview keeps its editing tooling.
+ */
+export function grokExtensionsDisabled() {
+  const value = typeof process !== "undefined" ? process.env?.ENABLE_GROK_EXTENSIONS : "";
+  return String(value ?? "").trim().toLowerCase() === "false";
+}
+
 /** Platform "Created with Grok" banner — injected into every HTML document. */
 export function grokExtensionsHeadTags(projectId = readGrokProjectId()) {
+  if (grokExtensionsDisabled()) return [];
   const id = escapeHtml(projectId);
   const tags = [];
   if (projectId) {

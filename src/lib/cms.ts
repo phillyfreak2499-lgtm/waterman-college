@@ -746,7 +746,7 @@ export const saveTrack = createServerFn({ method: "POST" })
       role: track.role,
       title,
       nav: cleanText(track.nav || title, "Navigation label", 120),
-      image: safeImage(track.image, "/media/campus-cogs.jpg")!,
+      image: safeImage(track.image, "/media/3-step-open.jpg")!,
       audience: cleanText(track.audience ?? "", "Audience", 500, false),
       summary: cleanText(track.summary ?? "", "Summary", 5_000, false),
     };

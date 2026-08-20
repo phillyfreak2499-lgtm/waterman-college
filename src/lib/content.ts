@@ -97,7 +97,7 @@ export const tracks: Track[] = [
     title: "Client Experience",
     nav: "Client Experience",
     href: "/training/client-experience",
-    image: "/media/campus-cogs.jpg",
+    image: "/media/store-greeting.jpg",
     audience: "Every Specialist",
     summary:
       "The way a Client feels when they leave our store matters just as much as the product they walk out with. Listen deeply, respond with care, and turn a first visit into a lifelong relationship.",
@@ -200,7 +200,7 @@ export const tracks: Track[] = [
     title: "Product Training",
     nav: "Product",
     href: "/training/product",
-    image: "/media/classroom-table.jpg",
+    image: "/media/supports-display.jpg",
     audience: "Every Specialist",
     summary:
       "Knowledge and confidence to match the right solution to the right Client, without hesitation or guesswork. Understand what you recommend and why — then you stop being a salesperson and start being a trusted advisor.",
@@ -301,7 +301,7 @@ export const tracks: Track[] = [
     title: "Management Development",
     nav: "Management",
     href: "/training/management",
-    image: "/media/campus-cogs.jpg",
+    image: "/media/store-lobby.jpg",
     audience: "Managers",
     summary:
       "We invest in you because people are how we win. Great products get Clients through the door. Great managers keep them coming back.",

@@ -151,6 +151,17 @@ export default defineConfig(({ command }) => ({
             // manifest + head-tag middleware). Nitro v3 defaults serverDir to
             // false, so removing this silently unwires /?install=1 on deploys.
             serverDir: "./server",
+            // Static /media images are content that changes at stable URLs
+            // (CMS photo swaps). Without a Cache-Control header browsers fall
+            // back to heuristic caching and keep serving stale images. A short
+            // max-age plus revalidation lets updates propagate within minutes
+            // while still caching repeat views. (The security-headers
+            // middleware does not run for static assets, so this lives here.)
+            routeRules: {
+              "/media/**": {
+                headers: { "cache-control": "public, max-age=300, must-revalidate" },
+              },
+            },
           }),
         ]
       : []),
