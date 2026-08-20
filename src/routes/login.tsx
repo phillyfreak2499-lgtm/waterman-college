@@ -77,9 +77,9 @@ function Login() {
       <div className="mx-auto grid max-w-5xl items-stretch gap-0 px-5 py-8 sm:px-8 sm:py-12 md:grid-cols-2 md:py-20">
         <div className="relative overflow-hidden rounded-t-lg shadow-card md:rounded-l-lg md:rounded-tr-none">
           <img
-            src="/media/classroom-circle.jpg"
-            alt="Specialists training together at COGS"
-            className="h-48 w-full object-cover object-[center_22%] sm:h-64 md:h-full md:min-h-[32rem] md:object-[center_20%]"
+            src="/media/login-fitting.jpg"
+            alt="A Good Feet Specialist fitting a client at COGS"
+            className="h-48 w-full object-cover object-center sm:h-64 md:h-full md:min-h-[32rem]"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-navy/15 to-transparent" />
           <div className="absolute inset-x-0 bottom-0 p-5 text-paper sm:p-8">
