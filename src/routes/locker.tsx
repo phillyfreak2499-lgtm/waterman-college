@@ -563,6 +563,7 @@ function LockerDesk() {
             <span className="rule-brass mt-3" />
             <div className="mt-5 flex flex-wrap gap-2">
               {leader && <QuickLink to="/metrics" label="Team Metrics" />}
+              {leader && <QuickLink to="/huddle" label="Daily Huddle" />}
               <QuickLink to="/training" label="Training Hall" />
               <QuickLink to="/floor" label="Floor Mode" />
               <QuickLink to="/notifications" label="Inbox" />

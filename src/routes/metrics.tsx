@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
+  ChevronDown,
   Copy,
   Download,
   Minus,
@@ -255,6 +256,9 @@ function BoardView() {
           ))}
         </select>
         <div className="ml-auto flex flex-wrap gap-2">
+          <Button asChild size="sm" variant="outline">
+            <Link to="/huddle">Daily Huddle</Link>
+          </Button>
           <Button size="sm" variant="brass" onClick={coachingPreset}>
             Coaching list
           </Button>
@@ -410,34 +414,51 @@ function BoardView() {
           </p>
         </div>
       ) : (
-        <div className="mt-5 overflow-x-auto rounded-lg border border-line bg-surface shadow-card">
-          <table className="w-full min-w-[52rem] border-collapse text-sm">
-            <thead>
-              <tr className="border-b border-line text-left">
-                <th className="sticky left-0 z-10 bg-surface px-4 py-3 font-medium text-muted">
-                  Person
-                </th>
-                {METRICS.map((m) => (
-                  <th key={m.key} className="px-2 py-3 text-center font-medium text-muted">
-                    {m.short}
+        <>
+          {/* Desktop: dense table */}
+          <div className="mt-5 hidden overflow-x-auto rounded-lg border border-line bg-surface shadow-card lg:block">
+            <table className="w-full min-w-[52rem] border-collapse text-sm">
+              <thead>
+                <tr className="border-b border-line text-left">
+                  <th className="sticky left-0 z-10 bg-surface px-4 py-3 font-medium text-muted">
+                    Person
                   </th>
+                  {METRICS.map((m) => (
+                    <th key={m.key} className="px-2 py-3 text-center font-medium text-muted">
+                      {m.short}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((p) => (
+                  <PersonRow
+                    key={p.userId}
+                    person={p}
+                    period={period}
+                    open={openUser === p.userId}
+                    onToggle={() => setOpenUser(openUser === p.userId ? null : p.userId)}
+                    onSaved={() => void load(period)}
+                  />
                 ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((p) => (
-                <PersonRow
-                  key={p.userId}
-                  person={p}
-                  period={period}
-                  open={openUser === p.userId}
-                  onToggle={() => setOpenUser(openUser === p.userId ? null : p.userId)}
-                  onSaved={() => void load(period)}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile: card per person */}
+          <div className="mt-5 space-y-2.5 lg:hidden">
+            {filtered.map((p) => (
+              <PersonCard
+                key={p.userId}
+                person={p}
+                period={period}
+                open={openUser === p.userId}
+                onToggle={() => setOpenUser(openUser === p.userId ? null : p.userId)}
+                onSaved={() => void load(period)}
+              />
+            ))}
+          </div>
+        </>
       )}
 
       {/* Heat map */}
@@ -567,6 +588,54 @@ function PersonRow({
         </tr>
       )}
     </>
+  );
+}
+
+function PersonCard({
+  person,
+  period,
+  open,
+  onToggle,
+  onSaved,
+}: {
+  person: BoardPerson;
+  period: MetricPeriod;
+  open: boolean;
+  onToggle: () => void;
+  onSaved: () => void;
+}) {
+  return (
+    <div className={cn("rounded-lg border bg-surface shadow-card", open ? "border-brass/40" : "border-line")}>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={open}
+        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
+      >
+        <span className="min-w-0">
+          <span className="block truncate font-medium text-ink">{person.name}</span>
+          <span className="block truncate text-xs text-muted">{person.storeName ?? "—"}</span>
+        </span>
+        <ChevronDown className={cn("size-4 shrink-0 text-muted transition-transform", open && "rotate-180")} />
+      </button>
+      <div className="grid grid-cols-3 gap-1.5 px-3 pb-3">
+        {METRICS.map((m) => (
+          <div key={m.key} className="flex flex-col items-center gap-0.5">
+            <span className="text-[0.6rem] uppercase tracking-[0.08em] text-muted">{m.short}</span>
+            <MetricCell
+              metricKey={m.key}
+              value={person.values[m.key]}
+              prior={person.prior?.[m.key] ?? null}
+            />
+          </div>
+        ))}
+      </div>
+      {open && (
+        <div className="border-t border-line px-4 py-4">
+          <PersonDetail person={person} period={period} onSaved={onSaved} />
+        </div>
+      )}
+    </div>
   );
 }
 

@@ -17,6 +17,7 @@ import { Route as DirectoryRouteImport } from './routes/directory'
 import { Route as FloorRouteImport } from './routes/floor'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as HowItWorksRouteImport } from './routes/how-it-works'
+import { Route as HuddleRouteImport } from './routes/huddle'
 import { Route as InstallRouteImport } from './routes/install'
 import { Route as LockerRouteImport } from './routes/locker'
 import { Route as LoginRouteImport } from './routes/login'
@@ -97,6 +98,11 @@ const LoginRoute = LoginRouteImport.update({
 const MetricsRoute = MetricsRouteImport.update({
   id: '/metrics',
   path: '/metrics',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HuddleRoute = HuddleRouteImport.update({
+  id: '/huddle',
+  path: '/huddle',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NotificationsRoute = NotificationsRouteImport.update({
@@ -195,6 +201,7 @@ export interface FileRoutesByFullPath {
   '/floor': typeof FloorRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/huddle': typeof HuddleRoute
   '/install': typeof InstallRoute
   '/locker': typeof LockerRoute
   '/login': typeof LoginRoute
@@ -226,6 +233,7 @@ export interface FileRoutesByTo {
   '/floor': typeof FloorRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/huddle': typeof HuddleRoute
   '/install': typeof InstallRoute
   '/locker': typeof LockerRoute
   '/login': typeof LoginRoute
@@ -258,6 +266,7 @@ export interface FileRoutesById {
   '/floor': typeof FloorRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/how-it-works': typeof HowItWorksRoute
+  '/huddle': typeof HuddleRoute
   '/install': typeof InstallRoute
   '/locker': typeof LockerRoute
   '/login': typeof LoginRoute
@@ -291,6 +300,7 @@ export interface FileRouteTypes {
     | '/floor'
     | '/forgot-password'
     | '/how-it-works'
+    | '/huddle'
     | '/install'
     | '/locker'
     | '/login'
@@ -322,6 +332,7 @@ export interface FileRouteTypes {
     | '/floor'
     | '/forgot-password'
     | '/how-it-works'
+    | '/huddle'
     | '/install'
     | '/locker'
     | '/login'
@@ -353,6 +364,7 @@ export interface FileRouteTypes {
     | '/floor'
     | '/forgot-password'
     | '/how-it-works'
+    | '/huddle'
     | '/install'
     | '/locker'
     | '/login'
@@ -385,6 +397,7 @@ export interface RootRouteChildren {
   FloorRoute: typeof FloorRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   HowItWorksRoute: typeof HowItWorksRoute
+  HuddleRoute: typeof HuddleRoute
   InstallRoute: typeof InstallRoute
   LockerRoute: typeof LockerRoute
   LoginRoute: typeof LoginRoute
@@ -485,6 +498,13 @@ declare module '@tanstack/react-router' {
       path: '/metrics'
       fullPath: '/metrics'
       preLoaderRoute: typeof MetricsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/huddle': {
+      id: '/huddle'
+      path: '/huddle'
+      fullPath: '/huddle'
+      preLoaderRoute: typeof HuddleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -625,6 +645,7 @@ const rootRouteChildren: RootRouteChildren = {
   FloorRoute: FloorRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   HowItWorksRoute: HowItWorksRoute,
+  HuddleRoute: HuddleRoute,
   InstallRoute: InstallRoute,
   LockerRoute: LockerRoute,
   LoginRoute: LoginRoute,
