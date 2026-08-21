@@ -13,6 +13,7 @@ import {
   type AccessRole,
 } from "@/lib/access";
 import { getSql } from "@/lib/db";
+import { loadRegions, type Region } from "@/lib/regions";
 
 export type DirectoryEntry = {
   id: string;
@@ -24,6 +25,8 @@ export type DirectoryEntry = {
   phone: string;
   storeId: string | null;
   storeName: string | null;
+  /** Region a DM/Professor is scoped to (null for most staff). */
+  regionId: string | null;
 };
 
 export type StoreCard = {
@@ -32,6 +35,7 @@ export type StoreCard = {
   city: string;
   phone: string;
   sortOrder: number;
+  regionId: string | null;
   managers: DirectoryEntry[];
   sales: DirectoryEntry[];
 };
@@ -41,6 +45,10 @@ export type DirectorySnapshot = {
   stores: StoreCard[];
   unassigned: DirectoryEntry[];
   canEdit: boolean;
+  /** All regions, for grouping the split view and the assignment menus. */
+  regions: Region[];
+  /** Set when the viewer is a region-scoped DM/Professor — they see only this. */
+  scopedRegionId: string | null;
 };
 
 function isOfficeRole(role: AccessRole) {
@@ -93,6 +101,7 @@ async function loadEntries(): Promise<DirectoryEntry[]> {
     phone: string | null;
     store_id: string | null;
     store: string | null;
+    region_id: string | null;
   }>`
     select
       u.id,
@@ -102,7 +111,8 @@ async function loadEntries(): Promise<DirectoryEntry[]> {
       p.title,
       p.phone,
       p.store_id,
-      p.store
+      p.store,
+      p.region_id
     from "user" u
     left join user_profiles p on p.user_id = u.id
     order by u.name asc
@@ -120,24 +130,32 @@ async function loadEntries(): Promise<DirectoryEntry[]> {
       phone: (row.phone ?? "").trim(),
       storeId: row.store_id || null,
       storeName: row.store || null,
+      regionId: row.region_id || null,
     };
   });
+}
+
+/** The region a user is scoped to, if any (DMs and Professors). */
+async function readRegionId(userId: string): Promise<string | null> {
+  const sql = await getSql();
+  const rows = await sql<{ region_id: string | null }>`
+    select region_id from user_profiles where user_id = ${userId} limit 1
+  `;
+  return rows[0]?.region_id || null;
 }
 
 async function buildSnapshot(actorId: string): Promise<DirectorySnapshot> {
   const actor = await readAccessRole(actorId);
   if (actor === "pending") throw new Error("Your account must be approved first.");
-  const allPeople = (await fetchPeople()).filter(
-    (person) => person.accountStatus === "approved",
-  );
-  const allowedIds = new Set(visiblePeople(actorId, actor, allPeople).map((person) => person.id));
-  const people = (await loadEntries())
-    .filter((person) => allowedIds.has(person.id))
-    .map((person) =>
-      isLeader(actor) || actor === "admin"
-        ? person
-        : { ...person, email: "", phone: "" },
-    );
+  const regions = await loadRegions();
+
+  // A DM (regional) or Professor (trainer) with a region assignment sees only
+  // that region. Company-wide roles (sales-manager, ceo, admin, chancellor) and
+  // everyone else keep their normal role/hierarchy visibility.
+  const actorRegionId = await readRegionId(actorId);
+  const scopedRegionId =
+    (actor === "regional" || actor === "trainer") && actorRegionId ? actorRegionId : null;
+
   const sql = await getSql();
   const storeRows = await sql<{
     id: string;
@@ -145,13 +163,34 @@ async function buildSnapshot(actorId: string): Promise<DirectorySnapshot> {
     city: string | null;
     phone: string | null;
     sort_order: number;
+    region_id: string | null;
   }>`
-    select id, name, city, phone, sort_order from stores
+    select id, name, city, phone, sort_order, region_id from stores
     order by sort_order asc, name asc
     limit 500
   `;
+  const scopedStores = scopedRegionId
+    ? storeRows.filter((s) => s.region_id === scopedRegionId)
+    : storeRows;
 
-  const stores: StoreCard[] = storeRows.map((store) => {
+  const allEntries = await loadEntries();
+  let visible: DirectoryEntry[];
+  if (scopedRegionId) {
+    const regionStoreIds = new Set(scopedStores.map((s) => s.id));
+    visible = allEntries.filter(
+      (p) => (p.storeId && regionStoreIds.has(p.storeId)) || p.regionId === scopedRegionId,
+    );
+  } else {
+    const allPeople = (await fetchPeople()).filter((person) => person.accountStatus === "approved");
+    const allowedIds = new Set(visiblePeople(actorId, actor, allPeople).map((person) => person.id));
+    visible = allEntries.filter((person) => allowedIds.has(person.id));
+  }
+
+  const people = visible.map((person) =>
+    isLeader(actor) || actor === "admin" ? person : { ...person, email: "", phone: "" },
+  );
+
+  const stores: StoreCard[] = scopedStores.map((store) => {
     const here = people.filter((p) => p.storeId === store.id && !isOfficeRole(p.role));
     return {
       id: store.id,
@@ -159,13 +198,15 @@ async function buildSnapshot(actorId: string): Promise<DirectorySnapshot> {
       city: store.city ?? "",
       phone: store.phone ?? "",
       sortOrder: Number(store.sort_order) || 0,
+      regionId: store.region_id || null,
       managers: here.filter((p) => p.role === "managers"),
       sales: here.filter((p) => isSalesRole(p.role)),
     };
   });
 
   const placed = new Set(stores.flatMap((s) => [...s.managers, ...s.sales].map((p) => p.id)));
-  const office = people.filter((p) => isOfficeRole(p.role));
+  // Region-scoped viewers don't see the head office; everyone else does.
+  const office = scopedRegionId ? [] : people.filter((p) => isOfficeRole(p.role));
   const officeIds = new Set(office.map((p) => p.id));
   const unassigned = people.filter((p) => !officeIds.has(p.id) && !placed.has(p.id));
 
@@ -174,6 +215,8 @@ async function buildSnapshot(actorId: string): Promise<DirectorySnapshot> {
     stores,
     unassigned,
     canEdit: canEditDirectory(actor),
+    regions,
+    scopedRegionId,
   };
 }
 
@@ -182,18 +225,23 @@ export const getDirectory = createServerFn({ method: "GET" })
   .handler(async ({ context }) => buildSnapshot(context.userId));
 
 export const saveStore = createServerFn({ method: "POST" })
-  .validator((input: { id?: string; name: string; city?: string; phone?: string }) => {
-    if (!input || typeof input.name !== "string" || !input.name.trim() || input.name.length > 120) {
-      throw new Error("A store needs a name under 120 characters.");
-    }
-    if (input.city !== undefined && (typeof input.city !== "string" || input.city.length > 120)) {
-      throw new Error("City is too long.");
-    }
-    if (input.phone !== undefined && (typeof input.phone !== "string" || input.phone.length > 40)) {
-      throw new Error("Phone number is too long.");
-    }
-    return input;
-  })
+  .validator(
+    (input: { id?: string; name: string; city?: string; phone?: string; regionId?: string | null }) => {
+      if (!input || typeof input.name !== "string" || !input.name.trim() || input.name.length > 120) {
+        throw new Error("A store needs a name under 120 characters.");
+      }
+      if (input.city !== undefined && (typeof input.city !== "string" || input.city.length > 120)) {
+        throw new Error("City is too long.");
+      }
+      if (input.phone !== undefined && (typeof input.phone !== "string" || input.phone.length > 40)) {
+        throw new Error("Phone number is too long.");
+      }
+      if (input.regionId != null && (typeof input.regionId !== "string" || input.regionId.length > 80)) {
+        throw new Error("Unknown region.");
+      }
+      return input;
+    },
+  )
   .middleware([authMiddleware])
   .handler(async ({ context, data }) => {
     await assertEditor(context.userId);
@@ -212,12 +260,16 @@ export const saveStore = createServerFn({ method: "POST" })
     const sort = existing[0]?.sort_order ?? order[0]?.n ?? 0;
     await sql.transaction(async (tx) => {
       await tx`
-        insert into stores (id, name, city, phone, sort_order)
-        values (${id}, ${name}, ${data.city?.trim() || null}, ${data.phone?.trim() || null}, ${sort})
+        insert into stores (id, name, city, phone, sort_order, region_id)
+        values (
+          ${id}, ${name}, ${data.city?.trim() || null}, ${data.phone?.trim() || null},
+          ${sort}, ${data.regionId ?? null}
+        )
         on conflict (id) do update set
           name = excluded.name,
           city = excluded.city,
-          phone = excluded.phone
+          phone = excluded.phone,
+          region_id = excluded.region_id
       `;
       if (existing[0] && existing[0].name !== name) {
         await tx`
@@ -259,6 +311,7 @@ export const placeDirectoryPerson = createServerFn({ method: "POST" })
       title?: string;
       phone?: string;
       role?: AccessRole;
+      regionId?: string | null;
     }) => {
       if (!input || typeof input.userId !== "string" || !input.userId.trim()) {
         throw new Error("Choose a person.");
@@ -271,6 +324,9 @@ export const placeDirectoryPerson = createServerFn({ method: "POST" })
       }
       if (input.phone !== undefined && (typeof input.phone !== "string" || input.phone.length > 40)) {
         throw new Error("Phone number is too long.");
+      }
+      if (input.regionId != null && (typeof input.regionId !== "string" || input.regionId.length > 80)) {
+        throw new Error("Unknown region.");
       }
       if (input.role !== undefined && !isAccessRole(input.role)) throw new Error("Unknown position.");
       return input;
@@ -299,7 +355,7 @@ export const placeDirectoryPerson = createServerFn({ method: "POST" })
     await sql`
       insert into user_profiles (
         user_id, access_role, store, store_id, title, phone,
-        account_status, assigned_by, assigned_at, created_at
+        account_status, assigned_by, assigned_at, created_at, region_id
       )
       values (
         ${data.userId},
@@ -311,7 +367,8 @@ export const placeDirectoryPerson = createServerFn({ method: "POST" })
         ${status},
         ${context.userId},
         now(),
-        now()
+        now(),
+        ${data.regionId ?? null}
       )
       on conflict (user_id) do update set
         access_role = excluded.access_role,
@@ -321,7 +378,8 @@ export const placeDirectoryPerson = createServerFn({ method: "POST" })
         phone = coalesce(excluded.phone, user_profiles.phone),
         account_status = excluded.account_status,
         assigned_by = excluded.assigned_by,
-        assigned_at = now()
+        assigned_at = now(),
+        region_id = excluded.region_id
     `;
     return buildSnapshot(context.userId);
   });

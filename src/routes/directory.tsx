@@ -15,6 +15,7 @@ import {
   type StoreCard,
 } from "@/lib/directory";
 import type { AccessRole } from "@/lib/access";
+import { deleteRegion, saveRegion, type Region } from "@/lib/regions";
 import { Initials } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
 import { pageHead } from "@/lib/page-title";
@@ -104,6 +105,18 @@ function DirectoryDesk() {
     .filter((s) => !s.hidden);
   const unassigned = snap.unassigned.filter(match);
 
+  // Split the floor into regions (East, West, …) plus an Unassigned bucket.
+  // Named regions always show for editors so stores can be moved into them;
+  // the Unassigned bucket only appears when it actually holds stores.
+  const regionGroups = [
+    ...snap.regions.map((r) => ({
+      id: r.id as string | null,
+      name: r.name,
+      stores: stores.filter((s) => s.regionId === r.id),
+    })),
+    { id: null as string | null, name: "Unassigned", stores: stores.filter((s) => !s.regionId) },
+  ].filter((g) => g.stores.length > 0 || (g.id !== null && snap.canEdit));
+
   return (
     <div className="mx-auto max-w-6xl overflow-x-hidden px-5 py-10 sm:px-8 sm:py-14">
       <p className="kicker">
@@ -152,21 +165,36 @@ function DirectoryDesk() {
       </section>
 
       <section className="mt-16">
-        <SectionHead
-          kicker="The floor"
-          title="Stores"
-          count={`${stores.length}`}
-        />
-        {snap.canEdit && <AddStoreForm onChange={setSnap} />}
-        <div className="mt-6 space-y-6">
-          {stores.map((store) => (
-            <StoreBlock key={store.id} store={store} snap={snap} onChange={setSnap} />
+        <SectionHead kicker="The floor" title="Stores" count={`${stores.length}`} />
+        {snap.canEdit && (
+          <RegionManager regions={snap.regions} reload={() => setReloadKey((k) => k + 1)} />
+        )}
+        {snap.canEdit && <AddStoreForm regions={snap.regions} onChange={setSnap} />}
+        <div className="mt-8 space-y-12">
+          {regionGroups.map((group) => (
+            <div key={group.id ?? "unassigned"}>
+              <div className="flex items-end justify-between gap-3 border-b border-line pb-2">
+                <h3 className="font-display text-2xl leading-none">{group.name}</h3>
+                <p className="text-xs uppercase tracking-[0.14em] text-muted">
+                  {group.stores.length} {group.stores.length === 1 ? "store" : "stores"}
+                </p>
+              </div>
+              {group.stores.length ? (
+                <div className="mt-5 space-y-6">
+                  {group.stores.map((store) => (
+                    <StoreBlock key={store.id} store={store} snap={snap} onChange={setSnap} />
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-3 text-sm text-muted">No stores in this region yet.</p>
+              )}
+            </div>
           ))}
         </div>
         {!stores.length && (
           <p className="mt-4 text-sm text-muted">
             {snap.canEdit
-              ? "Add the first store above. Then place managers and salespeople into it."
+              ? "Add stores above, create regions, then assign each store to a region."
               : "No stores listed yet."}
           </p>
         )}
@@ -215,21 +243,154 @@ function SectionHead({
   );
 }
 
-function AddStoreForm({ onChange }: { onChange: (snap: DirectorySnapshot) => void }) {
+function RegionManager({ regions, reload }: { regions: Region[]; reload: () => void }) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+
+  async function add() {
+    if (!name.trim()) return;
+    setBusy(true);
+    try {
+      await saveRegion({ data: { name } });
+      setName("");
+      reload();
+      toast.success("Region added");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not save region");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function rename(id: string) {
+    if (!editName.trim()) return;
+    try {
+      await saveRegion({ data: { id, name: editName } });
+      setEditId(null);
+      reload();
+      toast.success("Region renamed");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not rename region");
+    }
+  }
+
+  async function remove(id: string, label: string) {
+    if (!confirm(`Delete the ${label} region? Its stores become Unassigned.`)) return;
+    try {
+      await deleteRegion({ data: id });
+      reload();
+      toast.success("Region deleted");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not delete region");
+    }
+  }
+
+  if (!open) {
+    return (
+      <Button type="button" variant="ghost" className="mt-4" onClick={() => setOpen(true)}>
+        Manage regions
+      </Button>
+    );
+  }
+
+  return (
+    <div className="mt-4 rounded-lg border border-line bg-surface p-4">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs font-medium uppercase tracking-[0.16em] text-brass">Regions</p>
+        <button
+          type="button"
+          className="text-xs uppercase tracking-[0.12em] text-muted hover:text-navy"
+          onClick={() => setOpen(false)}
+        >
+          Close
+        </button>
+      </div>
+      <ul className="mt-3 space-y-2">
+        {regions.map((r) => (
+          <li key={r.id} className="flex items-center gap-2">
+            {editId === r.id ? (
+              <>
+                <input
+                  className={fieldClass}
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                />
+                <Button type="button" onClick={() => void rename(r.id)}>
+                  Save
+                </Button>
+                <Button type="button" variant="ghost" onClick={() => setEditId(null)}>
+                  Cancel
+                </Button>
+              </>
+            ) : (
+              <>
+                <span className="flex-1 truncate text-sm font-medium">{r.name}</span>
+                <button
+                  type="button"
+                  className="text-xs uppercase tracking-[0.12em] text-muted hover:text-navy"
+                  onClick={() => {
+                    setEditId(r.id);
+                    setEditName(r.name);
+                  }}
+                >
+                  Rename
+                </button>
+                <button
+                  type="button"
+                  className="text-xs uppercase tracking-[0.12em] text-muted hover:text-navy"
+                  onClick={() => void remove(r.id, r.name)}
+                >
+                  Delete
+                </button>
+              </>
+            )}
+          </li>
+        ))}
+        {regions.length === 0 && (
+          <li className="text-sm text-muted">No regions yet — add East and West below.</li>
+        )}
+      </ul>
+      <div className="mt-3 flex gap-2">
+        <input
+          className={fieldClass}
+          placeholder="New region (e.g. East)"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+        <Button type="button" disabled={busy} onClick={() => void add()}>
+          {busy ? "Adding…" : "Add"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+function AddStoreForm({
+  regions,
+  onChange,
+}: {
+  regions: Region[];
+  onChange: (snap: DirectorySnapshot) => void;
+}) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [city, setCity] = useState("");
   const [phone, setPhone] = useState("");
+  const [regionId, setRegionId] = useState("");
   const [busy, setBusy] = useState(false);
 
   async function submit() {
     if (!name.trim()) return;
     setBusy(true);
     try {
-      onChange(await saveStore({ data: { name, city, phone } }));
+      onChange(await saveStore({ data: { name, city, phone, regionId: regionId || null } }));
       setName("");
       setCity("");
       setPhone("");
+      setRegionId("");
       setOpen(false);
       toast.success("Store added");
     } catch (err) {
@@ -248,7 +409,7 @@ function AddStoreForm({ onChange }: { onChange: (snap: DirectorySnapshot) => voi
   }
 
   return (
-    <div className="mt-4 grid gap-3 rounded-lg border border-line bg-surface p-4 sm:grid-cols-[1.2fr_1fr_1fr_auto]">
+    <div className="mt-4 grid gap-3 rounded-lg border border-line bg-surface p-4 sm:grid-cols-[1.2fr_1fr_1fr_1fr_auto]">
       <input
         className={fieldClass}
         placeholder="Store name"
@@ -267,6 +428,18 @@ function AddStoreForm({ onChange }: { onChange: (snap: DirectorySnapshot) => voi
         value={phone}
         onChange={(e) => setPhone(e.target.value)}
       />
+      <select
+        className={fieldClass}
+        value={regionId}
+        onChange={(e) => setRegionId(e.target.value)}
+      >
+        <option value="">No region</option>
+        {regions.map((r) => (
+          <option key={r.id} value={r.id}>
+            {r.name}
+          </option>
+        ))}
+      </select>
       <div className="flex gap-2">
         <Button type="button" disabled={busy} onClick={() => void submit()}>
           {busy ? "Saving…" : "Save"}
@@ -295,22 +468,32 @@ function StoreBlock({
   const [name, setName] = useState(store.name);
   const [city, setCity] = useState(store.city);
   const [phone, setPhone] = useState(store.phone);
+  const [regionId, setRegionId] = useState(store.regionId ?? "");
 
   useEffect(() => {
     setName(store.name);
     setCity(store.city);
     setPhone(store.phone);
-  }, [store.name, store.city, store.phone]);
+    setRegionId(store.regionId ?? "");
+  }, [store.name, store.city, store.phone, store.regionId]);
 
   return (
     <article className="min-w-0 overflow-hidden rounded-lg border border-line bg-surface shadow-card">
       <header className="flex flex-wrap items-start justify-between gap-3 border-b border-line px-5 py-4">
         <div className="min-w-0">
           {editing ? (
-            <div className="grid gap-2 sm:grid-cols-3">
+            <div className="grid gap-2 sm:grid-cols-4">
               <input className={fieldClass} value={name} onChange={(e) => setName(e.target.value)} />
               <input className={fieldClass} value={city} onChange={(e) => setCity(e.target.value)} placeholder="City" />
               <input className={fieldClass} value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone" />
+              <select className={fieldClass} value={regionId} onChange={(e) => setRegionId(e.target.value)}>
+                <option value="">No region</option>
+                {snap.regions.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name}
+                  </option>
+                ))}
+              </select>
             </div>
           ) : (
             <>
@@ -329,7 +512,7 @@ function StoreBlock({
                   type="button"
                   variant="outline"
                   onClick={() => {
-                    void saveStore({ data: { id: store.id, name, city, phone } })
+                    void saveStore({ data: { id: store.id, name, city, phone, regionId: regionId || null } })
                       .then((next) => {
                         onChange(next);
                         setEditing(false);
@@ -438,6 +621,7 @@ function PersonCard({
   const [role, setRole] = useState<AccessRole>(
     person.role === "managers" ? "managers" : "specialist",
   );
+  const [region, setRegion] = useState(person.regionId ?? "");
   const displayTitle = person.title || person.roleLabel;
 
   useEffect(() => {
@@ -445,7 +629,8 @@ function PersonCard({
     setTitle(person.title);
     setPhone(person.phone);
     setRole(person.role === "managers" ? "managers" : "specialist");
-  }, [person.id, person.storeId, person.title, person.phone, person.role]);
+    setRegion(person.regionId ?? "");
+  }, [person.id, person.storeId, person.title, person.phone, person.role, person.regionId]);
 
   return (
     <div className={cn("min-w-0", compact ? "" : "rounded-md border border-line bg-paper p-4")}>
@@ -493,6 +678,18 @@ function PersonCard({
                 <option value="managers">Manager</option>
                 <option value="specialist">Salesperson</option>
               </select>
+              <select
+                className={fieldClass}
+                value={region}
+                onChange={(e) => setRegion(e.target.value)}
+              >
+                <option value="">No region (scopes DMs & Professors)</option>
+                {snap.regions.map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.name}
+                  </option>
+                ))}
+              </select>
               <input
                 className={fieldClass}
                 placeholder="Title"
@@ -515,6 +712,7 @@ function PersonCard({
                       storeId: storeId || null,
                       title,
                       phone,
+                      regionId: region || null,
                       role:
                         person.role === "pending" ||
                         person.role === "managers" ||
