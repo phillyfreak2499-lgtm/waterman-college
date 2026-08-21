@@ -64,6 +64,35 @@ export const COLOR_LABEL: Record<MetricColor, string> = {
 /** Severity for sorting a coaching list (red = most urgent). */
 export const COLOR_SEVERITY: Record<MetricColor, number> = { red: 3, orange: 2, blue: 1, green: 0 };
 
+/** Sort weight so a single red outranks any number of oranges. */
+const SORT_WEIGHT: Record<MetricColor, number> = { red: 1000, orange: 100, blue: 1, green: 0 };
+
+/** Direction of a metric vs its prior period. */
+export function metricTrend(cur: number | null, prior: number | null): "up" | "down" | "flat" | null {
+  if (cur == null || prior == null) return null;
+  if (cur > prior) return "up";
+  if (cur < prior) return "down";
+  return "flat";
+}
+
+/** True when a metric slipped from a good band (green/blue) to a weak one (orange/red). */
+export function droppedBand(cur: MetricColor | null, prior: MetricColor | null): boolean {
+  if (!cur || !prior) return false;
+  const good = (c: MetricColor) => c === "green" || c === "blue";
+  const weak = (c: MetricColor) => c === "orange" || c === "red";
+  return good(prior) && weak(cur);
+}
+
+/** Worst-first weight across all six metrics (higher = needs attention). */
+export function rowSeverity(values: MetricValues): number {
+  let s = 0;
+  for (const m of METRICS) {
+    const c = metricColor(m.key, values[m.key]);
+    if (c) s += SORT_WEIGHT[c];
+  }
+  return s;
+}
+
 /** Stylesheet class for a color band pill (see styles.css). */
 export function bandClass(color: MetricColor | null | undefined): string {
   return color ? `band-${color}` : "";
@@ -358,4 +387,177 @@ export const saveStoreMetrics = createServerFn({ method: "POST" })
     await assertManager(context.userId);
     await writeOne("store", data.storeId, data.period, data.values, null, context.userId);
     return { ok: true };
+  });
+
+// --- manager board (Phase 2/3) ---
+
+export type BoardPerson = {
+  userId: string;
+  name: string;
+  email: string | null;
+  role: string | null;
+  storeId: string | null;
+  storeName: string | null;
+  regionId: string | null;
+  regionName: string | null;
+  values: MetricValues;
+  prior: MetricValues | null;
+  note: string | null;
+  updatedAt: string | null;
+};
+
+export type MetricsBoard = {
+  period: MetricPeriod;
+  prior: MetricPeriod;
+  people: BoardPerson[];
+  stores: { id: string; name: string; regionId: string | null }[];
+  regions: { id: string; name: string }[];
+};
+
+export type TrendPoint = { year: number; period: number; values: MetricValues };
+
+type BoardRow = {
+  user_id: string;
+  name: string | null;
+  email: string | null;
+  access_role: string | null;
+  store_id: string | null;
+  store_name: string | null;
+  region_id: string | null;
+  region_name: string | null;
+  c_id: string | null;
+  c_nsnu: unknown;
+  c_conversion: unknown;
+  c_demo_rate: unknown;
+  c_demo_close: unknown;
+  c_arch_supports: unknown;
+  c_demo_ticket: unknown;
+  c_note: string | null;
+  c_updated: unknown;
+  p_id: string | null;
+  p_nsnu: unknown;
+  p_conversion: unknown;
+  p_demo_rate: unknown;
+  p_demo_close: unknown;
+  p_arch_supports: unknown;
+  p_demo_ticket: unknown;
+};
+
+/** Everyone's current + prior metrics for a period, plus store/region lists. Managers+ only. */
+export const loadMetricsBoard = createServerFn({ method: "POST" })
+  .validator((input: { year?: number; period?: number } | undefined) => cleanPeriod(input))
+  .middleware([authMiddleware])
+  .handler(async ({ context, data: period }): Promise<MetricsBoard> => {
+    await assertManager(context.userId);
+    const prior = priorPeriod(period);
+    const sql = await getSql();
+    const rows = await sql<BoardRow>`
+      select
+        u.id as user_id, u.name, u.email,
+        p.access_role, p.store_id,
+        coalesce(s.name, p.store) as store_name,
+        s.region_id, r.name as region_name,
+        cur.id as c_id, cur.nsnu as c_nsnu, cur.conversion as c_conversion, cur.demo_rate as c_demo_rate,
+        cur.demo_close as c_demo_close, cur.arch_supports as c_arch_supports, cur.demo_ticket as c_demo_ticket,
+        cur.note as c_note, cur.updated_at as c_updated,
+        pri.id as p_id, pri.nsnu as p_nsnu, pri.conversion as p_conversion, pri.demo_rate as p_demo_rate,
+        pri.demo_close as p_demo_close, pri.arch_supports as p_arch_supports, pri.demo_ticket as p_demo_ticket
+      from "user" u
+      join user_profiles p on p.user_id = u.id
+      left join stores s on s.id = p.store_id
+      left join regions r on r.id = s.region_id
+      left join performance_metrics cur on cur.subject_type = 'person' and cur.subject_id = u.id
+        and cur.fiscal_year = ${period.year} and cur.period_number = ${period.period}
+      left join performance_metrics pri on pri.subject_type = 'person' and pri.subject_id = u.id
+        and pri.fiscal_year = ${prior.year} and pri.period_number = ${prior.period}
+      where p.store_id is not null
+      order by coalesce(s.sort_order, 999) asc, u.name asc
+      limit 1000
+    `;
+    const stores = await sql<{ id: string; name: string; region_id: string | null }>`
+      select id, name, region_id from stores order by sort_order asc, name asc
+    `;
+    const regions = await sql<{ id: string; name: string }>`
+      select id, name from regions order by sort_order asc, name asc
+    `;
+    const people: BoardPerson[] = rows.map((row) => ({
+      userId: row.user_id,
+      name: row.name ?? "—",
+      email: row.email ?? null,
+      role: row.access_role ?? null,
+      storeId: row.store_id ?? null,
+      storeName: row.store_name ?? null,
+      regionId: row.region_id ?? null,
+      regionName: row.region_name ?? null,
+      values: {
+        nsnu: num(row.c_nsnu),
+        conversion: num(row.c_conversion),
+        demoRate: num(row.c_demo_rate),
+        demoClose: num(row.c_demo_close),
+        archSupports: num(row.c_arch_supports),
+        demoTicket: num(row.c_demo_ticket),
+      },
+      prior:
+        row.p_id == null
+          ? null
+          : {
+              nsnu: num(row.p_nsnu),
+              conversion: num(row.p_conversion),
+              demoRate: num(row.p_demo_rate),
+              demoClose: num(row.p_demo_close),
+              archSupports: num(row.p_arch_supports),
+              demoTicket: num(row.p_demo_ticket),
+            },
+      note: row.c_note ?? null,
+      updatedAt:
+        row.c_updated instanceof Date
+          ? row.c_updated.toISOString()
+          : row.c_updated
+            ? String(row.c_updated)
+            : null,
+    }));
+    return {
+      period,
+      prior,
+      people,
+      stores: stores.map((s) => ({ id: s.id, name: s.name, regionId: s.region_id ?? null })),
+      regions: regions.map((r) => ({ id: r.id, name: r.name })),
+    };
+  });
+
+/** A person's full metric history, oldest first, for sparklines. Managers+ only. */
+export const getPersonTrend = createServerFn({ method: "POST" })
+  .validator((input: { userId: string }) => {
+    if (!input || typeof input.userId !== "string" || !input.userId.trim()) {
+      throw new Error("Choose a person.");
+    }
+    return { userId: input.userId };
+  })
+  .middleware([authMiddleware])
+  .handler(async ({ context, data }): Promise<{ points: TrendPoint[] }> => {
+    await assertManager(context.userId);
+    const sql = await getSql();
+    const rows = await sql<
+      MetricRow & { fiscal_year: unknown; period_number: unknown }
+    >`
+      select fiscal_year, period_number, nsnu, conversion, demo_rate, demo_close,
+             arch_supports, demo_ticket, note, updated_at
+      from performance_metrics
+      where subject_type = 'person' and subject_id = ${data.userId}
+      order by fiscal_year asc, period_number asc
+      limit 60
+    `;
+    const points: TrendPoint[] = rows.map((r) => ({
+      year: Number(r.fiscal_year),
+      period: Number(r.period_number),
+      values: {
+        nsnu: num(r.nsnu),
+        conversion: num(r.conversion),
+        demoRate: num(r.demo_rate),
+        demoClose: num(r.demo_close),
+        archSupports: num(r.arch_supports),
+        demoTicket: num(r.demo_ticket),
+      },
+    }));
+    return { points };
   });

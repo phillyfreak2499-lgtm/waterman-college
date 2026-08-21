@@ -20,6 +20,7 @@ import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as InstallRouteImport } from './routes/install'
 import { Route as LockerRouteImport } from './routes/locker'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as MetricsRouteImport } from './routes/metrics'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as QuadRouteImport } from './routes/quad'
 import { Route as RegisterRouteImport } from './routes/register'
@@ -91,6 +92,11 @@ const LockerRoute = LockerRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MetricsRoute = MetricsRouteImport.update({
+  id: '/metrics',
+  path: '/metrics',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NotificationsRoute = NotificationsRouteImport.update({
@@ -192,6 +198,7 @@ export interface FileRoutesByFullPath {
   '/install': typeof InstallRoute
   '/locker': typeof LockerRoute
   '/login': typeof LoginRoute
+  '/metrics': typeof MetricsRoute
   '/notifications': typeof NotificationsRoute
   '/quad': typeof QuadRoute
   '/register': typeof RegisterRoute
@@ -222,6 +229,7 @@ export interface FileRoutesByTo {
   '/install': typeof InstallRoute
   '/locker': typeof LockerRoute
   '/login': typeof LoginRoute
+  '/metrics': typeof MetricsRoute
   '/notifications': typeof NotificationsRoute
   '/quad': typeof QuadRoute
   '/register': typeof RegisterRoute
@@ -253,6 +261,7 @@ export interface FileRoutesById {
   '/install': typeof InstallRoute
   '/locker': typeof LockerRoute
   '/login': typeof LoginRoute
+  '/metrics': typeof MetricsRoute
   '/notifications': typeof NotificationsRoute
   '/quad': typeof QuadRoute
   '/register': typeof RegisterRoute
@@ -285,6 +294,7 @@ export interface FileRouteTypes {
     | '/install'
     | '/locker'
     | '/login'
+    | '/metrics'
     | '/notifications'
     | '/quad'
     | '/register'
@@ -315,6 +325,7 @@ export interface FileRouteTypes {
     | '/install'
     | '/locker'
     | '/login'
+    | '/metrics'
     | '/notifications'
     | '/quad'
     | '/register'
@@ -345,6 +356,7 @@ export interface FileRouteTypes {
     | '/install'
     | '/locker'
     | '/login'
+    | '/metrics'
     | '/notifications'
     | '/quad'
     | '/register'
@@ -376,6 +388,7 @@ export interface RootRouteChildren {
   InstallRoute: typeof InstallRoute
   LockerRoute: typeof LockerRoute
   LoginRoute: typeof LoginRoute
+  MetricsRoute: typeof MetricsRoute
   NotificationsRoute: typeof NotificationsRoute
   QuadRoute: typeof QuadRoute
   RegisterRoute: typeof RegisterRoute
@@ -465,6 +478,13 @@ declare module '@tanstack/react-router' {
       path: '/locker'
       fullPath: '/locker'
       preLoaderRoute: typeof LockerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/metrics': {
+      id: '/metrics'
+      path: '/metrics'
+      fullPath: '/metrics'
+      preLoaderRoute: typeof MetricsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -608,6 +628,7 @@ const rootRouteChildren: RootRouteChildren = {
   InstallRoute: InstallRoute,
   LockerRoute: LockerRoute,
   LoginRoute: LoginRoute,
+  MetricsRoute: MetricsRoute,
   NotificationsRoute: NotificationsRoute,
   QuadRoute: QuadRoute,
   RegisterRoute: RegisterRoute,

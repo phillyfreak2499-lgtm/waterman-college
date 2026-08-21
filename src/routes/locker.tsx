@@ -14,9 +14,11 @@ import {
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { AuthGate } from "@/components/auth-gate";
+import { useAccessRole } from "@/components/access-provider";
 import { MetricsPanel } from "@/components/metrics-panel";
 import { ProfilePhoto } from "@/components/profile-photo";
 import { SiteShell } from "@/components/site-shell";
+import { isLeader } from "@/lib/access";
 import { Button } from "@/components/ui/button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import {
@@ -110,6 +112,7 @@ function LockerPage() {
 
 function LockerDesk() {
   const { user } = useCurrentUserState();
+  const leader = isLeader(useAccessRole());
   const [assignments, setAssignments] = useState<MyAssignment[]>([]);
   const [favorites, setFavorites] = useState<LockerFavorite[]>([]);
   const [notes, setNotes] = useState<LockerNote[]>([]);
@@ -559,6 +562,7 @@ function LockerDesk() {
             <p className="kicker">Quick actions</p>
             <span className="rule-brass mt-3" />
             <div className="mt-5 flex flex-wrap gap-2">
+              {leader && <QuickLink to="/metrics" label="Team Metrics" />}
               <QuickLink to="/training" label="Training Hall" />
               <QuickLink to="/floor" label="Floor Mode" />
               <QuickLink to="/notifications" label="Inbox" />
