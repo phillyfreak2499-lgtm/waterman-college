@@ -6,6 +6,7 @@ import {
   Minus,
   Pin,
   Plus,
+  Sparkles,
   Star,
   Trash2,
   TrendingDown,
@@ -50,6 +51,7 @@ import {
   type MetricKey,
   type MetricValues,
 } from "@/lib/metrics";
+import { buildBrightNote, todayLocal } from "@/lib/bright-note";
 import { pageHead } from "@/lib/page-title";
 import { cn, errorMessage } from "@/lib/utils";
 
@@ -240,6 +242,34 @@ function LockerDesk() {
     return { weakest: weak, metricsEntered: entered };
   }, [myMetrics]);
 
+  // Today's locker note: a shout-out from real recent activity when there is
+  // one, a warm general message otherwise. Stable for the day, new tomorrow.
+  const brightNote = useMemo(() => {
+    if (loading) return null;
+    return buildBrightNote({
+      firstName,
+      seedKey: user?.id || firstName,
+      today: todayLocal(),
+      streak,
+      assignments,
+      thisMonthAvg,
+      priorMonthAvg,
+      allGreenMetrics: metricsEntered && !weakest,
+      gameScores,
+    });
+  }, [
+    loading,
+    firstName,
+    user?.id,
+    streak,
+    assignments,
+    thisMonthAvg,
+    priorMonthAvg,
+    metricsEntered,
+    weakest,
+    gameScores,
+  ]);
+
   return (
     <div className="mx-auto max-w-3xl px-5 py-10 sm:px-8 sm:py-14">
       <p className="kicker">Your desk</p>
@@ -262,6 +292,22 @@ function LockerDesk() {
         </div>
       ) : (
         <div className="mt-10 space-y-10">
+          {/* Daily locker note — something good to start the day on */}
+          {brightNote && (
+            <section
+              aria-label="A note for you"
+              className="rounded-lg border border-brass/30 bg-brass-soft/40 p-5 shadow-card sm:p-6"
+            >
+              <p className="kicker flex items-center gap-1.5">
+                <Sparkles className="size-3.5 text-brass" aria-hidden="true" />
+                A note for you
+              </p>
+              <p className="mt-3 font-display text-xl leading-snug text-ink sm:text-2xl">
+                {brightNote.text}
+              </p>
+            </section>
+          )}
+
           {/* Today at a glance */}
           <TodaySummary
             firstName={firstName}
