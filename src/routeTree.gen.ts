@@ -80,6 +80,11 @@ const HowItWorksRoute = HowItWorksRouteImport.update({
   path: '/how-it-works',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HuddleRoute = HuddleRouteImport.update({
+  id: '/huddle',
+  path: '/huddle',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InstallRoute = InstallRouteImport.update({
   id: '/install',
   path: '/install',
@@ -98,11 +103,6 @@ const LoginRoute = LoginRouteImport.update({
 const MetricsRoute = MetricsRouteImport.update({
   id: '/metrics',
   path: '/metrics',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HuddleRoute = HuddleRouteImport.update({
-  id: '/huddle',
-  path: '/huddle',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NotificationsRoute = NotificationsRouteImport.update({
@@ -479,6 +479,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HowItWorksRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/huddle': {
+      id: '/huddle'
+      path: '/huddle'
+      fullPath: '/huddle'
+      preLoaderRoute: typeof HuddleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/install': {
       id: '/install'
       path: '/install'
@@ -493,25 +500,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LockerRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/metrics': {
-      id: '/metrics'
-      path: '/metrics'
-      fullPath: '/metrics'
-      preLoaderRoute: typeof MetricsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/huddle': {
-      id: '/huddle'
-      path: '/huddle'
-      fullPath: '/huddle'
-      preLoaderRoute: typeof HuddleRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/metrics': {
+      id: '/metrics'
+      path: '/metrics'
+      fullPath: '/metrics'
+      preLoaderRoute: typeof MetricsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notifications': {
