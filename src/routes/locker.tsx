@@ -52,6 +52,7 @@ import {
   type MetricValues,
 } from "@/lib/metrics";
 import { buildBrightNote, todayLocal } from "@/lib/bright-note";
+import { getLockerDaily, type LockerDaily } from "@/lib/locker-daily";
 import { pageHead } from "@/lib/page-title";
 import { cn, errorMessage } from "@/lib/utils";
 
@@ -134,6 +135,7 @@ function LockerDesk() {
   const [notes, setNotes] = useState<LockerNote[]>([]);
   const [gameScores, setGameScores] = useState<GameScore[]>([]);
   const [streak, setStreak] = useState<Streak | null>(null);
+  const [daily, setDaily] = useState<LockerDaily | null>(null);
   const [myMetrics, setMyMetrics] = useState<MetricValues | null>(null);
   const [phaseAvgs, setPhaseAvgs] = useState<PhaseAverages | null>(null);
   const [suggestions, setSuggestions] = useState<SuggestedLesson[]>([])
@@ -146,7 +148,7 @@ function LockerDesk() {
 
   const reload = useCallback(async () => {
     try {
-      const [a, f, n, scores, games, streakData, myM] = await Promise.all([
+      const [a, f, n, scores, games, streakData, myM, dailyData] = await Promise.all([
         listMyAssignments(),
         listFavorites(),
         listLockerNotes(),
@@ -154,12 +156,14 @@ function LockerDesk() {
         listMyGameScores().catch(() => [] as GameScore[]),
         getMyStreak().catch(() => null),
         getMyMetrics({ data: {} }).catch(() => null),
+        getLockerDaily().catch(() => null),
       ]);
       setAssignments(a);
       setFavorites(f);
       setNotes(n);
       setGameScores(games);
       setStreak(streakData);
+      setDaily(dailyData);
       setMyMetrics(myM?.record.values ?? null);
       setPhaseAvgs(scores?.averages ?? null);
       setSuggestions(scores?.suggestions ?? []);
@@ -256,6 +260,11 @@ function LockerDesk() {
       priorMonthAvg,
       allGreenMetrics: metricsEntered && !weakest,
       gameScores,
+      birthdayToday: daily?.birthdayToday ?? false,
+      anniversaryYears: daily?.anniversaryYears ?? null,
+      isNewHire: daily?.isNewHire ?? false,
+      peerShoutout: daily?.shoutout ?? null,
+      teamEvents: daily?.teamEvents ?? [],
     });
   }, [
     loading,
@@ -268,6 +277,7 @@ function LockerDesk() {
     metricsEntered,
     weakest,
     gameScores,
+    daily,
   ]);
 
   return (
@@ -300,7 +310,7 @@ function LockerDesk() {
             >
               <p className="kicker flex items-center gap-1.5">
                 <Sparkles className="size-3.5 text-brass" aria-hidden="true" />
-                A note for you
+                {brightNote.kind === "peer" ? "A shout-out for you" : "A note for you"}
               </p>
               <p className="mt-3 font-display text-xl leading-snug text-ink sm:text-2xl">
                 {brightNote.text}

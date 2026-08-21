@@ -15,6 +15,7 @@ import {
   type StoreCard,
 } from "@/lib/directory";
 import type { AccessRole } from "@/lib/access";
+import { sendShoutout } from "@/lib/locker-daily";
 import { deleteRegion, saveRegion, type Region } from "@/lib/regions";
 import { Initials } from "@/components/ui/field";
 import { cn } from "@/lib/utils";
@@ -632,24 +633,58 @@ function PersonCard({
   compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const { access } = useAccess();
   const [storeId, setStoreId] = useState(person.storeId ?? "");
   const [title, setTitle] = useState(person.title);
   const [phone, setPhone] = useState(person.phone);
   const [daysOff, setDaysOff] = useState(person.daysOff);
+  const [birthday, setBirthday] = useState(person.birthday);
+  const [startDate, setStartDate] = useState(person.startDate);
   const [role, setRole] = useState<AccessRole>(
     person.role === "managers" || person.role === "mit" ? person.role : "specialist",
   );
   const [region, setRegion] = useState(person.regionId ?? "");
+  const [shoutOpen, setShoutOpen] = useState(false);
+  const [shoutDraft, setShoutDraft] = useState("");
+  const [shoutBusy, setShoutBusy] = useState(false);
   const displayTitle = person.title || person.roleLabel;
+
+  async function handleSendShoutout() {
+    const body = shoutDraft.trim();
+    if (!body || shoutBusy) return;
+    setShoutBusy(true);
+    try {
+      await sendShoutout({ data: { toUserId: person.id, body } });
+      setShoutDraft("");
+      setShoutOpen(false);
+      toast.success(`Sent — it'll be waiting in ${person.name.split(" ")[0]}'s locker.`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not send the shout-out");
+    } finally {
+      setShoutBusy(false);
+    }
+  }
 
   useEffect(() => {
     setStoreId(person.storeId ?? "");
     setTitle(person.title);
     setPhone(person.phone);
     setDaysOff(person.daysOff);
+    setBirthday(person.birthday);
+    setStartDate(person.startDate);
     setRole(person.role === "managers" || person.role === "mit" ? person.role : "specialist");
     setRegion(person.regionId ?? "");
-  }, [person.id, person.storeId, person.title, person.phone, person.daysOff, person.role, person.regionId]);
+  }, [
+    person.id,
+    person.storeId,
+    person.title,
+    person.phone,
+    person.daysOff,
+    person.birthday,
+    person.startDate,
+    person.role,
+    person.regionId,
+  ]);
 
   return (
     <div className={cn("min-w-0", compact ? "" : "rounded-md border border-line bg-paper p-4")}>
@@ -683,15 +718,50 @@ function PersonCard({
           )}
         </div>
       </div>
-      {snap.canEdit && (
-        <>
+      <div className="mt-2 flex gap-3">
+        {access.userId && access.userId !== person.id && (
           <button
             type="button"
-            className="mt-2 text-xs uppercase tracking-[0.12em] text-muted hover:text-navy"
+            className="text-xs uppercase tracking-[0.12em] text-muted hover:text-brass"
+            onClick={() => setShoutOpen((v) => !v)}
+          >
+            {shoutOpen ? "Never mind" : "Shout-out"}
+          </button>
+        )}
+        {snap.canEdit && (
+          <button
+            type="button"
+            className="text-xs uppercase tracking-[0.12em] text-muted hover:text-navy"
             onClick={() => setOpen((v) => !v)}
           >
             {open ? "Close" : "Place"}
           </button>
+        )}
+      </div>
+      {shoutOpen && (
+        <div className="mt-3 grid gap-2">
+          <input
+            className={fieldClass}
+            placeholder="One sentence — make their day."
+            maxLength={200}
+            value={shoutDraft}
+            onChange={(e) => setShoutDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") void handleSendShoutout();
+            }}
+          />
+          <Button
+            type="button"
+            variant="outline"
+            disabled={shoutBusy || !shoutDraft.trim()}
+            onClick={() => void handleSendShoutout()}
+          >
+            {shoutBusy ? "Sending…" : "Send to their locker"}
+          </Button>
+        </div>
+      )}
+      {snap.canEdit && (
+        <>
           {open && (
             <div className="mt-3 grid gap-2">
               <select
@@ -746,6 +816,22 @@ function PersonCard({
                 value={daysOff}
                 onChange={(e) => setDaysOff(e.target.value)}
               />
+              <input
+                className={fieldClass}
+                placeholder="Birthday (MM-DD, e.g. 04-18)"
+                maxLength={5}
+                value={birthday}
+                onChange={(e) => setBirthday(e.target.value)}
+              />
+              <label className="grid gap-1">
+                <span className="text-xs uppercase tracking-[0.12em] text-muted">Start date</span>
+                <input
+                  type="date"
+                  className={fieldClass}
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </label>
               <Button
                 type="button"
                 variant="outline"
@@ -757,6 +843,8 @@ function PersonCard({
                       title,
                       phone,
                       daysOff,
+                      birthday,
+                      startDate,
                       regionId: region || null,
                       role:
                         person.role === "pending" ||

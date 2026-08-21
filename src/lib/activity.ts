@@ -5,7 +5,7 @@ import { getSql } from "@/lib/db";
 const BUSINESS_TIME_ZONE = "America/Chicago";
 
 /** Today as a YYYY-MM-DD calendar date in the company's zone. */
-function businessToday(): string {
+export function businessToday(): string {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: BUSINESS_TIME_ZONE,
     year: "numeric",

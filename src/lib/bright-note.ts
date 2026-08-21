@@ -11,8 +11,21 @@
  */
 
 export type BrightNote = {
-  kind: "shoutout" | "general";
+  kind:
+    | "shoutout"
+    | "general"
+    | "peer"
+    | "birthday"
+    | "anniversary"
+    | "welcome"
+    | "team";
   text: string;
+};
+
+export type TeamEventInput = {
+  kind: "birthday" | "anniversary" | "new";
+  name: string;
+  years?: number;
 };
 
 export type BrightNoteInput = {
@@ -33,6 +46,16 @@ export type BrightNoteInput = {
   /** True when metrics were entered this period and none are orange/red. */
   allGreenMetrics: boolean;
   gameScores: { title: string; bestScore: number | null; plays: number }[];
+  /** Today is the reader's birthday. */
+  birthdayToday?: boolean;
+  /** Whole years with the company, on their start-date anniversary. */
+  anniversaryYears?: number | null;
+  /** Recently approved — their first notes are a welcome. */
+  isNewHire?: boolean;
+  /** Today's featured shout-out from a coworker, if any. */
+  peerShoutout?: { fromName: string; body: string } | null;
+  /** Same-store teammates with a birthday, anniversary, or first days today. */
+  teamEvents?: TeamEventInput[];
 };
 
 /** Local date as YYYY-MM-DD (the caller's timezone, matching what they see). */
@@ -135,14 +158,64 @@ function buildShoutouts(input: BrightNoteInput): string[] {
   return out;
 }
 
+const BIRTHDAY_NOTES: ((name: string) => string)[] = [
+  (n) => `Happy birthday, ${n}! Of all the days to be glad you're on this team, today is the easiest.`,
+  (n) => `Happy birthday, ${n}. Hope today hands you at least one genuinely good surprise.`,
+  (n) => `It's your day, ${n} — happy birthday. May every Client be easy and every coworker bring snacks.`,
+];
+
+function anniversaryNote(name: string, years: number): string {
+  if (years === 1) {
+    return `One year with us today, ${name}. Look how far you've come — happy anniversary.`;
+  }
+  return `${years} years with us today, ${name}. Grateful for every one of them — happy anniversary.`;
+}
+
+function welcomeNote(name: string): string {
+  return `Welcome to the team, ${name}. Everyone here remembers their first days — ask anything, twice if you need to. We're glad you're here.`;
+}
+
+function teamEventNote(event: TeamEventInput): string {
+  if (event.kind === "birthday") {
+    return `It's ${event.name}'s birthday today. A little fuss goes a long way — make them feel it.`;
+  }
+  if (event.kind === "anniversary") {
+    const y = event.years ?? 1;
+    return `${event.name} hits ${y} ${y === 1 ? "year" : "years"} with us today. Worth a high-five when you see them.`;
+  }
+  return `${event.name} is new on your team. Remember your first day? Go make theirs easier.`;
+}
+
 /**
- * Build today's note. Shout-outs are preferred when the data offers any, but
- * one general message always rides along in the pool so even a streak-holder
- * gets variety across the week.
+ * Build today's note, most-human first: a coworker's shout-out beats
+ * everything, then the reader's own birthday or anniversary, then the
+ * new-hire welcome, then a teammate's big day, then progress shout-outs,
+ * then the general pool. Within the last two tiers one general message
+ * rides along so even a streak-holder gets variety across the week.
  */
 export function buildBrightNote(input: BrightNoteInput): BrightNote {
   const daySeed = hash(`${input.seedKey}|${input.today}`);
   const pickSeed = hash(`${input.seedKey}|${input.today}|pick`);
+
+  if (input.peerShoutout) {
+    return {
+      kind: "peer",
+      text: `From ${input.peerShoutout.fromName}: “${input.peerShoutout.body}”`,
+    };
+  }
+  if (input.birthdayToday) {
+    return { kind: "birthday", text: BIRTHDAY_NOTES[daySeed % BIRTHDAY_NOTES.length](input.firstName) };
+  }
+  if (input.anniversaryYears != null) {
+    return { kind: "anniversary", text: anniversaryNote(input.firstName, input.anniversaryYears) };
+  }
+  if (input.isNewHire) {
+    return { kind: "welcome", text: welcomeNote(input.firstName) };
+  }
+  const events = input.teamEvents ?? [];
+  if (events.length > 0) {
+    return { kind: "team", text: teamEventNote(events[daySeed % events.length]) };
+  }
 
   const general: BrightNote = {
     kind: "general",
