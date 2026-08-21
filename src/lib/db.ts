@@ -90,6 +90,50 @@ function toSql(run: Run, runTransaction?: RunTransaction): Sql {
   return sql;
 }
 
+const NEON_MIGRATE_LOCK = "8487614362054001";
+
+/**
+ * Apply `migrations/*.sql` to the production Postgres, once per process, before
+ * the first query. Serialized across instances with an advisory lock and tracked
+ * in `_migrations` (parity with `scripts/migrate.mjs`). Without this, deploys
+ * never get new tables/columns and the app fails with "relation … does not
+ * exist" (the PGLite path already migrates on startup).
+ */
+async function runNeonMigrations(pool: import("pg").Pool): Promise<void> {
+  const migrations = import.meta.glob("/migrations/*.sql", {
+    query: "?raw",
+    import: "default",
+    eager: true,
+  }) as Record<string, string>;
+  const client = await pool.connect();
+  try {
+    await client.query("select pg_advisory_lock($1::bigint)", [NEON_MIGRATE_LOCK]);
+    await client.query(
+      "create table if not exists _migrations (name text primary key, applied_at timestamptz not null default now())",
+    );
+    const doneRows = await client.query("select name from _migrations");
+    const done = new Set((doneRows.rows as { name: string }[]).map((r) => r.name));
+    for (const [path, text] of Object.entries(migrations).sort(([a], [b]) => a.localeCompare(b))) {
+      const name = path.split("/").pop() as string;
+      if (done.has(name)) continue;
+      try {
+        await client.query("begin");
+        await client.query(text);
+        await client.query("insert into _migrations (name) values ($1)", [name]);
+        await client.query("commit");
+      } catch (error) {
+        await client.query("rollback").catch(() => undefined);
+        throw error;
+      }
+    }
+  } finally {
+    await client
+      .query("select pg_advisory_unlock($1::bigint)", [NEON_MIGRATE_LOCK])
+      .catch(() => undefined);
+    client.release();
+  }
+}
+
 function createNeonSql(): Promise<Sql> {
   globalRef.__pgSqlPromise__ ??= (async () => {
     // Regular Postgres driver: node-postgres (`pg`) — works directly with Neon's
@@ -103,6 +147,7 @@ function createNeonSql(): Promise<Sql> {
       connectionTimeoutMillis: 10_000,
       statement_timeout: 30_000,
     });
+    await runNeonMigrations(pool);
     const run = async <T>(text: string, params: unknown[]) => {
       const res = await pool.query(text, params);
       return res.rows as T[];
