@@ -3,6 +3,7 @@ import { Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useAccess } from "@/components/access-provider";
 import { useCatalog } from "@/components/catalog-provider";
+import { isLeader } from "@/lib/access";
 import { NotificationBell } from "@/components/notification-center";
 import { UserButton } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -38,6 +39,7 @@ export function SiteHeader({ inverted = false }: { inverted?: boolean }) {
     ...(p.viewQuad ? [{ to: "/quad", label: "The Quad" }] : []),
     ...(p.viewRemarkable ? [{ to: "/remarkable", label: "Be Remarkable" }] : []),
     ...(access.canManagePeople || p.viewTeam ? [{ to: "/team", label: "Team" }] : []),
+    ...(isLeader(access.role) ? [{ to: "/metrics", label: "Team Metrics" }] : []),
     ...(access.isChancellor ? [{ to: "/chancellor", label: "Chancellor" }] : []),
     ...(!access.isChancellor && (access.isAdmin || access.canSeeCompany)
       ? [{ to: "/admin", label: "Office" }]
