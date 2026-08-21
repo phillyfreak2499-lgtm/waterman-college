@@ -1,6 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { Check, Download } from "lucide-react";
 import { AuthGate } from "@/components/auth-gate";
+import { BirthdayGate } from "@/components/birthday-takeover";
 import { FavoriteButton } from "@/components/favorite-button";
 import { useAccess } from "@/components/access-provider";
 import { useCatalog } from "@/components/catalog-provider";
@@ -23,7 +24,9 @@ function TrackPage() {
   return (
     <SiteShell>
       <AuthGate>
-        <TrackGate />
+        <BirthdayGate>
+          <TrackGate />
+        </BirthdayGate>
       </AuthGate>
     </SiteShell>
   );

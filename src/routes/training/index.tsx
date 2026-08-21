@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAccess } from "@/components/access-provider";
 import { AuthGate } from "@/components/auth-gate";
+import { BirthdayGate } from "@/components/birthday-takeover";
 import { useCatalog } from "@/components/catalog-provider";
 import { LockedPath } from "@/components/locked-path";
 import { ProgressPanel } from "@/components/progress-panel";
@@ -34,7 +35,9 @@ function TrainingHome() {
   return (
     <SiteShell>
       <AuthGate>
-        <Campus />
+        <BirthdayGate>
+          <Campus />
+        </BirthdayGate>
       </AuthGate>
     </SiteShell>
   );

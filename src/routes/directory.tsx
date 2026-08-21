@@ -695,7 +695,18 @@ function PersonCard({
           className={compact ? "size-8 text-[0.65rem]" : "size-10"}
         />
         <div className="min-w-0">
-          <p className="truncate font-medium">{person.name}</p>
+          <p className="truncate font-medium">
+            {person.name}
+            {person.birthdayToday && (
+              <span
+                className="ml-1.5 inline-block align-middle text-lg leading-none drop-shadow-[0_0_5px_rgba(200,164,88,0.9)]"
+                title={`It's ${person.name.split(" ")[0]}'s birthday today!`}
+                aria-label="Birthday today"
+              >
+                🎂
+              </span>
+            )}
+          </p>
           <p className="truncate text-sm text-muted">{displayTitle}</p>
           {person.email && (
             <p className="mt-1 truncate text-sm">

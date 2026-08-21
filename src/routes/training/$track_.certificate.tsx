@@ -1,5 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { AuthGate } from "@/components/auth-gate";
+import { BirthdayGate } from "@/components/birthday-takeover";
 import { useAccess } from "@/components/access-provider";
 import { useCatalog } from "@/components/catalog-provider";
 import { LockedPath } from "@/components/locked-path";
@@ -17,7 +18,9 @@ function CertificatePage() {
   return (
     <SiteShell>
       <AuthGate>
-        <CertificateGate />
+        <BirthdayGate>
+          <CertificateGate />
+        </BirthdayGate>
       </AuthGate>
     </SiteShell>
   );

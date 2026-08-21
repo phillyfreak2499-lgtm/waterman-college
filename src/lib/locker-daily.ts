@@ -47,6 +47,22 @@ export function normalizeMonthDay(value: string | null | undefined): string | nu
   return `${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
+/**
+ * The one birthday check: does a stored birthday (MM-DD, tolerant of "M/D")
+ * fall on the given YYYY-MM-DD calendar day? Every birthday feature — the
+ * locker takeover, the directory cake, teammate notes, eve reminders —
+ * routes through this.
+ */
+export function isBirthdayOn(birthday: string | null | undefined, day: string): boolean {
+  const md = normalizeMonthDay(birthday);
+  return md !== null && md === day.slice(5);
+}
+
+/** Step a YYYY-MM-DD label forward one day (labels are timezone-free). */
+function nextDay(day: string): string {
+  return new Date(Date.parse(`${day}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
+}
+
 function toTime(value: unknown): number | null {
   if (value instanceof Date) return value.getTime();
   if (typeof value === "string" && value) {
@@ -79,7 +95,7 @@ type ProfileRow = {
 
 function eventsFor(row: ProfileRow, today: string): TeamEvent[] {
   const out: TeamEvent[] = [];
-  if (normalizeMonthDay(row.birthday) === today.slice(5)) {
+  if (isBirthdayOn(row.birthday, today)) {
     out.push({ kind: "birthday", name: row.name });
   }
   const years = anniversaryYears(row.start_date, today);
@@ -156,13 +172,113 @@ export const getLockerDaily = createServerFn({ method: "GET" })
     }
 
     return {
-      birthdayToday: normalizeMonthDay(self?.birthday) === today.slice(5),
+      birthdayToday: isBirthdayOn(self?.birthday, today),
       anniversaryYears: anniversaryYears(self?.start_date ?? null, today),
       isNewHire:
         self?.account_status === "approved" && isRecent(self.created_at, NEW_HIRE_DAYS),
       shoutout,
       teamEvents,
     };
+  });
+
+/**
+ * Day-before birthday reminders. Finds everyone whose birthday is tomorrow
+ * and notifies their direct boss (reports_to when set, otherwise their
+ * store's managers) plus the regional manager(s) for their store's region.
+ * A ledger row per (day, person) makes it safe to run on every page load;
+ * the in-process day guard keeps the common case to zero extra queries.
+ */
+let lastSweepDay: string | null = null;
+
+async function sweepBirthdayEveReminders(): Promise<void> {
+  const today = businessToday();
+  if (lastSweepDay === today) return;
+  lastSweepDay = today;
+
+  const sql = await getSql();
+  const tomorrow = nextDay(today);
+  const rows = await sql<{
+    user_id: string;
+    name: string;
+    birthday: string | null;
+    store_id: string | null;
+    reports_to: string | null;
+  }>`
+    select p.user_id, u.name, p.birthday, p.store_id, p.reports_to
+    from user_profiles p
+    join "user" u on u.id = p.user_id
+    where p.birthday is not null and p.account_status = 'approved'
+    limit 1000
+  `;
+  const celebrants = rows.filter((r) => isBirthdayOn(r.birthday, tomorrow));
+
+  for (const person of celebrants) {
+    const claimed = await sql<{ day: string }>`
+      insert into birthday_reminder_ledger (day, birthday_user)
+      values (${tomorrow}, ${person.user_id})
+      on conflict do nothing
+      returning day
+    `;
+    if (!claimed[0]) continue;
+
+    const recipients = new Set<string>();
+    if (person.reports_to) recipients.add(person.reports_to);
+    if (person.store_id) {
+      if (!person.reports_to) {
+        const managers = await sql<{ user_id: string }>`
+          select user_id from user_profiles
+          where store_id = ${person.store_id}
+            and access_role = 'managers'
+            and account_status = 'approved'
+        `;
+        for (const m of managers) recipients.add(m.user_id);
+      }
+      const store = await sql<{ region_id: string | null }>`
+        select region_id from stores where id = ${person.store_id} limit 1
+      `;
+      if (store[0]?.region_id) {
+        const regionals = await sql<{ user_id: string }>`
+          select user_id from user_profiles
+          where access_role = 'regional'
+            and region_id = ${store[0].region_id}
+            and account_status = 'approved'
+        `;
+        for (const r of regionals) recipients.add(r.user_id);
+      }
+    }
+    recipients.delete(person.user_id);
+    if (recipients.size === 0) continue;
+
+    const { dispatchNotice } = await import("@/lib/notify");
+    await dispatchNotice({
+      kind: "account",
+      title: `🎂 ${person.name}'s birthday is tomorrow`,
+      body: `Don't forget to wish ${person.name} a happy birthday!`,
+      href: "/directory",
+      userIds: [...recipients],
+    });
+  }
+}
+
+/**
+ * Is today the signed-in user's birthday? Powers the locker/training
+ * takeover, so it stays cheap. It also piggybacks the eve-reminder sweep —
+ * this endpoint is hit constantly, which keeps reminders timely without a
+ * cron.
+ */
+export const isMyBirthdayToday = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }): Promise<{ birthday: boolean }> => {
+    const sql = await getSql();
+    const rows = await sql<{ birthday: string | null }>`
+      select birthday from user_profiles where user_id = ${context.userId} limit 1
+    `;
+    try {
+      await sweepBirthdayEveReminders();
+    } catch {
+      // Reminders are best-effort; never block the page on them.
+    }
+    return { birthday: isBirthdayOn(rows[0]?.birthday, businessToday()) };
   });
 
 /** Send one kind sentence to a coworker's locker. */

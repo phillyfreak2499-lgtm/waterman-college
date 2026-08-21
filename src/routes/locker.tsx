@@ -15,6 +15,7 @@ import {
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { AuthGate } from "@/components/auth-gate";
+import { BirthdayGate } from "@/components/birthday-takeover";
 import { useAccessRole } from "@/components/access-provider";
 import { MetricsPanel } from "@/components/metrics-panel";
 import { ProfilePhoto } from "@/components/profile-photo";
@@ -121,7 +122,9 @@ function LockerPage() {
   return (
     <SiteShell>
       <AuthGate>
-        <LockerDesk />
+        <BirthdayGate>
+          <LockerDesk />
+        </BirthdayGate>
       </AuthGate>
     </SiteShell>
   );

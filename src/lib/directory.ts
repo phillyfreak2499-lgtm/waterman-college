@@ -12,8 +12,9 @@ import {
   visiblePeople,
   type AccessRole,
 } from "@/lib/access";
+import { businessToday } from "@/lib/activity";
 import { getSql } from "@/lib/db";
-import { normalizeMonthDay } from "@/lib/locker-daily";
+import { isBirthdayOn, normalizeMonthDay } from "@/lib/locker-daily";
 import { loadRegions, type Region } from "@/lib/regions";
 
 export type DirectoryEntry = {
@@ -30,6 +31,8 @@ export type DirectoryEntry = {
   birthday: string;
   /** Start date as YYYY-MM-DD; editors only, empty otherwise. */
   startDate: string;
+  /** Today is this person's birthday — everyone gets to see the cake. */
+  birthdayToday: boolean;
   storeId: string | null;
   storeName: string | null;
   /** Region a DM/Professor is scoped to (null for most staff). */
@@ -140,6 +143,7 @@ async function loadEntries(): Promise<DirectoryEntry[]> {
     order by u.name asc
     limit 1000
   `;
+  const today = businessToday();
   return rows.map((row) => {
     const role = isAccessRole(row.access_role) ? row.access_role : "pending";
     return {
@@ -153,6 +157,7 @@ async function loadEntries(): Promise<DirectoryEntry[]> {
       daysOff: (row.days_off ?? "").trim(),
       birthday: (row.birthday ?? "").trim(),
       startDate: (row.start_date ?? "").trim(),
+      birthdayToday: isBirthdayOn(row.birthday, today),
       storeId: row.store_id || null,
       storeName: row.store || null,
       regionId: row.region_id || null,

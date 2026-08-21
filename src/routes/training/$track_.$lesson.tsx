@@ -6,6 +6,7 @@ import { ApplyOnFloor } from "@/components/apply-on-floor";
 import { DayQuiz } from "@/components/day-quiz";
 import { AskTrainer } from "@/components/ask-trainer";
 import { AuthGate } from "@/components/auth-gate";
+import { BirthdayGate } from "@/components/birthday-takeover";
 import { FavoriteButton } from "@/components/favorite-button";
 import { useAccess } from "@/components/access-provider";
 import { useCatalog } from "@/components/catalog-provider";
@@ -28,7 +29,9 @@ function LessonPage() {
   return (
     <SiteShell>
       <AuthGate>
-        <LessonGate />
+        <BirthdayGate>
+          <LessonGate />
+        </BirthdayGate>
       </AuthGate>
     </SiteShell>
   );
