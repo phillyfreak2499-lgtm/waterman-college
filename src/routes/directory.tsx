@@ -558,9 +558,9 @@ function StoreBlock({
           onChange={onChange}
         />
         <Roster
-          label="Salespeople"
+          label="Arch Support Specialists"
           people={store.sales}
-          empty="No salespeople listed yet."
+          empty="No specialists listed yet."
           snap={snap}
           onChange={onChange}
           lined
@@ -619,7 +619,7 @@ function PersonCard({
   const [title, setTitle] = useState(person.title);
   const [phone, setPhone] = useState(person.phone);
   const [role, setRole] = useState<AccessRole>(
-    person.role === "managers" ? "managers" : "specialist",
+    person.role === "managers" || person.role === "mit" ? person.role : "specialist",
   );
   const [region, setRegion] = useState(person.regionId ?? "");
   const displayTitle = person.title || person.roleLabel;
@@ -628,7 +628,7 @@ function PersonCard({
     setStoreId(person.storeId ?? "");
     setTitle(person.title);
     setPhone(person.phone);
-    setRole(person.role === "managers" ? "managers" : "specialist");
+    setRole(person.role === "managers" || person.role === "mit" ? person.role : "specialist");
     setRegion(person.regionId ?? "");
   }, [person.id, person.storeId, person.title, person.phone, person.role, person.regionId]);
 
@@ -639,11 +639,16 @@ function PersonCard({
         <div className="min-w-0">
           <p className="truncate font-medium">{person.name}</p>
           <p className="truncate text-sm text-muted">{displayTitle}</p>
-          <p className="mt-1 truncate text-sm">
-            <a className="text-navy underline-offset-2 hover:underline" href={`mailto:${person.email}`}>
-              {person.email}
-            </a>
-          </p>
+          {person.email && (
+            <p className="mt-1 truncate text-sm">
+              <a
+                className="text-navy underline-offset-2 hover:underline"
+                href={`mailto:${person.email}`}
+              >
+                {person.email}
+              </a>
+            </p>
+          )}
           {person.phone && <p className="truncate text-sm text-muted">{person.phone}</p>}
         </div>
       </div>
@@ -673,10 +678,11 @@ function PersonCard({
               <select
                 className={fieldClass}
                 value={role}
-                onChange={(e) => setRole(e.target.value === "managers" ? "managers" : "specialist")}
+                onChange={(e) => setRole(e.target.value as AccessRole)}
               >
                 <option value="managers">Manager</option>
-                <option value="specialist">Salesperson</option>
+                <option value="specialist">Arch Support Specialist</option>
+                <option value="mit">MIT</option>
               </select>
               <select
                 className={fieldClass}
@@ -716,7 +722,8 @@ function PersonCard({
                       role:
                         person.role === "pending" ||
                         person.role === "managers" ||
-                        person.role === "specialist"
+                        person.role === "specialist" ||
+                        person.role === "mit"
                           ? role
                           : person.role,
                     },

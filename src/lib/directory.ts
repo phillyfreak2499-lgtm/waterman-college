@@ -79,6 +79,11 @@ function slugify(value: string) {
   );
 }
 
+/** Accounts sign in with an internal @accounts.waterman address; show the real one. */
+function toDisplayEmail(email: string): string {
+  return email.replace(/@accounts\.waterman$/i, "@goodfeetdfw.com");
+}
+
 async function ensureDirectoryTables() {
   // Compatibility shim. Migration 0010 performs the legacy store backfill once.
   await ensureProfileTable();
@@ -186,9 +191,15 @@ async function buildSnapshot(actorId: string): Promise<DirectorySnapshot> {
     visible = allEntries.filter((person) => allowedIds.has(person.id));
   }
 
-  const people = visible.map((person) =>
-    isLeader(actor) || actor === "admin" ? person : { ...person, email: "", phone: "" },
-  );
+  // Contact details go only to leaders/admins; and an email is shown only for
+  // managers and above (never for Specialists/MIT), in the real @goodfeetdfw.com
+  // domain rather than the internal sign-in address.
+  const canSeeContact = isLeader(actor) || actor === "admin";
+  const people = visible.map((person) => ({
+    ...person,
+    email: canSeeContact && isLeader(person.role) ? toDisplayEmail(person.email) : "",
+    phone: canSeeContact ? person.phone : "",
+  }));
 
   const stores: StoreCard[] = scopedStores.map((store) => {
     const here = people.filter((p) => p.storeId === store.id && !isOfficeRole(p.role));

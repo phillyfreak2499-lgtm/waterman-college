@@ -36,7 +36,7 @@ export type AccessProfile = {
 export const ACCESS_ROLES: { id: AccessRole; label: string; blurb: string; rank: number }[] = [
   { id: "pending", label: "Awaiting assignment", blurb: "Signed in, not yet placed.", rank: 0 },
   { id: "new-hires", label: "New Hire", blurb: "First six weeks only.", rank: 1 },
-  { id: "specialist", label: "Specialist", blurb: "Onboarding plus Specialist Training.", rank: 1 },
+  { id: "specialist", label: "Arch Support Specialist", blurb: "Onboarding plus Specialist Training.", rank: 1 },
   { id: "mit", label: "MIT", blurb: "Approved for the MIT path.", rank: 1 },
   { id: "managers", label: "Manager", blurb: "A store team and their training.", rank: 2 },
   { id: "regional", label: "Regional / DM", blurb: "Managers and every Specialist under them.", rank: 3 },
