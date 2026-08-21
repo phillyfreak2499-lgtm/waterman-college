@@ -455,6 +455,23 @@ function AddStoreForm({
 const fieldClass =
   "h-11 min-w-0 w-full rounded-sm border border-line bg-paper px-3 text-ink focus:outline-2 focus:outline-offset-1 focus:outline-navy";
 
+/** Word patterns for each weekday, indexed by Date#getDay (0 = Sunday). */
+const DAY_PATTERNS = [
+  /\bsun(day)?s?\b/i,
+  /\bmon(day)?s?\b/i,
+  /\btue(s|sday)?s?\b/i,
+  /\bwed(s|nesday)?s?\b/i,
+  /\bthu(r|rs|rsday)?s?\b/i,
+  /\bfri(day)?s?\b/i,
+  /\bsat(urday)?s?\b/i,
+];
+
+/** True when the free-text days-off note mentions today's weekday. */
+function isOffToday(daysOff: string, now: Date = new Date()): boolean {
+  if (!daysOff.trim()) return false;
+  return DAY_PATTERNS[now.getDay()].test(daysOff);
+}
+
 function StoreBlock({
   store,
   snap,
@@ -618,6 +635,7 @@ function PersonCard({
   const [storeId, setStoreId] = useState(person.storeId ?? "");
   const [title, setTitle] = useState(person.title);
   const [phone, setPhone] = useState(person.phone);
+  const [daysOff, setDaysOff] = useState(person.daysOff);
   const [role, setRole] = useState<AccessRole>(
     person.role === "managers" || person.role === "mit" ? person.role : "specialist",
   );
@@ -628,9 +646,10 @@ function PersonCard({
     setStoreId(person.storeId ?? "");
     setTitle(person.title);
     setPhone(person.phone);
+    setDaysOff(person.daysOff);
     setRole(person.role === "managers" || person.role === "mit" ? person.role : "specialist");
     setRegion(person.regionId ?? "");
-  }, [person.id, person.storeId, person.title, person.phone, person.role, person.regionId]);
+  }, [person.id, person.storeId, person.title, person.phone, person.daysOff, person.role, person.regionId]);
 
   return (
     <div className={cn("min-w-0", compact ? "" : "rounded-md border border-line bg-paper p-4")}>
@@ -654,6 +673,14 @@ function PersonCard({
             </p>
           )}
           {person.phone && <p className="truncate text-sm text-muted">{person.phone}</p>}
+          {person.daysOff && (
+            <p className="truncate text-xs text-muted">
+              Off {person.daysOff}
+              {isOffToday(person.daysOff) && (
+                <span className="font-medium text-brass"> · off today</span>
+              )}
+            </p>
+          )}
         </div>
       </div>
       {snap.canEdit && (
@@ -712,6 +739,13 @@ function PersonCard({
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
               />
+              <input
+                className={fieldClass}
+                placeholder="Days off (e.g. Sun & Wed)"
+                maxLength={60}
+                value={daysOff}
+                onChange={(e) => setDaysOff(e.target.value)}
+              />
               <Button
                 type="button"
                 variant="outline"
@@ -722,6 +756,7 @@ function PersonCard({
                       storeId: storeId || null,
                       title,
                       phone,
+                      daysOff,
                       regionId: region || null,
                       role:
                         person.role === "pending" ||

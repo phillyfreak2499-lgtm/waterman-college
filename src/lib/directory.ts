@@ -23,6 +23,8 @@ export type DirectoryEntry = {
   roleLabel: string;
   title: string;
   phone: string;
+  /** Regular days off, free text (e.g. "Sun & Wed"); empty when not set. */
+  daysOff: string;
   storeId: string | null;
   storeName: string | null;
   /** Region a DM/Professor is scoped to (null for most staff). */
@@ -106,6 +108,7 @@ async function loadEntries(): Promise<DirectoryEntry[]> {
     access_role: string | null;
     title: string | null;
     phone: string | null;
+    days_off: string | null;
     store_id: string | null;
     store: string | null;
     region_id: string | null;
@@ -119,6 +122,7 @@ async function loadEntries(): Promise<DirectoryEntry[]> {
       p.access_role,
       p.title,
       p.phone,
+      p.days_off,
       p.store_id,
       p.store,
       p.region_id
@@ -137,6 +141,7 @@ async function loadEntries(): Promise<DirectoryEntry[]> {
       roleLabel: accessLabel(role),
       title: (row.title ?? "").trim(),
       phone: (row.phone ?? "").trim(),
+      daysOff: (row.days_off ?? "").trim(),
       storeId: row.store_id || null,
       storeName: row.store || null,
       regionId: row.region_id || null,
@@ -326,6 +331,7 @@ export const placeDirectoryPerson = createServerFn({ method: "POST" })
       storeId: string | null;
       title?: string;
       phone?: string;
+      daysOff?: string;
       role?: AccessRole;
       regionId?: string | null;
     }) => {
@@ -340,6 +346,9 @@ export const placeDirectoryPerson = createServerFn({ method: "POST" })
       }
       if (input.phone !== undefined && (typeof input.phone !== "string" || input.phone.length > 40)) {
         throw new Error("Phone number is too long.");
+      }
+      if (input.daysOff !== undefined && (typeof input.daysOff !== "string" || input.daysOff.length > 60)) {
+        throw new Error("Days off should be short — e.g. “Sun & Wed”.");
       }
       if (input.regionId != null && (typeof input.regionId !== "string" || input.regionId.length > 80)) {
         throw new Error("Unknown region.");
@@ -370,7 +379,7 @@ export const placeDirectoryPerson = createServerFn({ method: "POST" })
     const status = role === "pending" ? "pending" : "approved";
     await sql`
       insert into user_profiles (
-        user_id, access_role, store, store_id, title, phone,
+        user_id, access_role, store, store_id, title, phone, days_off,
         account_status, assigned_by, assigned_at, created_at, region_id
       )
       values (
@@ -380,6 +389,7 @@ export const placeDirectoryPerson = createServerFn({ method: "POST" })
         ${data.storeId},
         ${data.title?.trim() || null},
         ${data.phone?.trim() || null},
+        ${data.daysOff === undefined ? null : data.daysOff.trim()},
         ${status},
         ${context.userId},
         now(),
@@ -392,6 +402,7 @@ export const placeDirectoryPerson = createServerFn({ method: "POST" })
         store_id = excluded.store_id,
         title = coalesce(excluded.title, user_profiles.title),
         phone = coalesce(excluded.phone, user_profiles.phone),
+        days_off = coalesce(excluded.days_off, user_profiles.days_off),
         account_status = excluded.account_status,
         assigned_by = excluded.assigned_by,
         assigned_at = now(),
