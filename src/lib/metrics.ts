@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { isLeader, readAccessRole } from "@/lib/access";
 import { getSql } from "@/lib/db";
+import { PHASE_LESSON_MAP } from "@/lib/presentation-eval";
 
 export type MetricKey =
   | "nsnu"
@@ -91,6 +92,64 @@ export function rowSeverity(values: MetricValues): number {
     if (c) s += SORT_WEIGHT[c];
   }
   return s;
+}
+
+// --- metric → training suggestions ---
+// Which presentation phase(s) each metric leans on. Weak metrics pull the
+// lessons already mapped to those phases (PHASE_LESSON_MAP), so suggestions
+// always point at real catalog lessons.
+const METRIC_PHASES: Record<MetricKey, string[]> = {
+  conversion: ["welcome", "interview", "close"],
+  demoRate: ["interview", "analysis"],
+  demoClose: ["close", "solution"],
+  nsnu: ["solution", "close"],
+  archSupports: ["analysis", "solution"],
+  demoTicket: ["solution", "close"],
+};
+
+export type MetricSuggestion = {
+  metricKey: MetricKey;
+  metricLabel: string;
+  color: MetricColor;
+  trackId: string;
+  lessonSlug: string;
+  title: string;
+  reason: string;
+};
+
+/**
+ * Lessons to work on, derived from a person's weak (orange/red) metrics.
+ * Red before orange, deduped by lesson, capped at `limit`.
+ */
+export function suggestLessonsForMetrics(values: MetricValues, limit = 4): MetricSuggestion[] {
+  const weak = METRICS.map((m) => ({ m, color: metricColor(m.key, values[m.key]) }))
+    .filter((x): x is { m: (typeof METRICS)[number]; color: MetricColor } =>
+      x.color === "red" || x.color === "orange",
+    )
+    .sort((a, b) => COLOR_SEVERITY[b.color] - COLOR_SEVERITY[a.color]);
+
+  const seen = new Set<string>();
+  const out: MetricSuggestion[] = [];
+  for (const { m, color } of weak) {
+    for (const phase of METRIC_PHASES[m.key] ?? []) {
+      for (const lesson of PHASE_LESSON_MAP[phase] ?? []) {
+        const key = `${lesson.trackId}/${lesson.lessonSlug}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push({
+          metricKey: m.key,
+          metricLabel: m.label,
+          color,
+          trackId: lesson.trackId,
+          lessonSlug: lesson.lessonSlug,
+          title: lesson.title,
+          reason: lesson.reason,
+        });
+        if (out.length >= limit) return out;
+      }
+    }
+  }
+  return out;
 }
 
 /** Stylesheet class for a color band pill (see styles.css). */

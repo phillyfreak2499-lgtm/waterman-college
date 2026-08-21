@@ -1,3 +1,5 @@
+import { Link } from "@tanstack/react-router";
+import { ArrowRight } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -12,6 +14,7 @@ import {
   periodLabel,
   periodRange,
   currentPeriod,
+  suggestLessonsForMetrics,
   getMyMetrics,
   saveMyMetrics,
   getMyStoreMetrics,
@@ -42,6 +45,21 @@ function toDraft(values: MetricValues | undefined | null): Draft {
     demoClose: s(values.demoClose),
     archSupports: s(values.archSupports),
     demoTicket: s(values.demoTicket),
+  };
+}
+
+function draftToValues(draft: Draft): MetricValues {
+  const n = (s: string) => {
+    const v = s.trim() === "" ? null : Number(s);
+    return v != null && Number.isFinite(v) ? v : null;
+  };
+  return {
+    nsnu: n(draft.nsnu),
+    conversion: n(draft.conversion),
+    demoRate: n(draft.demoRate),
+    demoClose: n(draft.demoClose),
+    archSupports: n(draft.archSupports),
+    demoTicket: n(draft.demoTicket),
   };
 }
 
@@ -178,6 +196,8 @@ export function MetricsPanel() {
             {myUpdatedAt && <span className="text-xs text-muted">Updated {fmtWhen(myUpdatedAt)}</span>}
           </div>
 
+          <MetricSuggestions values={draftToValues(myDraft)} />
+
           {store && (
             <div className="mt-10">
               <p className="kicker">Store metrics · {store.name}</p>
@@ -276,6 +296,52 @@ function MetricField({
         />
         {meta.kind === "percent" && <span className="text-sm text-muted">%</span>}
       </div>
+    </div>
+  );
+}
+
+/** "Work on this" — lessons targeting the weak (orange/red) metrics in `values`. */
+export function MetricSuggestions({
+  values,
+  heading = "Work on this",
+  blurb = "Lessons that lift your weakest numbers this period.",
+}: {
+  values: MetricValues;
+  heading?: string;
+  blurb?: string;
+}) {
+  const suggestions = suggestLessonsForMetrics(values);
+  if (suggestions.length === 0) return null;
+  return (
+    <div className="mt-6">
+      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brass">{heading}</p>
+      <p className="mt-1 text-sm text-muted">{blurb}</p>
+      <ul className="mt-3 space-y-2">
+        {suggestions.map((s) => (
+          <li key={`${s.trackId}-${s.lessonSlug}-${s.metricKey}`}>
+            <Link
+              to="/training/$track/$lesson"
+              params={{ track: s.trackId, lesson: s.lessonSlug }}
+              className="flex items-start justify-between gap-3 rounded-md border border-line bg-surface px-4 py-3 shadow-card transition-colors hover:border-brass/40"
+            >
+              <span className="min-w-0">
+                <span className="block font-medium text-ink">{s.title}</span>
+                <span className="mt-0.5 block text-sm text-muted">{s.reason}</span>
+                <span className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                  <span className={cn("metric-band", bandClass(s.color))}>
+                    <span className="metric-dot" aria-hidden />
+                    {COLOR_LABEL[s.color]}
+                  </span>
+                  <span className="text-[0.65rem] uppercase tracking-[0.12em] text-brass">
+                    {s.metricLabel}
+                  </span>
+                </span>
+              </span>
+              <ArrowRight className="mt-1 size-4 shrink-0 text-brass" />
+            </Link>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

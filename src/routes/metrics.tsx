@@ -12,6 +12,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { AuthGate } from "@/components/auth-gate";
 import { useAccess } from "@/components/access-provider";
+import { MetricSuggestions } from "@/components/metrics-panel";
 import { SiteShell } from "@/components/site-shell";
 import { Button } from "@/components/ui/button";
 import { Redirect } from "@/lib/auth/gates";
@@ -619,6 +620,7 @@ function PersonDetail({
   }
 
   return (
+    <div className="space-y-6">
     <div className="grid gap-6 lg:grid-cols-2">
       {/* Trends */}
       <div>
@@ -701,6 +703,12 @@ function PersonDetail({
           </Button>
         </div>
       </div>
+    </div>
+      <MetricSuggestions
+        values={person.values}
+        heading="Coach on this"
+        blurb="Lessons for this person's weakest numbers."
+      />
     </div>
   );
 }
