@@ -39,8 +39,22 @@ import {
 } from "@/lib/presentation-eval";
 import { listMyGameScores, type GameScore } from "@/lib/quad-scores";
 import { getMyStreak, type Streak } from "@/lib/activity";
+import {
+  getMyMetrics,
+  metricColor,
+  bandClass,
+  COLOR_LABEL,
+  COLOR_SEVERITY,
+  METRICS,
+  type MetricColor,
+  type MetricKey,
+  type MetricValues,
+} from "@/lib/metrics";
 import { pageHead } from "@/lib/page-title";
 import { cn, errorMessage } from "@/lib/utils";
+
+/** The weakest metric to spotlight in the Today summary (null when none is weak). */
+type WeakMetric = { key: MetricKey; label: string; color: MetricColor } | null;
 
 /** One phase's month-over-month movement, as returned by `listMyEvalScores`. */
 type PhaseTrendPoint = {
@@ -118,6 +132,7 @@ function LockerDesk() {
   const [notes, setNotes] = useState<LockerNote[]>([]);
   const [gameScores, setGameScores] = useState<GameScore[]>([]);
   const [streak, setStreak] = useState<Streak | null>(null);
+  const [myMetrics, setMyMetrics] = useState<MetricValues | null>(null);
   const [phaseAvgs, setPhaseAvgs] = useState<PhaseAverages | null>(null);
   const [suggestions, setSuggestions] = useState<SuggestedLesson[]>([])
   const [trends, setTrends] = useState<PhaseTrendPoint[]>([]);
@@ -129,19 +144,21 @@ function LockerDesk() {
 
   const reload = useCallback(async () => {
     try {
-      const [a, f, n, scores, games, streakData] = await Promise.all([
+      const [a, f, n, scores, games, streakData, myM] = await Promise.all([
         listMyAssignments(),
         listFavorites(),
         listLockerNotes(),
         listMyEvalScores().catch(() => null),
         listMyGameScores().catch(() => [] as GameScore[]),
         getMyStreak().catch(() => null),
+        getMyMetrics({ data: {} }).catch(() => null),
       ]);
       setAssignments(a);
       setFavorites(f);
       setNotes(n);
       setGameScores(games);
       setStreak(streakData);
+      setMyMetrics(myM?.record.values ?? null);
       setPhaseAvgs(scores?.averages ?? null);
       setSuggestions(scores?.suggestions ?? []);
       setTrends(scores?.trends ?? []);
@@ -206,6 +223,23 @@ function LockerDesk() {
   const firstName = user?.displayName?.split(" ")[0] || "there";
   const nextUp = assignments.find((a) => a.progress.nextLessonSlug);
 
+  // Weakest entered metric (orange/red) this period — the "focus" for Today.
+  const { weakest, metricsEntered } = useMemo(() => {
+    if (!myMetrics) return { weakest: null as WeakMetric, metricsEntered: false };
+    let entered = false;
+    let worst: WeakMetric = null;
+    for (const m of METRICS) {
+      const color = metricColor(m.key, myMetrics[m.key]);
+      if (!color) continue;
+      entered = true;
+      if (!worst || COLOR_SEVERITY[color] > COLOR_SEVERITY[worst.color]) {
+        worst = { key: m.key, label: m.label, color };
+      }
+    }
+    const weak = worst && (worst.color === "orange" || worst.color === "red") ? worst : null;
+    return { weakest: weak, metricsEntered: entered };
+  }, [myMetrics]);
+
   return (
     <div className="mx-auto max-w-3xl px-5 py-10 sm:px-8 sm:py-14">
       <p className="kicker">Your desk</p>
@@ -219,17 +253,6 @@ function LockerDesk() {
       <div className="mt-6">
         <ProfilePhoto />
       </div>
-      {streak && streak.current > 0 && (
-        <p className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-brass/30 bg-brass-soft/60 px-3 py-1 text-sm font-medium text-navy">
-          <Flame className="size-4 text-brass" aria-hidden />
-          {streak.current}-day practice streak
-          {!streak.todayDone ? (
-            <span className="text-navy/55">· practice today to keep it</span>
-          ) : streak.best > streak.current ? (
-            <span className="text-navy/55">· best {streak.best}</span>
-          ) : null}
-        </p>
-      )}
 
       {loading ? (
         <div className="mt-12 space-y-4">
@@ -239,8 +262,19 @@ function LockerDesk() {
         </div>
       ) : (
         <div className="mt-10 space-y-10">
+          {/* Today at a glance */}
+          <TodaySummary
+            firstName={firstName}
+            nextUp={nextUp}
+            streak={streak}
+            weakest={weakest}
+            metricsEntered={metricsEntered}
+          />
+
           {/* Performance metrics */}
-          <MetricsPanel />
+          <div id="my-metrics" className="scroll-mt-24">
+            <MetricsPanel />
+          </div>
 
           {/* Due & Assigned */}
           <section>
@@ -586,6 +620,96 @@ function lastPlayedLabel(iso: string): string {
   if (days === 1) return "yesterday";
   if (days < 7) return `${days} days ago`;
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+}
+
+function TodaySummary({
+  firstName,
+  nextUp,
+  streak,
+  weakest,
+  metricsEntered,
+}: {
+  firstName: string;
+  nextUp: MyAssignment | undefined;
+  streak: Streak | null;
+  weakest: WeakMetric;
+  metricsEntered: boolean;
+}) {
+  return (
+    <section className="rounded-lg border border-line bg-surface p-5 shadow-card sm:p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="font-display text-2xl leading-none">Good to see you, {firstName}.</p>
+        {streak && streak.current > 0 && (
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-brass/30 bg-brass-soft/60 px-3 py-1 text-sm font-medium text-navy">
+            <Flame className="size-4 text-brass" aria-hidden />
+            {streak.current}-day streak
+            {!streak.todayDone && <span className="text-navy/55">· keep it today</span>}
+          </span>
+        )}
+      </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-md border border-line bg-paper px-4 py-3.5">
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-brass">Next up</p>
+          {nextUp && nextUp.progress.nextLessonSlug ? (
+            <>
+              <p className="mt-1 line-clamp-2 font-medium text-ink">
+                {nextUp.progress.nextLessonTitle}
+              </p>
+              <Button asChild size="sm" className="mt-2.5">
+                <Link
+                  to="/training/$track/$lesson"
+                  params={{ track: nextUp.trackId, lesson: nextUp.progress.nextLessonSlug }}
+                >
+                  Continue <ArrowRight className="ml-1 size-4" />
+                </Link>
+              </Button>
+            </>
+          ) : (
+            <>
+              <p className="mt-1 text-sm text-muted">You&rsquo;re all caught up.</p>
+              <Button asChild size="sm" variant="outline" className="mt-2.5">
+                <Link to="/training">Open the Hall</Link>
+              </Button>
+            </>
+          )}
+        </div>
+        <div className="rounded-md border border-line bg-paper px-4 py-3.5">
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-brass">
+            This period&rsquo;s focus
+          </p>
+          {weakest ? (
+            <>
+              <p className="mt-1 flex flex-wrap items-center gap-2 font-medium text-ink">
+                {weakest.label}
+                <span className={cn("metric-band", bandClass(weakest.color))}>
+                  <span className="metric-dot" aria-hidden />
+                  {COLOR_LABEL[weakest.color]}
+                </span>
+              </p>
+              <a
+                href="#my-metrics"
+                className="mt-2 inline-block text-sm font-medium text-brass underline-offset-4 hover:underline"
+              >
+                See lessons that lift it ↓
+              </a>
+            </>
+          ) : metricsEntered ? (
+            <p className="mt-1 text-sm text-muted">Green across the board — keep it up.</p>
+          ) : (
+            <>
+              <p className="mt-1 text-sm text-muted">Log your numbers to see where to focus.</p>
+              <a
+                href="#my-metrics"
+                className="mt-2 inline-block text-sm font-medium text-brass underline-offset-4 hover:underline"
+              >
+                Enter metrics ↓
+              </a>
+            </>
+          )}
+        </div>
+      </div>
+    </section>
+  );
 }
 
 function DueCard({ assignment: a }: { assignment: MyAssignment }) {
