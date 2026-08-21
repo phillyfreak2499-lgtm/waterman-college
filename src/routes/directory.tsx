@@ -635,7 +635,11 @@ function PersonCard({
   return (
     <div className={cn("min-w-0", compact ? "" : "rounded-md border border-line bg-paper p-4")}>
       <div className="flex items-start gap-3">
-        <Initials name={person.name} className={compact ? "size-8 text-[0.65rem]" : "size-10"} />
+        <Initials
+          name={person.name}
+          src={person.imageUrl}
+          className={compact ? "size-8 text-[0.65rem]" : "size-10"}
+        />
         <div className="min-w-0">
           <p className="truncate font-medium">{person.name}</p>
           <p className="truncate text-sm text-muted">{displayTitle}</p>

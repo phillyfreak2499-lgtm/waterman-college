@@ -14,6 +14,7 @@ import {
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { AuthGate } from "@/components/auth-gate";
+import { ProfilePhoto } from "@/components/profile-photo";
 import { SiteShell } from "@/components/site-shell";
 import { Button } from "@/components/ui/button";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -211,6 +212,9 @@ function LockerDesk() {
         What is due, what leadership wants you to know, and what you want to remember.
       </p>
       <p className="mt-1 text-sm text-muted">Hello, {firstName}.</p>
+      <div className="mt-6">
+        <ProfilePhoto />
+      </div>
       {streak && streak.current > 0 && (
         <p className="mt-4 inline-flex items-center gap-1.5 rounded-full border border-brass/30 bg-brass-soft/60 px-3 py-1 text-sm font-medium text-navy">
           <Flame className="size-4 text-brass" aria-hidden />

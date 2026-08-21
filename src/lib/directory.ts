@@ -27,6 +27,8 @@ export type DirectoryEntry = {
   storeName: string | null;
   /** Region a DM/Professor is scoped to (null for most staff). */
   regionId: string | null;
+  /** Profile photo URL, or null for the initials fallback. */
+  imageUrl: string | null;
 };
 
 export type StoreCard = {
@@ -107,11 +109,13 @@ async function loadEntries(): Promise<DirectoryEntry[]> {
     store_id: string | null;
     store: string | null;
     region_id: string | null;
+    image: string | null;
   }>`
     select
       u.id,
       u.name,
       u.email,
+      u.image,
       p.access_role,
       p.title,
       p.phone,
@@ -136,6 +140,7 @@ async function loadEntries(): Promise<DirectoryEntry[]> {
       storeId: row.store_id || null,
       storeName: row.store || null,
       regionId: row.region_id || null,
+      imageUrl: row.image || null,
     };
   });
 }

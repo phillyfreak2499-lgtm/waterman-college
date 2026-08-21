@@ -973,6 +973,48 @@ export const uploadMedia = createServerFn({ method: "POST" })
     return { id, url: `/api/media/${id}`, filename: input.filename };
   });
 
+/**
+ * Any signed-in user may set their own profile photo (no admin needed). Same
+ * validation as uploadMedia — base64, size cap, magic-byte MIME check — then
+ * store it and point the account's image at it.
+ */
+export const setMyProfilePhoto = createServerFn({ method: "POST" })
+  .validator((input: { filename: string; mime: string; data: string }) => ({
+    filename: cleanText(input?.filename, "Filename", 255),
+    mime: cleanText(input?.mime, "Image type", 80),
+    data: cleanText(input?.data, "Image data", 2_100_000),
+  }))
+  .middleware([authMiddleware])
+  .handler(async ({ context, data: input }) => {
+    const raw = input.data.includes(",") ? input.data.slice(input.data.indexOf(",") + 1) : input.data;
+    if (!/^[a-z0-9+/]+={0,2}$/i.test(raw) || raw.length % 4 !== 0) {
+      throw new Error("The image data is invalid.");
+    }
+    const { Buffer } = await import("node:buffer");
+    const bytes = Buffer.from(raw, "base64");
+    if (!bytes.length || bytes.length > 1_500_000) {
+      throw new Error("Image is too large (keep under 1.5 MB).");
+    }
+    const mime = detectedImageMime(bytes);
+    if (!mime || mime !== input.mime.toLowerCase()) {
+      throw new Error("The file must be a valid PNG, JPEG, GIF, or WebP image.");
+    }
+    const sql = await getSql();
+    const id = globalThis.crypto.randomUUID();
+    const url = `/api/media/${id}`;
+    await sql`insert into cms_media (id, filename, mime, data) values (${id}, ${input.filename}, ${mime}, ${raw})`;
+    await sql`update "user" set image = ${url}, "updatedAt" = now() where id = ${context.userId}`;
+    return { url };
+  });
+
+export const removeMyProfilePhoto = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    const sql = await getSql();
+    await sql`update "user" set image = null, "updatedAt" = now() where id = ${context.userId}`;
+    return { ok: true };
+  });
+
 export const listMedia = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {

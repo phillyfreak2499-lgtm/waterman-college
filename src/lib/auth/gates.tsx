@@ -78,9 +78,17 @@ export function UserButton() {
   const initials = ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "A";
   return (
     <div className="flex items-center gap-2.5">
-      <span className="grid size-8 place-items-center rounded-full bg-brass-soft text-[0.7rem] font-semibold tracking-wide text-navy">
-        {initials}
-      </span>
+      {user.profileImageUrl ? (
+        <img
+          src={user.profileImageUrl}
+          alt=""
+          className="size-8 shrink-0 rounded-full object-cover"
+        />
+      ) : (
+        <span className="grid size-8 place-items-center rounded-full bg-brass-soft text-[0.7rem] font-semibold tracking-wide text-navy">
+          {initials}
+        </span>
+      )}
       <span className="max-w-[10rem] truncate text-sm font-medium">{label}</span>
       {authEnabled && (
         <button
