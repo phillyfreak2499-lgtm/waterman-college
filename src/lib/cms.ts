@@ -448,8 +448,9 @@ export async function readCatalog(): Promise<Catalog> {
     image: string;
     audience: string;
     summary: string;
+    visible_to_all: boolean;
   }>`
-    select id, role, title, nav, image, audience, summary
+    select id, role, title, nav, image, audience, summary, visible_to_all
     from cms_tracks
     where archived = false
     order by sort_order asc, title asc
@@ -482,6 +483,7 @@ export async function readCatalog(): Promise<Catalog> {
   const tracks: Track[] = trackRows.map((track) => ({
     ...track,
     href: `/training/${track.id}`,
+    visibleToAll: track.visible_to_all === true,
     lessons: lessonRows
       .filter((l) => l.track_id === track.id)
       .map((l) => ({
@@ -525,7 +527,10 @@ export const getCatalog = createServerFn({ method: "GET" })
     return {
       ...catalog,
       tracks: catalog.tracks.filter(
-        (track) => profile.allowedTabs.includes(track.role) || assigned.has(track.id),
+        (track) =>
+          track.visibleToAll ||
+          profile.allowedTabs.includes(track.role) ||
+          assigned.has(track.id),
       ),
     };
   });
@@ -734,6 +739,7 @@ export type TrackInput = {
   image: string;
   audience: string;
   summary: string;
+  visibleToAll?: boolean;
 };
 
 export const saveTrack = createServerFn({ method: "POST" })
@@ -749,6 +755,7 @@ export const saveTrack = createServerFn({ method: "POST" })
       image: safeImage(track.image, "/media/3-step-open.jpg")!,
       audience: cleanText(track.audience ?? "", "Audience", 500, false),
       summary: cleanText(track.summary ?? "", "Summary", 5_000, false),
+      visibleToAll: track.visibleToAll === true,
     };
   })
   .middleware([authMiddleware])
@@ -758,10 +765,10 @@ export const saveTrack = createServerFn({ method: "POST" })
     const id = track.id || slugify(track.title);
     const count = await sql<{ n: number }>`select count(*)::int as n from cms_tracks`;
     await sql`
-      insert into cms_tracks (id, role, title, nav, image, audience, summary, sort_order, updated_at)
+      insert into cms_tracks (id, role, title, nav, image, audience, summary, sort_order, updated_at, visible_to_all)
       values (
         ${id}, ${track.role}, ${track.title}, ${track.nav},
-        ${track.image}, ${track.audience}, ${track.summary}, ${count[0]?.n ?? 0}, now()
+        ${track.image}, ${track.audience}, ${track.summary}, ${count[0]?.n ?? 0}, now(), ${track.visibleToAll}
       )
       on conflict (id) do update set
         role = excluded.role,
@@ -770,6 +777,7 @@ export const saveTrack = createServerFn({ method: "POST" })
         image = excluded.image,
         audience = excluded.audience,
         summary = excluded.summary,
+        visible_to_all = excluded.visible_to_all,
         updated_at = now()
     `;
     return readCatalog();
@@ -820,9 +828,10 @@ export const listOfficeTracks = createServerFn({ method: "GET" })
       archived: boolean;
       updated_at: string | Date | null;
       lessons: number;
+      visible_to_all: boolean;
     }>`
       select
-        t.id, t.role, t.title, t.summary, t.archived, t.updated_at,
+        t.id, t.role, t.title, t.summary, t.archived, t.updated_at, t.visible_to_all,
         (select count(*)::int from cms_lessons l where l.track_id = t.id) as lessons
       from cms_tracks t
       order by t.archived asc, t.sort_order asc, t.title asc
@@ -836,6 +845,7 @@ export const listOfficeTracks = createServerFn({ method: "GET" })
       archived: row.archived,
       updatedAt: row.updated_at ? String(row.updated_at).slice(0, 10) : "",
       lessons: row.lessons,
+      visibleToAll: row.visible_to_all === true,
     }));
   });
 

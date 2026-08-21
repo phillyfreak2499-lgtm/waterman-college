@@ -163,7 +163,7 @@ export const getWeeklyDigest = createServerFn({ method: "GET" })
       const assignmentsForUser = assignedByUser.get(id) ?? new Set<string>();
       const tabs = allowedTabs(person.role);
       const allowed = catalog.tracks.filter(
-        (track) => tabs.includes(track.role) || assignmentsForUser.has(track.id),
+        (track) => track.visibleToAll || tabs.includes(track.role) || assignmentsForUser.has(track.id),
       );
       const stats = allowed.reduce(
         (total, track) => {

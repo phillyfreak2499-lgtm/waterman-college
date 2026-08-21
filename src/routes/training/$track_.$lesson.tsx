@@ -44,7 +44,11 @@ function LessonGate() {
     return <div className="mx-auto max-w-2xl px-5 py-24"><div className="h-40 animate-pulse rounded-md bg-navy/5" /></div>;
   }
   if (!track || !lesson) throw notFound();
-  if (!access.allowedTabs.includes(track.role) && !access.assignedTrackIds.includes(track.id)) {
+  if (
+    !track.visibleToAll &&
+    !access.allowedTabs.includes(track.role) &&
+    !access.assignedTrackIds.includes(track.id)
+  ) {
     return <LockedPath role={access.role} title="This lesson is not on your path." />;
   }
   return <LessonBody track={track} lesson={lesson} />;

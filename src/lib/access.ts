@@ -495,9 +495,10 @@ export async function assertTrackAccess(userId: string, trackId: string) {
     limit 1
   `;
   if (assigned.length) return;
-  const rows = await sql<{ role: string }>`
-    select role from cms_tracks where id = ${trackId} and archived = false limit 1
+  const rows = await sql<{ role: string; visible_to_all: boolean }>`
+    select role, visible_to_all from cms_tracks where id = ${trackId} and archived = false limit 1
   `;
+  if (rows[0]?.visible_to_all) return;
   const tab = rows[0]?.role;
   if (!tab || !isRoleId(tab) || !profile.allowedTabs.includes(tab)) {
     throw new Error("This course is not on your path");

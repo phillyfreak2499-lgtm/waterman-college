@@ -610,6 +610,7 @@ function TrainingDesk() {
   const [summary, setSummary] = useState("");
   const [body, setBody] = useState("");
   const [role, setRole] = useState<AccessRole>("specialist");
+  const [visibleToAll, setVisibleToAll] = useState(false);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -630,6 +631,7 @@ function TrainingDesk() {
           image: "/media/campus-cogs.jpg",
           audience: "Chancellor",
           summary,
+          visibleToAll,
         },
       });
       replace(next);
@@ -649,6 +651,7 @@ function TrainingDesk() {
       setTitle("");
       setSummary("");
       setBody("");
+      setVisibleToAll(false);
       toast.success("Training added.");
       setRows(await listOfficeTracks());
     } catch (err) {
@@ -667,11 +670,23 @@ function TrainingDesk() {
           <input className={darkInput} required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" />
           <textarea className={`${darkInput} min-h-20 py-2`} required value={summary} onChange={(e) => setSummary(e.target.value)} placeholder="Description" />
           <textarea className={`${darkInput} min-h-28 py-2`} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Content — text, steps, links" />
-          <select className={darkInput} value={role} onChange={(e) => setRole(e.target.value as AccessRole)}>
+          <select
+            className={darkInput}
+            value={visibleToAll ? "all" : role}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === "all") setVisibleToAll(true);
+              else {
+                setRole(value as AccessRole);
+                setVisibleToAll(false);
+              }
+            }}
+          >
             <option value="new-hires">Who can view: New Hires</option>
-            <option value="specialist">Who can view: Specialists</option>
+            <option value="specialist">Who can view: Arch Support Specialists</option>
             <option value="mit">Who can view: MIT</option>
             <option value="managers">Who can view: Managers</option>
+            <option value="all">Who can view: All (everyone)</option>
           </select>
         </div>
         <Button type="submit" className="mt-4" variant="invert" disabled={busy}>
@@ -707,6 +722,7 @@ function TrainingDesk() {
                         image: "/media/campus-cogs.jpg",
                         audience: "",
                         summary: track.summary,
+                        visibleToAll: track.visibleToAll,
                       },
                     }).then((c) => {
                       replace(c);

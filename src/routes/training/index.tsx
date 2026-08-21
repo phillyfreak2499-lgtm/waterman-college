@@ -69,11 +69,11 @@ function Campus() {
 
   const role = roleParam && access.allowedTabs.includes(roleParam) ? roleParam : access.allowedTabs[0];
   const meta = catalog.roles.find((r) => r.id === role) ?? catalog.roles[0];
-  const visible = catalog.tracks.filter((t) => t.role === role);
+  const visible = catalog.tracks.filter((t) => t.role === role || t.visibleToAll);
   const slideTracks = visible.filter((t) => trackDeck(t.id));
   const coreTracks = visible.filter((t) => !trackDeck(t.id));
   const assignedExtra = catalog.tracks.filter(
-    (t) => access.assignedTrackIds.includes(t.id) && t.role !== role,
+    (t) => access.assignedTrackIds.includes(t.id) && t.role !== role && !t.visibleToAll,
   );
   const seriesLabel = role === "managers" ? "Burgundy Track" : role === "specialist" ? "Blue Track" : null;
 

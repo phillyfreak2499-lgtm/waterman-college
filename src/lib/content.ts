@@ -28,6 +28,8 @@ export type Track = {
   audience: string;
   summary: string;
   lessons: Lesson[];
+  /** When true the course is visible to everyone, in every path (the "All" audience). */
+  visibleToAll?: boolean;
 };
 
 export const SITE = {

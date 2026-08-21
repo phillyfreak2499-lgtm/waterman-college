@@ -780,6 +780,7 @@ function TrainingEditor({
                     image: t.image,
                     audience: t.audience,
                     summary: t.summary,
+                    visibleToAll: t.visibleToAll,
                   });
                   setLessonForm(emptyLesson(t.id));
                 }}
@@ -806,19 +807,22 @@ function TrainingEditor({
             <Field label="Audience">
               <input className={inputClass} value={trackForm.audience} onChange={(e) => setTrackForm({ ...trackForm, audience: e.target.value })} placeholder="Every Specialist" />
             </Field>
-            <Field label="Tab">
+            <Field label="Who can view">
               <select
                 className={inputClass}
-                value={trackForm.role}
+                value={trackForm.visibleToAll ? "all" : trackForm.role}
                 onChange={(e) => {
                   const value = e.target.value;
-                  if (isRoleId(value)) setTrackForm({ ...trackForm, role: value });
+                  if (value === "all") setTrackForm({ ...trackForm, visibleToAll: true });
+                  else if (isRoleId(value))
+                    setTrackForm({ ...trackForm, role: value, visibleToAll: false });
                 }}
               >
                 <option value="new-hires">New Hires</option>
-                <option value="specialist">Specialist</option>
+                <option value="specialist">Arch Support Specialist</option>
                 <option value="mit">MIT</option>
                 <option value="managers">Managers</option>
+                <option value="all">All (everyone)</option>
               </select>
             </Field>
             <Field label="Short nav name">
