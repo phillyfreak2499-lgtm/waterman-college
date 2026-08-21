@@ -14,6 +14,7 @@ import {
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { AuthGate } from "@/components/auth-gate";
+import { MetricsPanel } from "@/components/metrics-panel";
 import { ProfilePhoto } from "@/components/profile-photo";
 import { SiteShell } from "@/components/site-shell";
 import { Button } from "@/components/ui/button";
@@ -235,6 +236,9 @@ function LockerDesk() {
         </div>
       ) : (
         <div className="mt-10 space-y-10">
+          {/* Performance metrics */}
+          <MetricsPanel />
+
           {/* Due & Assigned */}
           <section>
             <p className="kicker">Due on your path</p>
