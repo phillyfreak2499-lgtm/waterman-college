@@ -11,6 +11,7 @@
   --navy:#0B2A4A; --navy2:#0f3558; --cream:#f7f4ec; --gold:#C9A227;
   --gold2:#e0b83a; --ink:#0f1c24; --muted:#5a6b75; --ok:#1f7a4c; --bad:#b42318;
   --panel:#f7f4ec; --card:#ffffff; --shadow:0 18px 40px rgba(0,0,0,.28);
+  --breach:#5b8def;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%;background:var(--navy);color:var(--cream);font-family:system-ui,-apple-system,sans-serif;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
@@ -40,9 +41,11 @@ button{font:inherit;cursor:pointer;border:none}
 .fb.bad{background:#fde8e6;color:var(--bad)}
 .bar{height:10px;background:rgba(11,42,74,.15);border-radius:999px;overflow:hidden;margin:10px 0}
 .bar > i{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:999px;transition:width .2s}
+.bar.breach > i{background:linear-gradient(90deg,#3d6fd8,var(--breach))}
 .hp{display:flex;gap:6px;margin:8px 0}
 .hp span{flex:1;height:8px;border-radius:4px;background:rgba(11,42,74,.2)}
 .hp span.on{background:#e25555}
+.hp span.int{background:var(--breach)}
 .stage-grid{display:grid;gap:10px;margin-top:12px}
 .stage-btn{text-align:left;padding:14px;border-radius:14px;border:2px solid #d5dee5;background:#fff;color:var(--ink)}
 .stage-btn strong{display:block;font-size:15px;margin-bottom:4px}
@@ -54,6 +57,10 @@ button{font:inherit;cursor:pointer;border:none}
 .small{font-size:12px;color:var(--muted)}
 .row{display:flex;gap:8px}
 .row .btn{flex:1}
+.depth{display:flex;gap:4px;margin:8px 0 4px}
+.depth i{flex:1;height:6px;border-radius:3px;background:rgba(11,42,74,.18)}
+.depth i.on{background:var(--breach)}
+.depth i.done{background:var(--ok)}
 @keyframes pop{0%{transform:scale(.92);opacity:0}100%{transform:scale(1);opacity:1}}
 .pop{animation:pop .22s ease-out}
 </style>
@@ -64,10 +71,9 @@ button{font:inherit;cursor:pointer;border:none}
 (function(){
 "use strict";
 
-const SAVE_KEY = "fear-buster-v1";
+const SAVE_KEY = "fear-buster-v2";
 const SLUG = "fear-buster";
 
-/* ========== CONTENT BANK (from Customer Fears + Psych Principles + W.R.A.P.) ========== */
 const FEARS = [
   { id:"salesperson", label:"Afraid of the salesperson", short:"Salesperson fear" },
   { id:"mistake", label:"Fear of making a mistake", short:"Mistake" },
@@ -90,7 +96,6 @@ const PRINCIPLES = [
   { id:"simplify", label:"Reduce Decision Fatigue", tip:"Guide to one clear recommendation" },
 ];
 
-/* Each scenario: customer line, correct fear, best principle, best W.R.A.P. language, why */
 const SCENARIOS = [
   {
     line: "I don’t usually talk to salespeople. I’m just looking.",
@@ -178,7 +183,6 @@ const SCENARIOS = [
   },
 ];
 
-/* W.R.A.P. language options pool for distractors */
 const WRAP_DISTRACTORS = [
   "W – Why: “You should buy these because they are the best on the market.”",
   "R – Ready: “Just take my word for it — everyone loves them.”",
@@ -198,22 +202,25 @@ function shuffle(a){
 function pick(arr,n){return shuffle(arr).slice(0,n);}
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));}
 
-/* ========== STATE ========== */
 let state = {
-  screen: "title", // title | stage1 | stage2 | result
+  screen: "title",
   stage: 1,
   score: 0,
   streak: 0,
   bestStreak: 0,
   qi: 0,
   queue: [],
-  step: "fear", // fear | principle | wrap | feedback
+  step: "fear",
   selected: { fear:null, principle:null, wrap:null },
   lastCorrect: { fear:false, principle:false, wrap:false },
   health: 3,
   maxHealth: 3,
   bossHp: 2,
   bossMax: 2,
+  integrity: 3,
+  maxIntegrity: 3,
+  depth: 0,
+  maxDepth: 6,
   timer: 0,
   timerMax: 0,
   timerId: null,
@@ -235,7 +242,6 @@ function saveHigh(){
   if(window.QuadScore) window.QuadScore.report(state.score);
 }
 
-/* ========== AUDIO (light) ========== */
 let ctx=null;
 function unlock(){ if(!ctx) ctx=new (window.AudioContext||window.webkitAudioContext)(); if(ctx.state==="suspended") ctx.resume(); }
 function beep(f=440,d=0.08,type="sine",g=0.07){
@@ -253,11 +259,10 @@ const sfx = {
   ok(){ beep(523,0.07); beep(659,0.09, "triangle",0.08); },
   perfect(){ beep(523,0.06); beep(659,0.07); beep(784,0.12,"triangle",0.1); },
   bad(){ beep(180,0.18,"sawtooth",0.06); },
-  tick(){ beep(880,0.03,"square",0.03); },
+  depth(){ beep(392,0.06); beep(523,0.08,"triangle",0.09); beep(659,0.1,"triangle",0.1); },
   start(){ beep(330,0.08); beep(440,0.1,"triangle",0.08); },
 };
 
-/* ========== GAME FLOW ========== */
 function startStage(n){
   unlock(); sfx.start();
   clearTimer();
@@ -267,20 +272,33 @@ function startStage(n){
   state.bestStreak = 0;
   state.perfects = 0;
   state.qi = 0;
-  state.queue = shuffle(SCENARIOS).slice(0, n===1 ? 6 : 8);
-  state.health = 3;
-  state.maxHealth = 3;
+  state.depth = 0;
   state.step = "fear";
   state.selected = { fear:null, principle:null, wrap:null };
-  if(n===2){
+  state.health = 3;
+  state.maxHealth = 3;
+  state.integrity = 3;
+  state.maxIntegrity = 3;
+
+  if(n===1){
+    state.queue = shuffle(SCENARIOS).slice(0, 6);
+    state.screen = "stage1";
+  } else if(n===2){
+    state.queue = shuffle(SCENARIOS).slice(0, 8);
     state.bossHp = 2;
     state.bossMax = 2;
     state.timerMax = 14;
     state.timer = 14;
+    state.screen = "stage2";
+  } else {
+    state.queue = shuffle(SCENARIOS).slice(0, 6);
+    state.maxDepth = state.queue.length;
+    state.timerMax = 16;
+    state.timer = 16;
+    state.screen = "stage3";
   }
-  state.screen = n===1 ? "stage1" : "stage2";
   render();
-  if(n===2) startTimer();
+  if(n===2 || n===3) startTimer();
 }
 
 function clearTimer(){
@@ -302,7 +320,11 @@ function startTimer(){
 
 function onTimeout(){
   sfx.bad();
-  state.health = Math.max(0, state.health-1);
+  if(state.stage===2){
+    state.health = Math.max(0, state.health-1);
+  } else if(state.stage===3){
+    state.integrity = Math.max(0, state.integrity-1);
+  }
   state.streak = 0;
   state.step = "feedback";
   state.lastCorrect = { fear:false, principle:false, wrap:false };
@@ -332,6 +354,11 @@ function chooseWrap(text){
   scoreRound();
 }
 
+function depthMult(){
+  if(state.stage!==3) return 1;
+  return 1 + state.depth * 0.35;
+}
+
 function scoreRound(){
   const q = current();
   const fOk = state.selected.fear === q.fear;
@@ -349,17 +376,25 @@ function scoreRound(){
     state.streak++;
     state.bestStreak = Math.max(state.bestStreak, state.streak);
     state.perfects++;
-    const mult = Math.min(4, 1 + state.streak * 0.5);
+    let mult = Math.min(4, 1 + state.streak * 0.5);
+    if(state.stage===3) mult *= depthMult();
     pts = Math.round(pts * mult);
     sfx.perfect();
     if(state.stage===2){
       state.bossHp = Math.max(0, state.bossHp-1);
+    }
+    if(state.stage===3){
+      state.depth = Math.min(state.maxDepth, state.depth + 1);
+      sfx.depth();
     }
   } else {
     state.streak = 0;
     sfx.bad();
     if(state.stage===2){
       state.health = Math.max(0, state.health-1);
+    }
+    if(state.stage===3){
+      state.integrity = Math.max(0, state.integrity-1);
     }
   }
   state.score += pts;
@@ -369,24 +404,26 @@ function scoreRound(){
 }
 
 function nextRound(){
-  if(state.stage===2 && state.health <= 0){
-    endRun();
-    return;
-  }
+  if(state.stage===2 && state.health <= 0){ endRun(); return; }
+  if(state.stage===3 && state.integrity <= 0){ endRun(); return; }
+
   state.qi++;
-  if(state.qi >= state.queue.length){
-    endRun();
-    return;
-  }
-  // reset for next
+  if(state.qi >= state.queue.length){ endRun(); return; }
+
   state.step = "fear";
   state.selected = { fear:null, principle:null, wrap:null };
+
   if(state.stage===2){
     if(state.bossHp <= 0){
       state.bossHp = 2 + Math.floor(state.qi/3);
       state.bossMax = state.bossHp;
     }
     state.timerMax = Math.max(9, 14 - Math.floor(state.qi/2));
+    state.timer = state.timerMax;
+    startTimer();
+  }
+  if(state.stage===3){
+    state.timerMax = Math.max(8, 16 - state.depth * 1.2);
     state.timer = state.timerMax;
     startTimer();
   }
@@ -400,12 +437,12 @@ function endRun(){
   render();
 }
 
-/* ========== RENDER ========== */
 function render(){
   const app = document.getElementById("app");
   if(state.screen==="title") app.innerHTML = viewTitle();
   else if(state.screen==="stage1") app.innerHTML = viewStage1();
   else if(state.screen==="stage2") app.innerHTML = viewStage2();
+  else if(state.screen==="stage3") app.innerHTML = viewStage3();
   else if(state.screen==="result") app.innerHTML = viewResult();
   bind();
 }
@@ -427,6 +464,10 @@ function viewTitle(){
         <strong>Stage 2 — Fear Arena</strong>
         <span>Boss rush. Health bar. Timed pressure.</span>
       </button>
+      <button class="stage-btn" data-go="3">
+        <strong>Stage 3 — Mind Breach</strong>
+        <span>Deeper chambers. Rising multipliers. Path integrity.</span>
+      </button>
     </div>
     <p class="small center" style="margin-top:14px">Built from Customer Fears + Key Psychological Principles + W.R.A.P.</p>
   </div>`;
@@ -442,7 +483,6 @@ function optionsForStep(step){
     const others = PRINCIPLES.filter(p=>p.id!==q.principle);
     return shuffle([correct, ...pick(others,3)]).map(p=>({ id:p.id, label:p.label, tip:p.tip, correct:p.id===q.principle }));
   }
-  // wrap
   const correct = q.wrap;
   const distractors = pick(WRAP_DISTRACTORS.filter(w=>w!==correct), 3);
   return shuffle([correct, ...distractors]).map(w=>({ id:w, label:w, correct:w===correct }));
@@ -533,17 +573,70 @@ function viewStage2(){
   <button class="btn ghost" style="margin-top:12px" data-menu>Quit to menu</button>`;
 }
 
+function viewStage3(){
+  const q = current();
+  const step = state.step;
+  const hpPct = (state.timer / state.timerMax) * 100;
+  const mult = depthMult().toFixed(2);
+  let body = "";
+
+  if(step==="feedback"){
+    const lc = state.lastCorrect;
+    const perfect = lc.fear && lc.principle && lc.wrap;
+    const collapsed = state.integrity <= 0;
+    body = `
+      <div class="fb ${perfect?"ok":"bad"}">
+        <strong>${perfect?"Chamber breached!":(collapsed?"Path collapsed":"Integrity damaged")}</strong><br/>
+        ${perfect?`Depth ${state.depth} · Multiplier now ×${mult}`:"Path integrity reduced."}
+        <div style="margin-top:8px">${esc(q.why)}</div>
+      </div>
+      <button class="btn gold" data-next>${collapsed||state.qi+1>=state.queue.length?"See results":"Next chamber"}</button>`;
+  } else {
+    const opts = optionsForStep(step);
+    const title = step==="fear" ? "Identify the Fear" : step==="principle" ? "Choose the Principle" : "W.R.A.P. Seal";
+    body = `
+      <div class="step">${title}</div>
+      <div class="prompt">“${esc(q.line)}”</div>
+      ${opts.map(o=>`
+        <button class="opt" data-${step}="${esc(o.id)}">${esc(o.label)}</button>
+      `).join("")}`;
+  }
+
+  return `
+  <div class="hud">
+    <span class="chip">Mind Breach</span>
+    <span class="chip">Depth ${state.depth}/${state.maxDepth}</span>
+    <span class="chip">★ ${state.score}</span>
+    <span class="chip combo">×${mult}</span>
+  </div>
+  <div class="card pop">
+    <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:4px">
+      <div class="small">Path integrity</div>
+      <div class="small">Chamber ${state.qi+1}</div>
+    </div>
+    <div class="hp">${Array.from({length:state.maxIntegrity},(_,i)=>`<span class="${i<state.integrity?"int":""}"></span>`).join("")}</div>
+    <div class="depth">${Array.from({length:state.maxDepth},(_,i)=>`<i class="${i<state.depth?"done":(i===state.depth?"on":"")}"></i>`).join("")}</div>
+    ${step!=="feedback"?`
+      <div class="bar breach"><i id="timerFill" style="width:${hpPct}%"></i></div>
+      <div class="small center">${Math.ceil(state.timer)}s · deeper = higher score, tighter clock</div>
+    `:""}
+    ${body}
+  </div>
+  <button class="btn ghost" style="margin-top:12px" data-menu>Quit to menu</button>`;
+}
+
 function viewResult(){
   const perfectRate = state.queue.length ? Math.round((state.perfects/state.queue.length)*100) : 0;
+  const stageName = state.stage===1?"Basic Protocol":state.stage===2?"Fear Arena":"Mind Breach";
   return `
   <div class="top"><span class="chip">Run complete</span><span class="chip">Best ★ ${state.high}</span></div>
   <div class="card pop center">
     <div class="tag">Confidence Protocol</div>
     <h2>${state.score >= state.high && state.score>0 ? "New high score!" : "Session complete"}</h2>
-    <p class="sub">Stage ${state.stage} · ${state.perfects} perfect triples · best streak ${state.bestStreak}</p>
+    <p class="sub">${stageName} · ${state.perfects} perfect triples · best streak ${state.bestStreak}${state.stage===3?` · depth ${state.depth}`:""}</p>
     <div style="font-size:42px;font-weight:800;color:var(--navy);margin:8px 0">${state.score}</div>
     <div class="small">Accuracy (perfects): ${perfectRate}%</div>
-    <button class="btn gold" data-again style="margin-top:16px">Run Stage ${state.stage} again</button>
+    <button class="btn gold" data-again style="margin-top:16px">Run ${stageName} again</button>
     <button class="btn primary" data-menu>Back to menu</button>
   </div>`;
 }
