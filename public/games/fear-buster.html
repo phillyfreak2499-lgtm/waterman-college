@@ -117,7 +117,7 @@ button:disabled{cursor:default;opacity:.5}
 <script>
 (function(){
 "use strict";
-const SAVE_KEY="fear-buster-v5";
+const SAVE_KEY="fear-buster-v6";
 const FEARS=[
   {id:"salesperson",label:"Afraid of the salesperson"},
   {id:"mistake",label:"Fear of making a mistake"},
@@ -205,13 +205,40 @@ function beep(f,d,type,g){if(!ctx)return;const t=ctx.currentTime,o=ctx.createOsc
   o.type=type||"sine";o.frequency.value=f;gn.gain.setValueAtTime(0.0001,t);
   gn.gain.exponentialRampToValueAtTime(g||0.065,t+0.01);gn.gain.exponentialRampToValueAtTime(0.0001,t+(d||0.08));
   o.connect(gn);gn.connect(ctx.destination);o.start(t);o.stop(t+(d||0.08)+0.02);}
+
+/* Haptic patterns (ms). No-ops safely when Vibration API is unavailable. */
+const HAP = {
+  click:  [12],
+  select: [18],
+  ok:     [20, 30, 20],
+  perfect:[30, 40, 30, 40, 60],
+  bad:    [60, 40, 80],
+  timeout:[100, 50, 100],
+  depth:  [25, 35, 25, 35, 45],
+  boss:   [40, 50, 40],
+  start:  [15, 40, 15, 40, 30],
+  high:   [40, 50, 40, 50, 80, 60, 100],
+};
+function hap(name){
+  try{
+    if(typeof navigator==="undefined"||!navigator.vibrate) return;
+    const pat = HAP[name];
+    if(!pat) return;
+    navigator.vibrate(0);
+    navigator.vibrate(pat);
+  }catch(e){}
+}
+
 const sfx={
-  ok(){beep(523,.055);beep(659,.075,"triangle",.065);},
-  perfect(){beep(523,.05);beep(659,.055);beep(784,.1,"triangle",.085);},
-  bad(){beep(170,.18,"sawtooth",.05);},
-  depth(){beep(392,.05);beep(523,.065,"triangle",.075);beep(659,.085,"triangle",.085);},
-  start(){beep(330,.065);beep(440,.085,"triangle",.065);},
-  click(){beep(700,.03,"sine",.04);}
+  ok(){beep(523,.055);beep(659,.075,"triangle",.065);hap("ok");},
+  perfect(){beep(523,.05);beep(659,.055);beep(784,.1,"triangle",.085);hap("perfect");},
+  bad(){beep(170,.18,"sawtooth",.05);hap("bad");},
+  depth(){beep(392,.05);beep(523,.065,"triangle",.075);beep(659,.085,"triangle",.085);hap("depth");},
+  start(){beep(330,.065);beep(440,.085,"triangle",.065);hap("start");},
+  click(){beep(700,.03,"sine",.04);hap("click");},
+  timeout(){hap("timeout");},
+  boss(){hap("boss");},
+  high(){hap("high");}
 };
 
 function startStage(n){
@@ -227,7 +254,7 @@ function startStage(n){
 function clearTimer(){if(state.timerId){clearInterval(state.timerId);state.timerId=null;}}
 function startTimer(){clearTimer();state.timer=state.timerMax;state.timerId=setInterval(()=>{
   state.timer-=0.1;if(state.timer<=0){state.timer=0;clearTimer();onTimeout();}updateTimerUI();},100);}
-function onTimeout(){if(state.locked)return;sfx.bad();state.locked=true;
+function onTimeout(){if(state.locked)return;sfx.bad();sfx.timeout();state.locked=true;
   if(state.stage===2)state.health=Math.max(0,state.health-1);
   if(state.stage===3)state.integrity=Math.max(0,state.integrity-1);
   state.streak=0;state.step="feedback";state.lastCorrect={fear:false,principle:false,wrap:false};render();}
@@ -245,7 +272,7 @@ function scoreRound(){
   const perfect=fOk&&pOk&&wOk;
   if(perfect){state.streak++;state.bestStreak=Math.max(state.bestStreak,state.streak);state.perfects++;
     let mult=comboMult();if(state.stage===3)mult*=depthMult();pts=Math.round(pts*mult);sfx.perfect();
-    if(state.stage===2)state.bossHp=Math.max(0,state.bossHp-1);
+    if(state.stage===2){state.bossHp=Math.max(0,state.bossHp-1);sfx.boss();}
     if(state.stage===3){state.depth=Math.min(state.maxDepth,state.depth+1);sfx.depth();}
   }else{state.streak=0;sfx.bad();
     if(state.stage===2)state.health=Math.max(0,state.health-1);
@@ -262,7 +289,7 @@ function nextRound(){
   if(state.stage===3){state.timerMax=Math.max(8,16-state.depth*1.2);state.timer=state.timerMax;startTimer();}
   render();
 }
-function endRun(){clearTimer();saveHigh();state.screen="result";render();}
+function endRun(){clearTimer();const wasHigh=state.score>state.high;saveHigh();if(wasHigh&&state.score>0)sfx.high();state.screen="result";render();}
 function stepDots(){const order=["fear","principle","wrap"];const idx=order.indexOf(state.step);
   return order.map((s,i)=>`<div class="step-dot ${i<idx?"done":i===idx?"on":""}"></div>`).join("");}
 function optionsForStep(step){
