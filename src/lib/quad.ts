@@ -53,4 +53,10 @@ export const QUAD_GAMES = [
     file: "/games/care-floor-commander.html",
     blurb: "Run the floor when it is busy. Protect the chair.",
   },
+  {
+    slug: "fear-buster",
+    title: "Fear Buster",
+    file: "/games/fear-buster.html",
+    blurb: "Confidence Protocol — identify the fear, fire the principle, seal with W.R.A.P.",
+  },
 ] as const;
