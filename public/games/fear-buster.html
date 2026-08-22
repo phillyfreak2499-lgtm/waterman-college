@@ -103,6 +103,13 @@ button:disabled{cursor:default;opacity:.5}
 .fade-in{animation:fadeup .3s cubic-bezier(.2,.85,.2,1)}
 .pulse-gold{animation:pulseG 1.2s ease-in-out infinite}
 @keyframes pulseG{0%,100%{box-shadow:0 0 0 0 rgba(201,162,39,.35)}50%{box-shadow:0 0 0 6px rgba(201,162,39,0)}}
+.opt:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.stage-btn:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.btn:focus-visible{outline:2px solid rgba(201,162,39,.7);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){
+  .pop,.fade-in,.pulse-gold{animation:none!important}
+  .opt,.btn,.stage-btn{transition:none!important}
+}
 </style>
 </head>
 <body>
@@ -110,7 +117,7 @@ button:disabled{cursor:default;opacity:.5}
 <script>
 (function(){
 "use strict";
-const SAVE_KEY="fear-buster-v4";
+const SAVE_KEY="fear-buster-v5";
 const FEARS=[
   {id:"salesperson",label:"Afraid of the salesperson"},
   {id:"mistake",label:"Fear of making a mistake"},
@@ -181,7 +188,7 @@ const WRAP_DISTRACTORS=[
 ];
 function shuffle(a){const x=a.slice();for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[x[i],x[j]]=[x[j],x[i]];}return x;}
 function pick(arr,n){return shuffle(arr).slice(0,n);}
-function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));}
+function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&","<":"<",">":">","\"":""","'":"&#39;"}[c]));}
 
 let state={screen:"title",stage:1,score:0,streak:0,bestStreak:0,qi:0,queue:[],step:"fear",
   selected:{fear:null,principle:null,wrap:null},lastCorrect:{fear:false,principle:false,wrap:false},
@@ -292,8 +299,11 @@ function viewTitle(){loadHigh();return `
 function viewStage1(){
   const q=current(),step=state.step;let body="";
   if(step==="feedback"){const lc=state.lastCorrect,perfect=lc.fear&&lc.principle&&lc.wrap;
+    const fearLab=(FEARS.find(f=>f.id===q.fear)||{}).label||q.fear;
+    const prinLab=(PRINCIPLES.find(p=>p.id===q.principle)||{}).label||q.principle;
     body=`<div class="fb ${perfect?"ok":"bad"} fade-in"><strong>${perfect?"Perfect triple":"Review the gaps"}</strong>
-      Fear ${lc.fear?"✓":"✗"} · Principle ${lc.principle?"✓":"✗"} · W.R.A.P. ${lc.wrap?"✓":"✗"}
+      <div style="margin:6px 0 2px;font-size:12.5px;opacity:.9">Fear ${lc.fear?"✓":"✗"} · Principle ${lc.principle?"✓":"✗"} · W.R.A.P. ${lc.wrap?"✓":"✗"}</div>
+      ${perfect?"":`<div style="margin-top:8px;font-size:12.5px;color:var(--ink);line-height:1.45"><b>Fear:</b> ${esc(fearLab)}<br/><b>Principle:</b> ${esc(prinLab)}</div>`}
       <div style="margin-top:9px;color:var(--ink)">${esc(q.why)}</div></div>
       <button class="btn gold" data-next>Next scenario</button>`;}
   else{const opts=optionsForStep(step);
