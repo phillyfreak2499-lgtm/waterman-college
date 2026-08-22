@@ -4,6 +4,21 @@
  * the streak bridge in activity.ts always agree.
  */
 
+/** The company's calendar zone — the one every date feature reckons in. */
+export const BUSINESS_TIME_ZONE = "America/Chicago";
+
+const WEEKDAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/** The current weekday (0 = Sunday) in the company's zone, not the viewer's. */
+export function businessWeekdayNow(now: Date = new Date()): number {
+  const name = new Intl.DateTimeFormat("en-US", {
+    timeZone: BUSINESS_TIME_ZONE,
+    weekday: "short",
+  }).format(now);
+  const index = WEEKDAY_NAMES.indexOf(name);
+  return index >= 0 ? index : now.getDay();
+}
+
 /** Word patterns for each weekday, indexed by Date#getDay (0 = Sunday). */
 const DAY_PATTERNS = [
   /\bsun(day)?s?\b/i,
@@ -26,9 +41,9 @@ export function offWeekdays(daysOff: string | null | undefined): Set<number> {
   return out;
 }
 
-/** True when the free-text days-off note mentions today's weekday. */
+/** True when the note mentions today's weekday — today in the business zone. */
 export function isOffToday(daysOff: string, now: Date = new Date()): boolean {
-  return offWeekdays(daysOff).has(now.getDay());
+  return offWeekdays(daysOff).has(businessWeekdayNow(now));
 }
 
 /** Weekday (0–6, Sunday first) of a YYYY-MM-DD label, timezone-free. */

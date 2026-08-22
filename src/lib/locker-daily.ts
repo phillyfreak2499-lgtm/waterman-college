@@ -51,13 +51,16 @@ const NEW_HIRE_DAYS = 3;
 /** Most shout-outs one person can send in a rolling day. */
 const SHOUTOUT_DAILY_CAP = 25;
 
+/** Real day counts per month; February keeps 29 so leap-day birthdays fit. */
+const DAYS_IN_MONTH = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
 /** Coerce "M/D", "MM-DD", or "MM-DD" with junk spacing into padded MM-DD. */
 export function normalizeMonthDay(value: string | null | undefined): string | null {
   const m = (value ?? "").trim().match(/^(\d{1,2})[/-](\d{1,2})$/);
   if (!m) return null;
   const month = Number(m[1]);
   const day = Number(m[2]);
-  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
+  if (month < 1 || month > 12 || day < 1 || day > DAYS_IN_MONTH[month - 1]) return null;
   return `${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
 
@@ -65,11 +68,30 @@ export function normalizeMonthDay(value: string | null | undefined): string | nu
  * The one birthday check: does a stored birthday (MM-DD, tolerant of "M/D")
  * fall on the given YYYY-MM-DD calendar day? Every birthday feature — the
  * locker takeover, the directory cake, teammate notes, eve reminders —
- * routes through this.
+ * routes through this. Feb 29 birthdays celebrate on Feb 28 when the year
+ * has no leap day.
  */
 export function isBirthdayOn(birthday: string | null | undefined, day: string): boolean {
   const md = normalizeMonthDay(birthday);
-  return md !== null && md === day.slice(5);
+  if (md === null) return false;
+  if (md === day.slice(5)) return true;
+  if (md === "02-29" && day.slice(5) === "02-28") {
+    const year = Number(day.slice(0, 4));
+    const leap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+    return !leap;
+  }
+  return false;
+}
+
+/** Writes that broadcast to coworkers require an approved account. */
+export async function requireApproved(userId: string): Promise<void> {
+  const sql = await getSql();
+  const rows = await sql<{ account_status: string | null }>`
+    select account_status from user_profiles where user_id = ${userId} limit 1
+  `;
+  if (rows[0]?.account_status !== "approved") {
+    throw new Error("Your account must be approved first.");
+  }
 }
 
 /** Step a YYYY-MM-DD label forward one day (labels are timezone-free). */
@@ -156,11 +178,17 @@ export const getLockerDaily = createServerFn({ method: "GET" })
     if (featured[0]) {
       shoutout = { fromName: featured[0].name, body: featured[0].body };
     } else {
+      // The not-exists guard keeps two concurrent locker loads from each
+      // promoting a different shout-out (which would silently burn one).
       const taken = await sql<{ body: string; from_user: string }>`
         update locker_shoutouts set seen_on = ${today}
         where id = (
           select id from locker_shoutouts
           where to_user = ${userId} and seen_on is null
+            and not exists (
+              select 1 from locker_shoutouts s2
+              where s2.to_user = ${userId} and s2.seen_on = ${today}
+            )
           order by created_at asc
           limit 1
         )
@@ -247,59 +275,78 @@ async function sweepBirthdayEveReminders(): Promise<void> {
   `;
   const celebrants = rows.filter((r) => isBirthdayOn(r.birthday, tomorrow));
 
+  // Each celebrant is handled independently: one failure must not abort the
+  // rest, and a failed send releases its ledger claim so a later request
+  // (or another instance) can retry instead of losing the reminder for good.
   for (const person of celebrants) {
-    const claimed = await sql<{ day: string }>`
-      insert into birthday_reminder_ledger (day, birthday_user)
-      values (${tomorrow}, ${person.user_id})
-      on conflict do nothing
-      returning day
-    `;
-    if (!claimed[0]) continue;
-
-    const recipients = new Set<string>();
-    if (person.reports_to) recipients.add(person.reports_to);
-    if (person.store_id) {
-      if (!person.reports_to) {
-        const managers = await sql<{ user_id: string }>`
-          select user_id from user_profiles
-          where store_id = ${person.store_id}
-            and access_role = 'managers'
-            and account_status = 'approved'
-        `;
-        for (const m of managers) recipients.add(m.user_id);
-      }
-      const store = await sql<{ region_id: string | null }>`
-        select region_id from stores where id = ${person.store_id} limit 1
+    let claimedHere = false;
+    try {
+      const claimed = await sql<{ day: string }>`
+        insert into birthday_reminder_ledger (day, birthday_user)
+        values (${tomorrow}, ${person.user_id})
+        on conflict do nothing
+        returning day
       `;
-      if (store[0]?.region_id) {
-        const regionals = await sql<{ user_id: string }>`
-          select user_id from user_profiles
-          where access_role = 'regional'
-            and region_id = ${store[0].region_id}
-            and account_status = 'approved'
+      if (!claimed[0]) continue;
+      claimedHere = true;
+
+      const recipients = new Set<string>();
+      if (person.reports_to) recipients.add(person.reports_to);
+      if (person.store_id) {
+        if (!person.reports_to) {
+          const managers = await sql<{ user_id: string }>`
+            select user_id from user_profiles
+            where store_id = ${person.store_id}
+              and access_role = 'managers'
+              and account_status = 'approved'
+          `;
+          for (const m of managers) recipients.add(m.user_id);
+        }
+        const store = await sql<{ region_id: string | null }>`
+          select region_id from stores where id = ${person.store_id} limit 1
         `;
-        for (const r of regionals) recipients.add(r.user_id);
+        if (store[0]?.region_id) {
+          const regionals = await sql<{ user_id: string }>`
+            select user_id from user_profiles
+            where access_role = 'regional'
+              and region_id = ${store[0].region_id}
+              and account_status = 'approved'
+          `;
+          for (const r of regionals) recipients.add(r.user_id);
+        }
+      }
+      recipients.delete(person.user_id);
+      if (recipients.size === 0) continue;
+
+      const { dispatchNotice } = await import("@/lib/notify");
+      await dispatchNotice({
+        kind: "account",
+        title: `🎂 ${person.name}'s birthday is tomorrow`,
+        body: `Don't forget to wish ${person.name} a happy birthday!`,
+        href: "/directory",
+        userIds: [...recipients],
+      });
+    } catch {
+      if (claimedHere) {
+        try {
+          await sql`
+            delete from birthday_reminder_ledger
+            where day = ${tomorrow} and birthday_user = ${person.user_id}
+          `;
+        } catch {
+          // Claim stays; worst case this one reminder is lost, not the sweep.
+        }
       }
     }
-    recipients.delete(person.user_id);
-    if (recipients.size === 0) continue;
-
-    const { dispatchNotice } = await import("@/lib/notify");
-    await dispatchNotice({
-      kind: "account",
-      title: `🎂 ${person.name}'s birthday is tomorrow`,
-      body: `Don't forget to wish ${person.name} a happy birthday!`,
-      href: "/directory",
-      userIds: [...recipients],
-    });
   }
 }
 
 /**
  * Is today the signed-in user's birthday? Powers the locker/training
- * takeover, so it stays cheap. It also piggybacks the eve-reminder sweep —
- * this endpoint is hit constantly, which keeps reminders timely without a
- * cron.
+ * takeover, so it stays cheap: the answer returns immediately and the
+ * daily/weekly sweeps it piggybacks (this endpoint is hit constantly,
+ * which keeps them timely without a cron) run detached, never in the
+ * response path.
  */
 export const isMyBirthdayToday = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
@@ -308,13 +355,19 @@ export const isMyBirthdayToday = createServerFn({ method: "GET" })
     const rows = await sql<{ birthday: string | null }>`
       select birthday from user_profiles where user_id = ${context.userId} limit 1
     `;
-    try {
-      await sweepBirthdayEveReminders();
-      const { sweepWeeklyPulse } = await import("@/lib/team-pulse");
-      await sweepWeeklyPulse();
-    } catch {
-      // Reminders and pulses are best-effort; never block the page on them.
-    }
+    void (async () => {
+      try {
+        await sweepBirthdayEveReminders();
+      } catch {
+        // Best-effort; the sweep retries on later requests.
+      }
+      try {
+        const { sweepWeeklyPulse } = await import("@/lib/team-pulse");
+        await sweepWeeklyPulse();
+      } catch {
+        // Same.
+      }
+    })();
     return { birthday: isBirthdayOn(rows[0]?.birthday, businessToday()) };
   });
 
@@ -356,6 +409,7 @@ export const setLockerStyle = createServerFn({ method: "POST" })
   })
   .middleware([authMiddleware])
   .handler(async ({ context, data }) => {
+    await requireApproved(context.userId);
     const sql = await getSql();
     await sql`
       insert into user_profiles (user_id, locker_accent, locker_stickers, created_at)
@@ -402,6 +456,7 @@ export const sendShoutout = createServerFn({ method: "POST" })
     if (data.toUserId === context.userId) {
       throw new Error("Aim it at a coworker — you already know you're great.");
     }
+    await requireApproved(context.userId);
     const sql = await getSql();
     const recipient = await sql<{ account_status: string | null }>`
       select account_status from user_profiles where user_id = ${data.toUserId} limit 1

@@ -38,6 +38,8 @@ export type TeamMember = {
   store: string | null;
   reportsTo: string | null;
   reportsToName: string | null;
+  /** Regular days off, free text from the directory; empty when unset. */
+  daysOff: string;
   done: number;
   total: number;
   pct: number;
@@ -119,6 +121,14 @@ async function buildTeam(actorId: string, actorRole: AccessRole): Promise<TeamSn
   `
     : [];
 
+  const offRows = visible.length
+    ? await sql<{ user_id: string; days_off: string | null }>`
+        select user_id, days_off from user_profiles
+        where user_id = any(${[...idSet]}::text[])
+      `
+    : [];
+  const daysOffById = new Map(offRows.map((r) => [r.user_id, (r.days_off ?? "").trim()]));
+
   const names = new Map(all.map((p) => [p.id, p.name]));
   const titles = new Map(catalog.tracks.map((t) => [t.id, t.title]));
   const assignments: Assignment[] = assignAll
@@ -152,6 +162,7 @@ async function buildTeam(actorId: string, actorRole: AccessRole): Promise<TeamSn
       store: person.store,
       reportsTo: person.reportsTo,
       reportsToName: person.reportsTo ? names.get(person.reportsTo) ?? null : null,
+      daysOff: daysOffById.get(person.id) ?? "",
       done: stats.done,
       total: stats.total,
       pct: stats.pct,

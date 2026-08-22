@@ -74,14 +74,23 @@ function makeConfetti(count: number): Piece[] {
   }));
 }
 
+// One check per calendar day per tab: navigating between the five gated
+// routes should not re-blank the page on a fresh round-trip every time.
+let birthdayCache: { day: string; birthday: boolean } | null = null;
+
 export function BirthdayGate({ children }: { children: ReactNode }) {
   const { user } = useCurrentUserState();
-  const [state, setState] = useState<"checking" | "party" | "normal">("checking");
+  const today = new Date().toDateString();
+  const [state, setState] = useState<"checking" | "party" | "normal">(() =>
+    birthdayCache?.day === today ? (birthdayCache.birthday ? "party" : "normal") : "checking",
+  );
 
   useEffect(() => {
+    if (birthdayCache?.day === today) return;
     let cancelled = false;
     isMyBirthdayToday()
       .then((r) => {
+        birthdayCache = { day: today, birthday: r.birthday };
         if (!cancelled) setState(r.birthday ? "party" : "normal");
       })
       .catch(() => {
@@ -91,7 +100,7 @@ export function BirthdayGate({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [today]);
 
   if (state === "checking") {
     return <div className="min-h-[50vh]" aria-hidden="true" />;

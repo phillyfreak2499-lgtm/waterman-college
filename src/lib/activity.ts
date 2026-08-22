@@ -1,9 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
-import { offWeekdays, weekdayOf } from "@/lib/days-off";
+import { BUSINESS_TIME_ZONE, offWeekdays, weekdayOf } from "@/lib/days-off";
 import { getSql } from "@/lib/db";
-
-const BUSINESS_TIME_ZONE = "America/Chicago";
 
 /** Today as a YYYY-MM-DD calendar date in the company's zone. */
 export function businessToday(): string {

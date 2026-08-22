@@ -12,6 +12,7 @@ import {
   assignableRoles,
   type AccessRole,
 } from "@/lib/access";
+import { isOffToday } from "@/lib/days-off";
 import { assignTraining, getTeam, groupTeam, revokeTraining, type TeamMember, type TeamSnapshot } from "@/lib/org";
 import { listTeamEvalStatus } from "@/lib/presentation-eval";
 
@@ -111,6 +112,9 @@ function TeamDesk() {
     return hay.includes(query.trim().toLowerCase());
   });
   const groups = groupTeam(filtered, snap.viewerId);
+  const offTodayNames = snap.people
+    .filter((p) => p.role !== "pending" && p.daysOff && isOffToday(p.daysOff))
+    .map((p) => p.name.split(" ")[0]);
   const placed = snap.people.filter((p) => p.role !== "pending");
   const avg = placed.length
     ? Math.round(placed.reduce((n, p) => n + p.pct, 0) / placed.length)
@@ -129,6 +133,12 @@ function TeamDesk() {
           <p className="mt-4 max-w-xl text-muted">
             See who has finished their path. Assign the next course to anyone under you.
           </p>
+          {offTodayNames.length > 0 && (
+            <p className="mt-2 text-sm text-muted">
+              <span className="font-medium text-brass">Off today:</span>{" "}
+              {offTodayNames.join(", ")}
+            </p>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Button asChild variant="outline" size="sm">

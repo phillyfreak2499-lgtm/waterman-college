@@ -22,8 +22,14 @@ see is a short, warm message meant to start their day well — "A note for you."
 
 ## Files
 
-- `src/lib/bright-note.ts` — new pure module: message pools, shout-out
-  builders, and the deterministic daily picker. No server calls.
-- `src/routes/locker.tsx` — renders the note card at the top of the locker,
-  built entirely from data the page already loads. No new requests, no schema
-  changes, no migration.
+- `src/lib/bright-note.ts` — pure module: message pools, shout-out builders,
+  and the deterministic daily picker (no server calls of its own).
+- `src/routes/locker.tsx` — renders the note card at the top of the locker.
+
+## Since v1
+
+The note has grown server-side inputs beyond what the locker page already
+loaded: `getLockerDaily` (`src/lib/locker-daily.ts`) now feeds it birthdays,
+work anniversaries, peer shout-outs, new-hire welcomes, teammate events, and
+fresh win stories, backed by migrations 0022–0026. See those modules for the
+current data flow; only the message-picking itself remains pure client logic.

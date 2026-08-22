@@ -1,4 +1,4 @@
-import { businessToday } from "@/lib/activity";
+import { businessToday, computeStreak } from "@/lib/activity";
 import { readCatalog } from "@/lib/cms";
 import { normalizeMonthDay } from "@/lib/locker-daily";
 import { offWeekdays, weekdayOf } from "@/lib/days-off";
@@ -44,10 +44,10 @@ function iso(value: unknown): string {
   return "";
 }
 
-/** MM-DD values for the next seven calendar days after `today`. */
+/** MM-DD values for today through six days out — a Monday pulse's "this week". */
 function upcomingMonthDays(today: string): Set<string> {
   const out = new Set<string>();
-  for (let i = 1; i <= 7; i++) out.add(addDays(today, i).slice(5));
+  for (let i = 0; i <= 6; i++) out.add(addDays(today, i).slice(5));
   return out;
 }
 
@@ -138,9 +138,11 @@ async function buildStoreSummaries(today: string): Promise<StoreSummary[]> {
       overdue.push({ name: person.name.split(" ")[0], track: track.title });
     }
 
-    // A streak "went quiet" when someone active 3+ consecutive days stopped
-    // 2–5 days ago — with at least one of those silent days being a working
-    // day for them, so a Sun/Mon off-schedule doesn't get flagged Monday.
+    // A streak "went quiet" when someone active 3+ days stopped 2–5 days
+    // ago — with at least one of those silent days being a working day for
+    // them, so a Sun/Mon off-schedule doesn't get flagged Monday. The run
+    // length uses the same off-day-bridged computeStreak the locker shows,
+    // anchored at their last active day.
     const lapsed: StoreSummary["lapsed"] = [];
     for (const p of crew) {
       const days = (activityByUser.get(p.user_id) ?? []).sort();
@@ -152,8 +154,7 @@ async function buildStoreSummaries(today: string): Promise<StoreSummary[]> {
         if (off.size >= 7 || !off.has(weekdayOf(d))) hasWorkGap = true;
       }
       if (!hasWorkGap) continue;
-      let run = 1;
-      for (let i = days.length - 2; i >= 0 && days[i] === addDays(days[i + 1], -1); i--) run++;
+      const run = computeStreak(days, last, off).current;
       if (run >= 3) lapsed.push({ name: p.name.split(" ")[0], run });
     }
 
@@ -232,37 +233,54 @@ export async function sweepWeeklyPulse(): Promise<void> {
   `;
   if (!leaders.length) return;
 
+  // Per-leader isolation: one failed send releases its ledger claim and the
+  // loop moves on, so a hiccup never drops the remaining leaders' pulses.
   let summaries: StoreSummary[] | null = null;
   for (const leader of leaders) {
-    const claimed = await sql<{ week: string }>`
-      insert into weekly_pulse_ledger (week, user_id)
-      values (${today}, ${leader.user_id})
-      on conflict do nothing
-      returning week
-    `;
-    if (!claimed[0]) continue;
-    summaries ??= await buildStoreSummaries(today);
+    let claimedHere = false;
+    try {
+      const claimed = await sql<{ week: string }>`
+        insert into weekly_pulse_ledger (week, user_id)
+        values (${today}, ${leader.user_id})
+        on conflict do nothing
+        returning week
+      `;
+      if (!claimed[0]) continue;
+      claimedHere = true;
+      summaries ??= await buildStoreSummaries(today);
 
-    if (leader.access_role === "managers" && leader.store_id) {
-      const summary = summaries.find((s) => s.storeId === leader.store_id);
-      if (!summary) continue;
-      await dispatchNotice({
-        kind: "training",
-        title: `Monday team pulse — ${summary.storeName}`,
-        body: storeBody(summary),
-        href: "/team",
-        userIds: [leader.user_id],
-      });
-    } else if (leader.access_role === "regional" && leader.region_id) {
-      const regionStores = summaries.filter((s) => s.regionId === leader.region_id);
-      if (!regionStores.length) continue;
-      await dispatchNotice({
-        kind: "training",
-        title: "Monday team pulse — your region",
-        body: regionBody(regionStores),
-        href: "/team",
-        userIds: [leader.user_id],
-      });
+      if (leader.access_role === "managers" && leader.store_id) {
+        const summary = summaries.find((s) => s.storeId === leader.store_id);
+        if (!summary) continue;
+        await dispatchNotice({
+          kind: "training",
+          title: `Monday team pulse — ${summary.storeName}`,
+          body: storeBody(summary),
+          href: "/team",
+          userIds: [leader.user_id],
+        });
+      } else if (leader.access_role === "regional" && leader.region_id) {
+        const regionStores = summaries.filter((s) => s.regionId === leader.region_id);
+        if (!regionStores.length) continue;
+        await dispatchNotice({
+          kind: "training",
+          title: "Monday team pulse — your region",
+          body: regionBody(regionStores),
+          href: "/team",
+          userIds: [leader.user_id],
+        });
+      }
+    } catch {
+      if (claimedHere) {
+        try {
+          await sql`
+            delete from weekly_pulse_ledger
+            where week = ${today} and user_id = ${leader.user_id}
+          `;
+        } catch {
+          // Claim stays; worst case this one pulse is lost, not the sweep.
+        }
+      }
     }
   }
 }

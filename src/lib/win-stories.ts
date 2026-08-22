@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { readAccessRole, isOrgWide } from "@/lib/access";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
+import { requireApproved } from "@/lib/locker-daily";
 
 /**
  * Win stories: two-sentence Client wins anyone can post, so the whole
@@ -69,6 +70,7 @@ export const postWinStory = createServerFn({ method: "POST" })
   })
   .middleware([authMiddleware])
   .handler(async ({ context, data }) => {
+    await requireApproved(context.userId);
     const sql = await getSql();
     const sent = await sql<{ n: number }>`
       select count(*)::int as n from win_stories
