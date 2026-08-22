@@ -268,6 +268,7 @@ function LockerDesk() {
       isNewHire: daily?.isNewHire ?? false,
       peerShoutout: daily?.shoutout ?? null,
       teamEvents: daily?.teamEvents ?? [],
+      recentWin: daily?.recentWin ?? null,
     });
   }, [
     loading,
@@ -664,6 +665,7 @@ function LockerDesk() {
               <QuickLink to="/floor" label="Floor Mode" />
               <QuickLink to="/notifications" label="Inbox" />
               <QuickLink to="/quad" label="The Quad" />
+              <QuickLink to="/wins" label="Win Stories" />
               <QuickLink to="/remarkable" label="Be Remarkable" />
               <QuickLink to="/directory" label="Directory" />
             </div>

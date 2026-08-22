@@ -28,6 +28,7 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as RemarkableRouteImport } from './routes/remarkable'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as WhyRouteImport } from './routes/why'
+import { Route as WinsRouteImport } from './routes/wins'
 import { Route as QuadGameRouteImport } from './routes/quad_.$game'
 import { Route as TeamHealthRouteImport } from './routes/team_.health'
 import { Route as TrainingIndexRouteImport } from './routes/training/index'
@@ -135,6 +136,11 @@ const WhyRoute = WhyRouteImport.update({
   path: '/why',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WinsRoute = WinsRouteImport.update({
+  id: '/wins',
+  path: '/wins',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const QuadGameRoute = QuadGameRouteImport.update({
   id: '/quad_/$game',
   path: '/quad/$game',
@@ -212,6 +218,7 @@ export interface FileRoutesByFullPath {
   '/remarkable': typeof RemarkableRoute
   '/team': typeof TeamRoute
   '/why': typeof WhyRoute
+  '/wins': typeof WinsRoute
   '/quad/$game': typeof QuadGameRoute
   '/team/health': typeof TeamHealthRoute
   '/training/$track': typeof TrainingTrackRoute
@@ -244,6 +251,7 @@ export interface FileRoutesByTo {
   '/remarkable': typeof RemarkableRoute
   '/team': typeof TeamRoute
   '/why': typeof WhyRoute
+  '/wins': typeof WinsRoute
   '/quad/$game': typeof QuadGameRoute
   '/team/health': typeof TeamHealthRoute
   '/training/$track': typeof TrainingTrackRoute
@@ -277,6 +285,7 @@ export interface FileRoutesById {
   '/remarkable': typeof RemarkableRoute
   '/team': typeof TeamRoute
   '/why': typeof WhyRoute
+  '/wins': typeof WinsRoute
   '/quad_/$game': typeof QuadGameRoute
   '/team_/health': typeof TeamHealthRoute
   '/training/$track': typeof TrainingTrackRoute
@@ -311,6 +320,7 @@ export interface FileRouteTypes {
     | '/remarkable'
     | '/team'
     | '/why'
+    | '/wins'
     | '/quad/$game'
     | '/team/health'
     | '/training/$track'
@@ -343,6 +353,7 @@ export interface FileRouteTypes {
     | '/remarkable'
     | '/team'
     | '/why'
+    | '/wins'
     | '/quad/$game'
     | '/team/health'
     | '/training/$track'
@@ -375,6 +386,7 @@ export interface FileRouteTypes {
     | '/remarkable'
     | '/team'
     | '/why'
+    | '/wins'
     | '/quad_/$game'
     | '/team_/health'
     | '/training/$track'
@@ -408,6 +420,7 @@ export interface RootRouteChildren {
   RemarkableRoute: typeof RemarkableRoute
   TeamRoute: typeof TeamRoute
   WhyRoute: typeof WhyRoute
+  WinsRoute: typeof WinsRoute
   QuadGameRoute: typeof QuadGameRoute
   TeamHealthRoute: typeof TeamHealthRoute
   TrainingTrackRoute: typeof TrainingTrackRoute
@@ -556,6 +569,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WhyRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/wins': {
+      id: '/wins'
+      path: '/wins'
+      fullPath: '/wins'
+      preLoaderRoute: typeof WinsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/quad_/$game': {
       id: '/quad_/$game'
       path: '/quad/$game'
@@ -656,6 +676,7 @@ const rootRouteChildren: RootRouteChildren = {
   RemarkableRoute: RemarkableRoute,
   TeamRoute: TeamRoute,
   WhyRoute: WhyRoute,
+  WinsRoute: WinsRoute,
   QuadGameRoute: QuadGameRoute,
   TeamHealthRoute: TeamHealthRoute,
   TrainingTrackRoute: TrainingTrackRoute,

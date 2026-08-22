@@ -56,6 +56,8 @@ export type BrightNoteInput = {
   peerShoutout?: { fromName: string; body: string } | null;
   /** Same-store teammates with a birthday, anniversary, or first days today. */
   teamEvents?: TeamEventInput[];
+  /** A fresh win story by a coworker, worth pointing the reader to. */
+  recentWin?: { authorName: string; store: string | null } | null;
 };
 
 /** Local date as YYYY-MM-DD (the caller's timezone, matching what they see). */
@@ -152,6 +154,13 @@ function buildShoutouts(input: BrightNoteInput): string[] {
   if (champ) {
     out.push(
       `${champ.plays} rounds of ${champ.title} in The Quad with a best of ${champ.bestScore!.toLocaleString()} — sharpening skills and having fun doing it. That's the way, ${n}.`,
+    );
+  }
+
+  if (input.recentWin) {
+    const where = input.recentWin.store ? ` at ${input.recentWin.store}` : "";
+    out.push(
+      `${input.recentWin.authorName}${where} just posted a win story. Read it in Win Stories — that's why we do this, ${n}.`,
     );
   }
 

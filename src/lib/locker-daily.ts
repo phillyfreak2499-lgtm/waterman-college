@@ -31,6 +31,8 @@ export type LockerDaily = {
   teamEvents: TeamEvent[];
   /** False when no birthday is on file — the locker shows the nudge. */
   hasBirthday: boolean;
+  /** A fresh win story by someone else (last 36h), for the daily note. */
+  recentWin: { authorName: string; store: string | null } | null;
 };
 
 /** Days a profile counts as "new" for the welcome + teammate mentions. */
@@ -173,7 +175,20 @@ export const getLockerDaily = createServerFn({ method: "GET" })
       teamEvents = mates.flatMap((row) => eventsFor(row, today));
     }
 
+    let recentWin: LockerDaily["recentWin"] = null;
+    const wins = await sql<{ name: string; store: string | null }>`
+      select u.name, p.store
+      from win_stories w
+      join "user" u on u.id = w.user_id
+      left join user_profiles p on p.user_id = w.user_id
+      where w.user_id != ${userId} and w.created_at > now() - interval '36 hours'
+      order by w.created_at desc
+      limit 1
+    `;
+    if (wins[0]) recentWin = { authorName: wins[0].name, store: wins[0].store?.trim() || null };
+
     return {
+      recentWin,
       hasBirthday: normalizeMonthDay(self?.birthday) !== null,
       birthdayToday: isBirthdayOn(self?.birthday, today),
       anniversaryYears: anniversaryYears(self?.start_date ?? null, today),
@@ -278,8 +293,10 @@ export const isMyBirthdayToday = createServerFn({ method: "GET" })
     `;
     try {
       await sweepBirthdayEveReminders();
+      const { sweepWeeklyPulse } = await import("@/lib/team-pulse");
+      await sweepWeeklyPulse();
     } catch {
-      // Reminders are best-effort; never block the page on them.
+      // Reminders and pulses are best-effort; never block the page on them.
     }
     return { birthday: isBirthdayOn(rows[0]?.birthday, businessToday()) };
   });
@@ -305,6 +322,22 @@ export const setMyBirthday = createServerFn({ method: "POST" })
       on conflict (user_id) do update set birthday = excluded.birthday
     `;
     return { ok: true };
+  });
+
+/** The most recent shout-out the user has ever received (seen or not). */
+export const getLastShoutout = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }): Promise<{ fromName: string; body: string } | null> => {
+    const sql = await getSql();
+    const rows = await sql<{ body: string; name: string }>`
+      select s.body, u.name
+      from locker_shoutouts s
+      join "user" u on u.id = s.from_user
+      where s.to_user = ${context.userId}
+      order by s.created_at desc
+      limit 1
+    `;
+    return rows[0] ? { fromName: rows[0].name, body: rows[0].body } : null;
   });
 
 /** Send one kind sentence to a coworker's locker. */

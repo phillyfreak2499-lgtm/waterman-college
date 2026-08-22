@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
+import { offWeekdays, weekdayOf } from "@/lib/days-off";
 import { getSql } from "@/lib/db";
 
 const BUSINESS_TIME_ZONE = "America/Chicago";
@@ -36,25 +37,46 @@ export type Streak = {
   lastActiveOn: string | null;
 };
 
-function computeStreak(days: string[], today: string): Streak {
+/**
+ * Streaks respect regular days off: a gap made only of the user's scheduled
+ * off-days (from their directory days-off note) neither breaks nor grows a
+ * run. Off Sun & Wed, active Sat, back Monday → still one streak. `offDays`
+ * holds weekday numbers (0 = Sunday); empty means the strict original rules.
+ */
+export function computeStreak(days: string[], today: string, offDays?: Set<number>): Streak {
   const set = new Set(days);
-  const yesterday = addDays(today, -1);
-  const anchor = set.has(today) ? today : set.has(yesterday) ? yesterday : null;
+  const off = offDays ?? new Set<number>();
+  // Someone whose note matches every weekday would bridge forever — that is
+  // a data problem, not a real schedule, so fall back to strict streaks.
+  const bridge = (day: string) => off.size < 7 && off.has(weekdayOf(day));
 
+  // Walk back from today: active days count, the user's off-days bridge,
+  // and today itself gets grace (the day isn't over). Anything else — a
+  // skipped working day — ends the run, same as before.
   let current = 0;
-  if (anchor) {
-    let cursor = anchor;
-    while (set.has(cursor)) {
-      current += 1;
-      cursor = addDays(cursor, -1);
-    }
+  let cursor = today;
+  for (let guard = 0; guard < 800; guard++) {
+    if (set.has(cursor)) current += 1;
+    else if (cursor !== today && !bridge(cursor)) break;
+    cursor = addDays(cursor, -1);
   }
 
+  // Best run, with the same bridging between consecutive active days.
+  const sorted = [...set].sort();
+  const connected = (prev: string, day: string): boolean => {
+    let step = addDays(prev, 1);
+    for (let guard = 0; guard < 8; guard++) {
+      if (step === day) return true;
+      if (!bridge(step)) return false;
+      step = addDays(step, 1);
+    }
+    return false;
+  };
   let best = 0;
   let run = 0;
   let prev: string | null = null;
-  for (const day of [...set].sort()) {
-    run = prev && addDays(prev, 1) === day ? run + 1 : 1;
+  for (const day of sorted) {
+    run = prev && connected(prev, day) ? run + 1 : 1;
     if (run > best) best = run;
     prev = day;
   }
@@ -86,6 +108,9 @@ export const getMyStreak = createServerFn({ method: "GET" })
       order by day desc
       limit 400
     `;
+    const profile = await sql<{ days_off: string | null }>`
+      select days_off from user_profiles where user_id = ${context.userId} limit 1
+    `;
     const days = rows.map((r) => dayLabel(r.day)).filter(Boolean);
-    return computeStreak(days, businessToday());
+    return computeStreak(days, businessToday(), offWeekdays(profile[0]?.days_off));
   });
