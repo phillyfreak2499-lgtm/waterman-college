@@ -1,3 +1,4 @@
+import { assertClean } from "@/lib/clean-language";
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import {
@@ -896,6 +897,10 @@ export const submitPresentationEval = createServerFn({ method: "POST" })
       if (!input.evalDate || !/^\d{4}-\d{2}-\d{2}$/.test(input.evalDate)) {
         throw new Error("Date is required.");
       }
+      const texts = Object.values(input.answers ?? {}).filter(
+        (v): v is string => typeof v === "string",
+      );
+      assertClean("an evaluation", input.clientName, input.floorLeader, ...texts);
       return input;
     },
   )

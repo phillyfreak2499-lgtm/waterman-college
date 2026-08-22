@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { businessToday } from "@/lib/activity";
+import { assertClean } from "@/lib/clean-language";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
 import {
@@ -449,6 +450,7 @@ export const sendShoutout = createServerFn({ method: "POST" })
     if (input.body.length > 200) {
       throw new Error("Keep it to one sentence (200 characters).");
     }
+    assertClean("a shout-out", input.body);
     return { toUserId: input.toUserId.trim(), body: input.body.trim() };
   })
   .middleware([authMiddleware])

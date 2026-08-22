@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { assertClean } from "@/lib/clean-language";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { isOrgWide, readAccessRole, type AccessRole } from "@/lib/access";
 import { getSql } from "@/lib/db";
@@ -44,6 +45,7 @@ export const saveRegion = createServerFn({ method: "POST" })
     if (!input || typeof input.name !== "string" || !input.name.trim() || input.name.length > 60) {
       throw new Error("A region needs a name under 60 characters.");
     }
+    assertClean("a region name", input.name);
     return { id: input.id?.trim() || undefined, name: input.name.trim() };
   })
   .middleware([authMiddleware])

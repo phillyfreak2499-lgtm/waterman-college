@@ -1,3 +1,4 @@
+import { assertClean } from "@/lib/clean-language";
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import {
@@ -200,7 +201,10 @@ export const getTeam = createServerFn({ method: "GET" })
   });
 
 export const assignTraining = createServerFn({ method: "POST" })
-  .validator((input: { userId: string; trackId: string; note?: string; dueOn?: string }) => input)
+  .validator((input: { userId: string; trackId: string; note?: string; dueOn?: string }) => {
+    assertClean("an assignment note", input.note);
+    return input;
+  })
   .middleware([authMiddleware])
   .handler(async ({ context, data }) => {
     const actor = await readAccessRole(context.userId);

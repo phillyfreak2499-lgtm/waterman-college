@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { assertClean } from "@/lib/clean-language";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { readAccessProfile } from "@/lib/access";
 import { readCatalog } from "@/lib/cms";
@@ -383,6 +384,7 @@ export const upsertLockerNote = createServerFn({ method: "POST" })
     }) => {
       const body = typeof input.body === "string" ? input.body.trim() : "";
       if (!body || body.length > 4000) throw new Error("Write a note (up to 4000 characters).");
+      assertClean("a note", body);
       return {
         id: input.id,
         body,

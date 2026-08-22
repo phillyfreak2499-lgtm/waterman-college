@@ -13,6 +13,7 @@ import {
   type AccessRole,
 } from "@/lib/access";
 import { businessToday } from "@/lib/activity";
+import { assertClean } from "@/lib/clean-language";
 import { getSql } from "@/lib/db";
 import { isBirthdayOn, normalizeMonthDay } from "@/lib/locker-daily";
 import { loadRegions, type Region } from "@/lib/regions";
@@ -280,6 +281,7 @@ export const saveStore = createServerFn({ method: "POST" })
       if (input.regionId != null && (typeof input.regionId !== "string" || input.regionId.length > 80)) {
         throw new Error("Unknown region.");
       }
+      assertClean("the directory", input.name, input.city);
       return input;
     },
   )
@@ -392,6 +394,7 @@ export const placeDirectoryPerson = createServerFn({ method: "POST" })
         throw new Error("Unknown region.");
       }
       if (input.role !== undefined && !isAccessRole(input.role)) throw new Error("Unknown position.");
+      assertClean("the directory", input.title, input.daysOff);
       return input;
     },
   )

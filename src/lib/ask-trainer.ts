@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { assertClean } from "@/lib/clean-language";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
 
@@ -76,6 +77,7 @@ export const sendTrainerNote = createServerFn({ method: "POST" })
         !/^[a-z0-9:_-]+\/[a-z0-9:_-]+$/i.test(input.lessonKey) ||
         input.lessonKey.length > 180) throw new Error("Unknown lesson.");
     if (typeof input.body !== "string") throw new Error("Write a note for the professor.");
+    assertClean("a note to the professor", input.body);
     return { lessonKey: input.lessonKey.trim(), body: input.body };
   })
   .middleware([authMiddleware])

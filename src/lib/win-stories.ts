@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { readAccessRole, isOrgWide } from "@/lib/access";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
+import { assertClean } from "@/lib/clean-language";
 import { requireApproved } from "@/lib/locker-daily";
 
 /**
@@ -66,6 +67,7 @@ export const postWinStory = createServerFn({ method: "POST" })
     if (body.length > MAX_BODY) {
       throw new Error(`Keep it to about two sentences (${MAX_BODY} characters).`);
     }
+    assertClean("a win story", body);
     return { body };
   })
   .middleware([authMiddleware])
