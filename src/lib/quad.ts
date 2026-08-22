@@ -12,6 +12,12 @@ export const QUAD_GAMES = [
     blurb: "New-hire training as a quest through the three supports.",
   },
   {
+    slug: "tunnel-run",
+    title: "Tunnel Run",
+    file: "/games/tunnel-run.html",
+    blurb: "2D platformer — drop into the right path. Wrong tunnel ends the run.",
+  },
+  {
     slug: "three-step-showdown",
     title: "3-Step Showdown",
     file: "/games/three-step-showdown.html",
