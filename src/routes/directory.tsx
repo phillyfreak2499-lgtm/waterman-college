@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useAccess } from "@/components/access-provider";
 import { AuthGate } from "@/components/auth-gate";
@@ -37,6 +37,16 @@ function DirectoryPage() {
   );
 }
 
+/** Per-group tally of the profile data the people features run on. */
+type HealthRow = {
+  name: string;
+  total: number;
+  birthdays: number;
+  daysOff: number;
+  photos: number;
+  startDates: number;
+};
+
 function DirectoryDesk() {
   const { access } = useAccess();
   const [snap, setSnap] = useState<DirectorySnapshot | null>(null);
@@ -61,6 +71,27 @@ function DirectoryDesk() {
       cancelled = true;
     };
   }, [access.userId, reloadKey]);
+
+  // What the birthday, days-off, and photo features are silently missing,
+  // per store. Editors already receive these fields, so this is free.
+  const health = useMemo<HealthRow[]>(() => {
+    if (!snap?.canEdit) return [];
+    const groups = [
+      { name: "Headquarters", people: snap.office },
+      ...snap.stores.map((s) => ({ name: s.name, people: [...s.managers, ...s.sales] })),
+      { name: "Unassigned", people: snap.unassigned },
+    ];
+    return groups
+      .map((g) => ({
+        name: g.name,
+        total: g.people.length,
+        birthdays: g.people.filter((p) => !p.birthday).length,
+        daysOff: g.people.filter((p) => !p.daysOff).length,
+        photos: g.people.filter((p) => !p.imageUrl).length,
+        startDates: g.people.filter((p) => !p.startDate).length,
+      }))
+      .filter((g) => g.total > 0 && g.birthdays + g.daysOff + g.photos + g.startDates > 0);
+  }, [snap]);
 
   if (error) {
     return (
@@ -143,6 +174,36 @@ function DirectoryDesk() {
           />
         </label>
       </div>
+
+      {health.length > 0 && (
+        <section className="mt-10 rounded-lg border border-dashed border-brass/40 bg-paper px-5 py-4">
+          <p className="text-xs font-medium uppercase tracking-[0.16em] text-brass">
+            Directory health
+          </p>
+          <p className="mt-1 text-xs text-muted">
+            Birthdays power the cake, the locker party, and leader reminders; days off power
+            streaks and the off-today hint. Fill the gaps and the magic reaches everyone.
+          </p>
+          <ul className="mt-3 space-y-1.5">
+            {health.map((g) => (
+              <li key={g.name} className="text-sm text-ink">
+                <span className="font-medium">{g.name}</span>
+                <span className="text-muted">
+                  {" — "}
+                  {[
+                    g.birthdays && `${g.birthdays} missing birthday${g.birthdays === 1 ? "" : "s"}`,
+                    g.daysOff && `${g.daysOff} missing days off`,
+                    g.photos && `${g.photos} without photo${g.photos === 1 ? "" : "s"}`,
+                    g.startDates && `${g.startDates} missing start date${g.startDates === 1 ? "" : "s"}`,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       <section className="mt-12">
         <SectionHead

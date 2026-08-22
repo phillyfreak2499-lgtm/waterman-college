@@ -2,6 +2,14 @@ import { createServerFn } from "@tanstack/react-start";
 import { businessToday } from "@/lib/activity";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
+import {
+  DEFAULT_ACCENT,
+  LOCKER_ACCENTS,
+  LOCKER_STICKERS,
+  MAX_STICKERS,
+  parseStickers,
+  type LockerStyle,
+} from "@/lib/locker-style";
 
 /**
  * The people-side of the daily locker note: birthdays, work anniversaries,
@@ -33,6 +41,8 @@ export type LockerDaily = {
   hasBirthday: boolean;
   /** A fresh win story by someone else (last 36h), for the daily note. */
   recentWin: { authorName: string; store: string | null } | null;
+  /** The owner's chosen locker decoration. */
+  style: LockerStyle;
 };
 
 /** Days a profile counts as "new" for the welcome + teammate mentions. */
@@ -122,8 +132,11 @@ export const getLockerDaily = createServerFn({ method: "GET" })
       store_id: string | null;
       created_at: unknown;
       account_status: string | null;
+      locker_accent: string | null;
+      locker_stickers: string | null;
     }>`
-      select birthday, start_date, store_id, created_at, account_status
+      select birthday, start_date, store_id, created_at, account_status,
+             locker_accent, locker_stickers
       from user_profiles where user_id = ${userId} limit 1
     `;
     const self = selfRows[0];
@@ -188,6 +201,10 @@ export const getLockerDaily = createServerFn({ method: "GET" })
     if (wins[0]) recentWin = { authorName: wins[0].name, store: wins[0].store?.trim() || null };
 
     return {
+      style: {
+        accent: LOCKER_ACCENTS[self?.locker_accent ?? ""] ? self!.locker_accent! : DEFAULT_ACCENT,
+        stickers: parseStickers(self?.locker_stickers),
+      },
       recentWin,
       hasBirthday: normalizeMonthDay(self?.birthday) !== null,
       birthdayToday: isBirthdayOn(self?.birthday, today),
@@ -320,6 +337,32 @@ export const setMyBirthday = createServerFn({ method: "POST" })
       insert into user_profiles (user_id, birthday, created_at)
       values (${context.userId}, ${data.birthday}, now())
       on conflict (user_id) do update set birthday = excluded.birthday
+    `;
+    return { ok: true };
+  });
+
+/** Decorate your own locker: pick an accent and up to three stickers. */
+export const setLockerStyle = createServerFn({ method: "POST" })
+  .validator((input: { accent: string; stickers: string[] }) => {
+    if (!input || !LOCKER_ACCENTS[input.accent]) throw new Error("Pick one of the accent colors.");
+    if (!Array.isArray(input.stickers) || input.stickers.length > MAX_STICKERS) {
+      throw new Error(`Up to ${MAX_STICKERS} stickers.`);
+    }
+    const allowed = new Set<string>(LOCKER_STICKERS);
+    if (!input.stickers.every((s) => typeof s === "string" && allowed.has(s))) {
+      throw new Error("Stickers come from the sticker sheet.");
+    }
+    return { accent: input.accent, stickers: input.stickers };
+  })
+  .middleware([authMiddleware])
+  .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    await sql`
+      insert into user_profiles (user_id, locker_accent, locker_stickers, created_at)
+      values (${context.userId}, ${data.accent}, ${data.stickers.join(" ")}, now())
+      on conflict (user_id) do update set
+        locker_accent = excluded.locker_accent,
+        locker_stickers = excluded.locker_stickers
     `;
     return { ok: true };
   });

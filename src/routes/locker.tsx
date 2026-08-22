@@ -53,7 +53,15 @@ import {
   type MetricValues,
 } from "@/lib/metrics";
 import { buildBrightNote, todayLocal } from "@/lib/bright-note";
-import { getLockerDaily, setMyBirthday, type LockerDaily } from "@/lib/locker-daily";
+import { getLockerDaily, setLockerStyle, setMyBirthday, type LockerDaily } from "@/lib/locker-daily";
+import {
+  accentColor,
+  DEFAULT_ACCENT,
+  LOCKER_ACCENTS,
+  LOCKER_STICKERS,
+  MAX_STICKERS,
+  type LockerStyle,
+} from "@/lib/locker-style";
 import { pageHead } from "@/lib/page-title";
 import { cn, errorMessage } from "@/lib/utils";
 
@@ -139,6 +147,7 @@ function LockerDesk() {
   const [gameScores, setGameScores] = useState<GameScore[]>([]);
   const [streak, setStreak] = useState<Streak | null>(null);
   const [daily, setDaily] = useState<LockerDaily | null>(null);
+  const [styleOverride, setStyleOverride] = useState<LockerStyle | null>(null);
   const [myMetrics, setMyMetrics] = useState<MetricValues | null>(null);
   const [phaseAvgs, setPhaseAvgs] = useState<PhaseAverages | null>(null);
   const [suggestions, setSuggestions] = useState<SuggestedLesson[]>([])
@@ -231,6 +240,8 @@ function LockerDesk() {
 
   const firstName = user?.displayName?.split(" ")[0] || "there";
   const nextUp = assignments.find((a) => a.progress.nextLessonSlug);
+  const lockerStyle: LockerStyle =
+    styleOverride ?? daily?.style ?? { accent: DEFAULT_ACCENT, stickers: [] };
 
   // Weakest entered metric (orange/red) this period — the "focus" for Today.
   const { weakest, metricsEntered } = useMemo(() => {
@@ -294,6 +305,18 @@ function LockerDesk() {
         What is due, what leadership wants you to know, and what you want to remember.
       </p>
       <p className="mt-1 text-sm text-muted">Hello, {firstName}.</p>
+      {daily && (
+        <LockerDoor
+          style={lockerStyle}
+          onChange={(next, previous) => {
+            setStyleOverride(next);
+            setLockerStyle({ data: next }).catch((err) => {
+              setStyleOverride(previous);
+              toast.error(errorMessage(err) || "Could not save your locker style");
+            });
+          }}
+        />
+      )}
       <div className="mt-6">
         <ProfilePhoto />
       </div>
@@ -670,6 +693,110 @@ function LockerDesk() {
               <QuickLink to="/directory" label="Directory" />
             </div>
           </section>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The locker door: an accent-colored strip with the owner's stickers, and a
+ * small Decorate panel to change them. Choices save immediately (optimistic,
+ * reverted on failure). Pure ownership, zero business value, exactly as
+ * intended.
+ */
+function LockerDoor({
+  style,
+  onChange,
+}: {
+  style: LockerStyle;
+  onChange: (next: LockerStyle, previous: LockerStyle) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const color = accentColor(style.accent);
+
+  function toggleSticker(sticker: string) {
+    const has = style.stickers.includes(sticker);
+    const stickers = has
+      ? style.stickers.filter((s) => s !== sticker)
+      : [...style.stickers, sticker].slice(0, MAX_STICKERS);
+    if (!has && style.stickers.length >= MAX_STICKERS) {
+      toast(`Up to ${MAX_STICKERS} stickers — swap one out first.`);
+      return;
+    }
+    onChange({ ...style, stickers }, style);
+  }
+
+  return (
+    <div className="mt-5">
+      <div className="flex items-end gap-3">
+        <span
+          aria-hidden="true"
+          className="h-2.5 min-w-0 flex-1 rounded-full"
+          style={{ background: `linear-gradient(90deg, ${color}, ${color}55)` }}
+        />
+        {style.stickers.length > 0 && (
+          <span className="flex shrink-0 gap-1.5 text-2xl leading-none" aria-hidden="true">
+            {style.stickers.map((s, i) => (
+              <span
+                key={`${s}${i}`}
+                className="inline-block drop-shadow-sm"
+                style={{ transform: `rotate(${[-8, 6, -4][i % 3]}deg)` }}
+              >
+                {s}
+              </span>
+            ))}
+          </span>
+        )}
+        <button
+          type="button"
+          className="shrink-0 text-xs uppercase tracking-[0.12em] text-muted hover:text-navy"
+          onClick={() => setOpen((v) => !v)}
+        >
+          {open ? "Done" : "Decorate"}
+        </button>
+      </div>
+      {open && (
+        <div className="mt-3 rounded-lg border border-line bg-surface px-4 py-4 shadow-card">
+          <p className="text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-brass">
+            Accent
+          </p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {Object.entries(LOCKER_ACCENTS).map(([key, a]) => (
+              <button
+                key={key}
+                type="button"
+                title={a.label}
+                aria-label={`${a.label} accent`}
+                aria-pressed={style.accent === key}
+                onClick={() => onChange({ ...style, accent: key }, style)}
+                className={cn(
+                  "size-8 rounded-full border-2 transition-transform hover:scale-110",
+                  style.accent === key ? "border-ink" : "border-transparent",
+                )}
+                style={{ background: a.color }}
+              />
+            ))}
+          </div>
+          <p className="mt-4 text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-brass">
+            Stickers ({style.stickers.length}/{MAX_STICKERS})
+          </p>
+          <div className="mt-2 flex flex-wrap gap-1">
+            {LOCKER_STICKERS.map((s) => (
+              <button
+                key={s}
+                type="button"
+                aria-pressed={style.stickers.includes(s)}
+                onClick={() => toggleSticker(s)}
+                className={cn(
+                  "rounded-md p-1.5 text-xl leading-none transition-transform hover:scale-110",
+                  style.stickers.includes(s) ? "bg-brass-soft ring-1 ring-brass" : "hover:bg-paper-2",
+                )}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>
