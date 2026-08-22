@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+<meta name="theme-color" content="#0B2A4A" />
+<meta name="description" content="Tunnel Run — Good Feet specialist training platformer. Drop into the right path." />
+<title>Tunnel Run — Waterman College</title>
+<script src="/games/quad-bridge.js"></script>
+<style>
+:root {
+  --navy: #0B2A4A;
+  --navy-2: #0f3a63;
+  --brass: #C9A227;
+  --brass-soft: #e8d48a;
+  --paper: #f7f4ec;
+  --ink: #0f1c24;
+  --muted: #5a6b75;
+  --danger: #b42318;
+  --ok: #1f7a4c;
+  --sky: #7eb8d4;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;background:var(--navy);color:var(--paper);font-family:"DM Sans",system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;touch-action:none;user-select:none}
+#wrap{position:relative;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center}
+canvas{display:block;max-width:100%;max-height:100%;background:#1a3a55;image-rendering:pixelated;border-radius:0;box-shadow:0 0 0 2px rgba(201,162,39,.35)}
+#ui{position:absolute;inset:0;pointer-events:none;display:flex;flex-direction:column}
+#hud{display:flex;justify-content:space-between;align-items:flex-start;padding:10px 14px;gap:8px;font-size:13px;font-weight:700;text-shadow:0 1px 2px rgba(0,0,0,.5)}
+#hud .chip{background:rgba(11,42,74,.75);border:1px solid rgba(201,162,39,.45);border-radius:999px;padding:6px 12px;backdrop-filter:blur(6px)}
+#hud .brass{color:var(--brass)}
+#overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(11,42,74,.88);pointer-events:auto;padding:20px}
+#overlay.hidden{display:none}
+.card{background:var(--paper);color:var(--ink);border-radius:16px;padding:24px 22px;max-width:420px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.35);text-align:center}
+.card h1{font-family:Georgia,"Times New Roman",serif;font-size:1.85rem;color:var(--navy);margin-bottom:6px}
+.card h2{font-family:Georgia,"Times New Roman",serif;font-size:1.4rem;color:var(--navy);margin-bottom:8px}
+.card .tag{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--brass);margin-bottom:8px}
+.card p{font-size:14px;line-height:1.45;color:var(--muted);margin:8px 0}
+.card .prompt{font-size:15px;font-weight:650;color:var(--ink);margin:12px 0 16px;line-height:1.4}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:12px 22px;border-radius:12px;border:none;font-weight:700;font-size:15px;cursor:pointer;background:var(--navy);color:#fff;width:100%;margin-top:10px;transition:filter .12s,transform .1s}
+.btn:active{transform:scale(.98)}
+.btn:hover{filter:brightness(1.08)}
+.btn-brass{background:var(--brass);color:var(--navy)}
+.btn-ghost{background:transparent;color:var(--navy);border:1px solid #c5cdd4}
+.sides{display:grid;gap:10px;margin-top:8px}
+.side{text-align:left;padding:14px 16px;border-radius:12px;border:2px solid #d5dee5;background:#fff;font-size:14px;font-weight:550;cursor:pointer;line-height:1.35}
+.side:hover{border-color:var(--navy)}
+.side .letter{display:inline-block;width:24px;height:24px;border-radius:50%;background:var(--navy);color:#fff;text-align:center;line-height:24px;font-size:12px;font-weight:800;margin-right:8px}
+.side.ok{border-color:var(--ok);background:#d8f3e5}
+.side.bad{border-color:var(--danger);background:#fde8e6}
+.fb{margin-top:12px;padding:12px;border-radius:10px;font-size:13px;line-height:1.4}
+.fb.ok{background:#d8f3e5;color:var(--ok)}
+.fb.bad{background:#fde8e6;color:var(--danger)}
+#touch{position:absolute;bottom:0;left:0;right:0;height:120px;display:none;pointer-events:auto;padding:8px 12px 16px;gap:12px;justify-content:space-between;align-items:flex-end}
+#touch.show{display:flex}
+.tbtn{width:72px;height:72px;border-radius:50%;background:rgba(11,42,74,.65);border:2px solid rgba(201,162,39,.5);color:#fff;font-size:22px;font-weight:800;display:grid;place-items:center;backdrop-filter:blur(4px);-webkit-user-select:none;user-select:none}
+.tbtn:active,.tbtn.active{background:rgba(201,162,39,.55);border-color:var(--brass)}
+.trow{display:flex;gap:10px}
+.hint{font-size:12px;color:rgba(255,255,255,.7);margin-top:6px}
+@media(max-width:900px){#touch.show{display:flex}}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="c" width="960" height="540"></canvas>
+  <div id="ui">
+    <div id="hud">
+      <div class="chip">🪙 <span id="coins">0</span></div>
+      <div class="chip brass">Floor <span id="floor">1</span>/<span id="floors">5</span></div>
+      <div class="chip">★ <span id="score">0</span></div>
+    </div>
+  </div>
+  <div id="overlay">
+    <div class="card" id="card"></div>
+  </div>
+  <div id="touch">
+    <div class="trow">
+      <button class="tbtn" id="tL" type="button">◀</button>
+      <button class="tbtn" id="tR" type="button">▶</button>
+    </div>
+    <div class="trow">
+      <button class="tbtn" id="tJ" type="button">▲</button>
+    </div>
+  </div>
+</div>
+<script src="data:text/javascript;base64,PLACEHOLDER"></script>
+</body>
+</html>
