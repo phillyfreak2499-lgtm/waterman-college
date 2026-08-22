@@ -53,7 +53,7 @@ import {
   type MetricValues,
 } from "@/lib/metrics";
 import { buildBrightNote, todayLocal } from "@/lib/bright-note";
-import { getLockerDaily, type LockerDaily } from "@/lib/locker-daily";
+import { getLockerDaily, setMyBirthday, type LockerDaily } from "@/lib/locker-daily";
 import { pageHead } from "@/lib/page-title";
 import { cn, errorMessage } from "@/lib/utils";
 
@@ -320,6 +320,9 @@ function LockerDesk() {
               </p>
             </section>
           )}
+
+          {/* Birthday nudge — only until they tell us */}
+          {daily && !daily.hasBirthday && <BirthdayNudge onSaved={reload} />}
 
           {/* Today at a glance */}
           <TodaySummary
@@ -668,6 +671,69 @@ function LockerDesk() {
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * A small ask, shown only while no birthday is on file: month and day, no
+ * year. "Later" tucks it away for the rest of the visit; it returns next
+ * time so the locker eventually gets its answer.
+ */
+function BirthdayNudge({ onSaved }: { onSaved: () => Promise<void> }) {
+  const [draft, setDraft] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [hidden, setHidden] = useState(false);
+
+  if (hidden) return null;
+
+  async function save(e?: FormEvent) {
+    e?.preventDefault();
+    if (!draft.trim() || busy) return;
+    setBusy(true);
+    try {
+      await setMyBirthday({ data: { birthday: draft } });
+      toast.success("Got it — see you on the big day. 🎂");
+      await onSaved();
+    } catch (err) {
+      toast.error(errorMessage(err) || "Try month and day, like 04-18.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <section className="rounded-lg border border-dashed border-brass/40 bg-paper px-5 py-4">
+      <form onSubmit={save} className="flex flex-wrap items-center gap-3">
+        <p className="min-w-0 flex-1 text-sm text-muted">
+          <span className="mr-1.5" aria-hidden="true">🎂</span>
+          Your locker wants to know your birthday. Month and day only — no year,
+          no age, just cake.
+        </p>
+        <div className="flex items-center gap-2">
+          <label className="sr-only" htmlFor="birthday-nudge">
+            Birthday, month and day
+          </label>
+          <input
+            id="birthday-nudge"
+            className="field-input h-10 w-36 text-sm"
+            placeholder="MM-DD, e.g. 04-18"
+            maxLength={5}
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+          />
+          <Button type="submit" size="sm" disabled={busy || !draft.trim()}>
+            {busy ? "Saving…" : "Save"}
+          </Button>
+          <button
+            type="button"
+            className="text-xs uppercase tracking-[0.12em] text-muted hover:text-navy"
+            onClick={() => setHidden(true)}
+          >
+            Later
+          </button>
+        </div>
+      </form>
+    </section>
   );
 }
 

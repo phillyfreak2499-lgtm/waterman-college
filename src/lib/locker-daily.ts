@@ -29,6 +29,8 @@ export type LockerDaily = {
   shoutout: { fromName: string; body: string } | null;
   /** Same-store teammates with something worth mentioning today. */
   teamEvents: TeamEvent[];
+  /** False when no birthday is on file — the locker shows the nudge. */
+  hasBirthday: boolean;
 };
 
 /** Days a profile counts as "new" for the welcome + teammate mentions. */
@@ -172,6 +174,7 @@ export const getLockerDaily = createServerFn({ method: "GET" })
     }
 
     return {
+      hasBirthday: normalizeMonthDay(self?.birthday) !== null,
       birthdayToday: isBirthdayOn(self?.birthday, today),
       anniversaryYears: anniversaryYears(self?.start_date ?? null, today),
       isNewHire:
@@ -279,6 +282,29 @@ export const isMyBirthdayToday = createServerFn({ method: "GET" })
       // Reminders are best-effort; never block the page on them.
     }
     return { birthday: isBirthdayOn(rows[0]?.birthday, businessToday()) };
+  });
+
+/**
+ * Let a user tell their locker their own birthday (month and day only —
+ * no year, so no ages). Editors can still set or fix it from the
+ * directory's Place panel; this is just the self-service path the locker
+ * nudge uses.
+ */
+export const setMyBirthday = createServerFn({ method: "POST" })
+  .validator((input: { birthday: string }) => {
+    const normalized = normalizeMonthDay(typeof input?.birthday === "string" ? input.birthday : "");
+    if (!normalized) throw new Error("Month and day, like 04-18.");
+    return { birthday: normalized };
+  })
+  .middleware([authMiddleware])
+  .handler(async ({ context, data }) => {
+    const sql = await getSql();
+    await sql`
+      insert into user_profiles (user_id, birthday, created_at)
+      values (${context.userId}, ${data.birthday}, now())
+      on conflict (user_id) do update set birthday = excluded.birthday
+    `;
+    return { ok: true };
   });
 
 /** Send one kind sentence to a coworker's locker. */
