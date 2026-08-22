@@ -3,85 +3,106 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"/>
-<meta name="theme-color" content="#0B2A4A"/>
+<meta name="theme-color" content="#071e36"/>
 <title>Fear Buster: Confidence Protocol — Waterman College</title>
 <script src="/games/quad-bridge.js"></script>
 <style>
 :root{
-  --navy:#0B2A4A; --navy-deep:#071e36; --navy-mid:#0f3558;
-  --cream:#f7f4ec; --cream2:#efebe0; --gold:#C9A227; --gold-bright:#e8c44a;
-  --ink:#0f1c24; --muted:#5a6b75; --ok:#1a7a4a; --ok-bg:#d4f0e2;
-  --bad:#b42318; --bad-bg:#fde8e6; --breach:#4a7fd4; --breach-bg:#e8f0fc;
-  --arena:#c94a3a; --radius:16px; --shadow:0 20px 48px rgba(0,0,0,.32);
+  --navy:#0B2A4A; --deep:#071e36; --mid:#0f3558;
+  --cream:#f7f4ec; --cream2:#efebe0; --gold:#C9A227; --goldb:#e8c44a;
+  --ink:#0f1c24; --muted:#5a6b75; --ok:#1a7a4a; --okbg:#d4f0e2;
+  --bad:#b42318; --badbg:#fde8e6; --breach:#4a7fd4; --arena:#c94a3a;
+  --r:18px; --sh:0 22px 50px rgba(0,0,0,.34);
 }
 *{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;background:var(--navy-deep);color:var(--cream);font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;touch-action:manipulation;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
-body{display:flex;flex-direction:column;min-height:100%;background:
-  radial-gradient(ellipse 90% 60% at 50% -10%,rgba(201,162,39,.18),transparent 55%),
-  radial-gradient(ellipse 50% 40% at 100% 100%,rgba(74,127,212,.08),transparent 50%),
-  var(--navy-deep)}
+html,body{height:100%;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
+body{display:flex;flex-direction:column;min-height:100%;color:var(--cream);background:
+  radial-gradient(ellipse 100% 70% at 50% -15%,rgba(201,162,39,.22),transparent 55%),
+  radial-gradient(ellipse 55% 45% at 95% 95%,rgba(74,127,212,.1),transparent 50%),
+  radial-gradient(ellipse 40% 35% at 5% 80%,rgba(201,162,39,.06),transparent 45%),
+  var(--deep)}
 button{font:inherit;cursor:pointer;border:none;background:none;color:inherit}
-button:disabled{cursor:default;opacity:.55}
-.wrap{flex:1;display:flex;flex-direction:column;max-width:440px;margin:0 auto;width:100%;padding:14px 14px 28px;position:relative;z-index:1}
-.hud{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:12px}
-.chip{display:inline-flex;align-items:center;gap:5px;background:rgba(11,42,74,.72);border:1px solid rgba(201,162,39,.35);border-radius:999px;padding:6px 11px;font-size:11px;font-weight:700;letter-spacing:.02em;backdrop-filter:blur(8px);font-variant-numeric:tabular-nums}
-.chip.gold{color:var(--gold-bright);border-color:rgba(201,162,39,.55)}
-.chip.combo{color:var(--gold-bright);font-weight:800}
-.card{background:linear-gradient(165deg,#fbf9f3 0%,var(--cream) 40%,var(--cream2));color:var(--ink);border-radius:20px;padding:20px 16px;box-shadow:var(--shadow),0 1px 0 rgba(255,255,255,.6) inset;border:1px solid rgba(255,255,255,.25);position:relative;overflow:hidden}
-.card::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.35),transparent 40%);opacity:.7}
+button:disabled{cursor:default;opacity:.5}
+.wrap{flex:1;display:flex;flex-direction:column;max-width:440px;margin:0 auto;width:100%;
+  padding:max(14px,env(safe-area-inset-top)) 14px max(28px,env(safe-area-inset-bottom));position:relative;z-index:1}
+.hud{display:flex;justify-content:space-between;align-items:center;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:4px;background:rgba(7,30,54,.78);border:1px solid rgba(201,162,39,.32);
+  border-radius:999px;padding:6px 11px;font-size:11px;font-weight:700;letter-spacing:.02em;
+  backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);font-variant-numeric:tabular-nums}
+.chip.gold{color:var(--goldb);border-color:rgba(201,162,39,.5)}
+.chip.combo{color:var(--goldb);font-weight:800}
+.card{background:linear-gradient(165deg,#fcfbf7 0%,var(--cream) 45%,var(--cream2));
+  color:var(--ink);border-radius:22px;padding:22px 17px;box-shadow:var(--sh),0 1px 0 rgba(255,255,255,.55) inset;
+  border:1px solid rgba(255,255,255,.28);position:relative;overflow:hidden}
+.card::before{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.4),transparent 42%);opacity:.65}
 .card>*{position:relative;z-index:1}
-.tag{font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
-.card h1{font-family:Georgia,"Times New Roman",serif;font-size:26px;color:var(--navy);line-height:1.15;margin-bottom:4px}
+.tag{font-size:10px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);margin-bottom:7px}
+.card h1{font-family:Georgia,"Times New Roman",serif;font-size:28px;color:var(--navy);line-height:1.12;letter-spacing:-.01em}
 .card h2{font-family:Georgia,"Times New Roman",serif;font-size:22px;color:var(--navy);line-height:1.2}
-.sub{font-size:13px;color:var(--muted);line-height:1.45;margin:8px 0 4px}
-.prompt{font-size:15.5px;font-weight:650;color:var(--ink);line-height:1.4;margin:12px 0 14px;padding:12px 14px;background:rgba(11,42,74,.05);border-radius:12px;border-left:3px solid var(--gold)}
-.btn{display:block;width:100%;min-height:50px;border-radius:13px;font-weight:700;font-size:15px;padding:13px 16px;margin-top:10px;transition:transform .12s,filter .12s,box-shadow .12s}
-.btn:active:not(:disabled){transform:scale(.975)}
-.btn.primary{background:var(--navy);color:#fff;box-shadow:0 8px 20px -8px rgba(11,42,74,.5)}
-.btn.gold{background:linear-gradient(180deg,var(--gold-bright),var(--gold));color:var(--navy);box-shadow:0 8px 22px -8px rgba(201,162,39,.55)}
+.sub{font-size:13.5px;color:var(--muted);line-height:1.5;margin:10px 0 2px}
+.prompt{font-size:15.5px;font-weight:650;color:var(--ink);line-height:1.42;margin:12px 0 14px;
+  padding:13px 14px;background:rgba(11,42,74,.045);border-radius:13px;border-left:3.5px solid var(--gold)}
+.btn{display:block;width:100%;min-height:52px;border-radius:14px;font-weight:700;font-size:15px;
+  padding:14px 16px;margin-top:10px;transition:transform .13s cubic-bezier(.2,.8,.2,1),filter .13s,box-shadow .13s}
+.btn:active:not(:disabled){transform:scale(.97)}
+.btn.primary{background:var(--navy);color:#fff;box-shadow:0 10px 24px -10px rgba(11,42,74,.55)}
+.btn.gold{background:linear-gradient(180deg,var(--goldb),var(--gold));color:var(--navy);
+  box-shadow:0 10px 26px -10px rgba(201,162,39,.55)}
 .btn.ghost{background:transparent;color:var(--navy);border:1.5px solid #c5cdd4}
-.btn.breach{background:linear-gradient(180deg,#5b8ef0,var(--breach));color:#fff;box-shadow:0 8px 22px -8px rgba(74,127,212,.5)}
-.opt{display:block;width:100%;text-align:left;padding:13px 14px;margin:8px 0;border:2px solid #d8e0e8;border-radius:13px;background:#fff;font-size:14px;font-weight:600;color:var(--ink);transition:border-color .15s,background .15s,transform .1s;line-height:1.35}
+.btn.breach{background:linear-gradient(180deg,#5b8ef0,var(--breach));color:#fff;
+  box-shadow:0 10px 26px -10px rgba(74,127,212,.5)}
+.opt{display:block;width:100%;text-align:left;padding:14px 15px;margin:8px 0;border:2px solid #d6dee6;
+  border-radius:14px;background:#fff;font-size:14px;font-weight:600;color:var(--ink);line-height:1.35;
+  transition:border-color .14s,background .14s,transform .1s,box-shadow .14s}
 .opt:active:not(:disabled){transform:scale(.985)}
-.opt:hover:not(:disabled){border-color:rgba(201,162,39,.65);background:#fffdf6}
-.opt .tip{font-size:11.5px;font-weight:500;color:var(--muted);margin-top:3px}
-.opt.ok{border-color:var(--ok);background:var(--ok-bg)}
-.opt.bad{border-color:var(--bad);background:var(--bad-bg);opacity:.88}
-.step-row{display:flex;gap:6px;margin-bottom:10px}
-.step-dot{flex:1;height:4px;border-radius:2px;background:rgba(11,42,74,.12)}
-.step-dot.on{background:var(--gold)}
+.opt:hover:not(:disabled){border-color:rgba(201,162,39,.6);background:#fffdf7;box-shadow:0 4px 14px -8px rgba(11,42,74,.2)}
+.opt .tip{font-size:11.5px;font-weight:500;color:var(--muted);margin-top:4px}
+.opt.ok{border-color:var(--ok);background:var(--okbg);box-shadow:0 0 0 1px rgba(26,122,74,.15)}
+.opt.bad{border-color:var(--bad);background:var(--badbg);opacity:.9}
+.step-row{display:flex;gap:6px;margin-bottom:12px}
+.step-dot{flex:1;height:5px;border-radius:3px;background:rgba(11,42,74,.1);transition:background .25s}
+.step-dot.on{background:var(--gold);box-shadow:0 0 8px rgba(201,162,39,.45)}
 .step-dot.done{background:var(--ok)}
-.step-label{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin-bottom:2px}
-.fb{margin-top:14px;padding:14px;border-radius:13px;font-size:13.5px;line-height:1.45}
-.fb.ok{background:var(--ok-bg);color:var(--ok);border:1px solid rgba(26,122,74,.25)}
-.fb.bad{background:var(--bad-bg);color:var(--bad);border:1px solid rgba(180,35,24,.2)}
-.fb strong{display:block;font-size:14.5px;margin-bottom:4px}
-.bar{height:9px;background:rgba(11,42,74,.12);border-radius:999px;overflow:hidden;margin:10px 0 4px}
-.bar>i{display:block;height:100%;border-radius:999px;transition:width .18s linear;background:linear-gradient(90deg,var(--gold),var(--gold-bright))}
+.step-label{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:2px}
+.fb{margin-top:14px;padding:15px;border-radius:14px;font-size:13.5px;line-height:1.5}
+.fb.ok{background:var(--okbg);color:var(--ok);border:1px solid rgba(26,122,74,.22)}
+.fb.bad{background:var(--badbg);color:var(--bad);border:1px solid rgba(180,35,24,.18)}
+.fb strong{display:block;font-size:15px;margin-bottom:5px}
+.bar{height:9px;background:rgba(11,42,74,.1);border-radius:999px;overflow:hidden;margin:10px 0 4px}
+.bar>i{display:block;height:100%;border-radius:999px;transition:width .15s linear;
+  background:linear-gradient(90deg,var(--gold),var(--goldb))}
 .bar.arena>i{background:linear-gradient(90deg,#e05a4a,var(--arena))}
 .bar.breach>i{background:linear-gradient(90deg,#3d6fd8,var(--breach))}
 .hp{display:flex;gap:5px;margin:6px 0}
-.hp span{flex:1;height:7px;border-radius:4px;background:rgba(11,42,74,.14);transition:background .2s}
-.hp span.on{background:#e25555;box-shadow:0 0 8px rgba(226,85,85,.4)}
-.hp span.int{background:var(--breach);box-shadow:0 0 8px rgba(74,127,212,.35)}
+.hp span{flex:1;height:7px;border-radius:4px;background:rgba(11,42,74,.12);transition:background .25s,box-shadow .25s}
+.hp span.on{background:#e25555;box-shadow:0 0 10px rgba(226,85,85,.45)}
+.hp span.int{background:var(--breach);box-shadow:0 0 10px rgba(74,127,212,.4)}
 .depth{display:flex;gap:3px;margin:8px 0 2px}
-.depth i{flex:1;height:5px;border-radius:3px;background:rgba(11,42,74,.12);transition:background .25s}
-.depth i.on{background:var(--breach);box-shadow:0 0 6px rgba(74,127,212,.4)}
+.depth i{flex:1;height:5px;border-radius:3px;background:rgba(11,42,74,.1);transition:background .3s,box-shadow .3s}
+.depth i.on{background:var(--breach);box-shadow:0 0 8px rgba(74,127,212,.45)}
 .depth i.done{background:var(--ok)}
-.stage-grid{display:grid;gap:10px;margin-top:14px}
-.stage-btn{text-align:left;padding:15px 14px;border-radius:14px;border:2px solid #d5dee5;background:#fff;color:var(--ink);transition:border-color .15s,transform .1s,box-shadow .15s}
+.stage-grid{display:grid;gap:11px;margin-top:16px}
+.stage-btn{text-align:left;padding:16px 15px;border-radius:15px;border:2px solid #d5dee5;background:#fff;
+  color:var(--ink);transition:border-color .15s,transform .12s,box-shadow .15s}
 .stage-btn:active{transform:scale(.98)}
-.stage-btn:hover{border-color:rgba(201,162,39,.55);box-shadow:0 6px 18px -10px rgba(11,42,74,.25)}
-.stage-btn strong{display:block;font-size:15px;margin-bottom:3px;color:var(--navy)}
-.stage-btn span{font-size:12px;color:var(--muted);line-height:1.35}
-.stage-btn .num{display:inline-block;width:22px;height:22px;border-radius:7px;background:var(--navy);color:#fff;font-size:11px;font-weight:800;text-align:center;line-height:22px;margin-right:6px;vertical-align:middle}
+.stage-btn:hover{border-color:rgba(201,162,39,.55);box-shadow:0 8px 22px -12px rgba(11,42,74,.3)}
+.stage-btn strong{display:block;font-size:15.5px;margin-bottom:4px;color:var(--navy)}
+.stage-btn span{font-size:12.5px;color:var(--muted);line-height:1.4}
+.stage-btn .num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;
+  border-radius:8px;background:var(--navy);color:#fff;font-size:12px;font-weight:800;margin-right:7px;vertical-align:middle}
 .center{text-align:center}
 .small{font-size:12px;color:var(--muted)}
 .row{display:flex;gap:8px;align-items:center}
-.score-big{font-size:48px;font-weight:800;color:var(--navy);letter-spacing:-.02em;line-height:1;margin:10px 0 4px;font-variant-numeric:tabular-nums}
-@keyframes pop{0%{transform:scale(.94);opacity:0}100%{transform:scale(1);opacity:1}}
-.pop{animation:pop .22s cubic-bezier(.2,.8,.2,1)}
-.fade-in{animation:pop .28s cubic-bezier(.2,.8,.2,1)}
+.score-big{font-size:52px;font-weight:800;color:var(--navy);letter-spacing:-.025em;line-height:1;
+  margin:12px 0 6px;font-variant-numeric:tabular-nums}
+@keyframes pop{0%{transform:scale(.93) translateY(6px);opacity:0}100%{transform:scale(1) translateY(0);opacity:1}}
+@keyframes fadeup{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:translateY(0)}}
+.pop{animation:pop .26s cubic-bezier(.2,.85,.2,1)}
+.fade-in{animation:fadeup .3s cubic-bezier(.2,.85,.2,1)}
+.pulse-gold{animation:pulseG 1.2s ease-in-out infinite}
+@keyframes pulseG{0%,100%{box-shadow:0 0 0 0 rgba(201,162,39,.35)}50%{box-shadow:0 0 0 6px rgba(201,162,39,0)}}
 </style>
 </head>
 <body>
@@ -89,7 +110,7 @@ button:disabled{cursor:default;opacity:.55}
 <script>
 (function(){
 "use strict";
-const SAVE_KEY="fear-buster-v3";
+const SAVE_KEY="fear-buster-v4";
 const FEARS=[
   {id:"salesperson",label:"Afraid of the salesperson"},
   {id:"mistake",label:"Fear of making a mistake"},
@@ -112,85 +133,244 @@ const PRINCIPLES=[
 ];
 const SCENARIOS=[
   {line:"I don't usually talk to salespeople. I'm just looking.",fear:"salesperson",principle:"reciprocity",
-    wrap:"W – Why: \"I'm here to understand what's going on with your feet first — no pressure.\"",
+    wrap:'W – Why: "I\'m here to understand what\'s going on with your feet first — no pressure."',
     why:"Salesperson fear dissolves with warmth, low pressure, and free value before any ask."},
   {line:"What if these don't actually work for me?",fear:"mistake",principle:"endowment",
-    wrap:"P – Pain Better: \"Walk with these on. Once you feel the difference, you'll know if it's right.\"",
+    wrap:'P – Pain Better: "Walk with these on. Once you feel the difference, you\'ll know if it\'s right."',
     why:"Mistake fear drops when they experience ownership and feel improvement live."},
   {line:"How do I know this isn't just another gimmick?",fear:"liedto",principle:"authority",
-    wrap:"A – Answer: \"These are biomechanically designed and backed by clinical results from Mass General.\"",
+    wrap:'A – Answer: "These are biomechanically designed and backed by clinical results from Mass General."',
     why:"Fear of being lied to is met with authority — clinical backing and clear specifics."},
   {line:"I can't afford to put that much on a card right now.",fear:"debt",principle:"value",
-    wrap:"A – Answer: \"We can spread it into smaller payments. Think of it as investing in pain-free days.\"",
+    wrap:'A – Answer: "We can spread it into smaller payments. Think of it as investing in pain-free days."',
     why:"Debt fear is handled by reframing value and making the investment feel manageable."},
   {line:"If this doesn't work I'll look foolish for spending the money.",fear:"losingface",principle:"social",
-    wrap:"R – Ready: \"Customers in the same situation felt the same way — then couldn't believe the difference.\"",
+    wrap:'R – Ready: "Customers in the same situation felt the same way — then couldn\'t believe the difference."',
     why:"Losing face eases with social proof that others had the same worry and still succeeded."},
   {line:"I've never worn anything like this. I don't know what to expect.",fear:"unknown",principle:"authority",
-    wrap:"W – Why: \"I'll walk you through exactly what you'll feel and how the wear schedule works.\"",
+    wrap:'W – Why: "I\'ll walk you through exactly what you\'ll feel and how the wear schedule works."',
     why:"Fear of the unknown is dissolved by clear education that removes the mystery."},
   {line:"I tried orthotics years ago and they just made things worse.",fear:"pastexp",principle:"authority",
-    wrap:"A – Answer: \"Those were likely generic. Ours are fitted to your structure — let's test the difference now.\"",
+    wrap:'A – Answer: "Those were likely generic. Ours are fitted to your structure — let\'s test the difference now."',
     why:"Bad past experience is overcome by differentiating with expertise and a live demo."},
   {line:"My sister said these kinds of things never work.",fear:"thirdparty",principle:"social",
-    wrap:"R – Ready: \"A lot of people hear that. What matters is what your feet tell you in this fitting.\"",
+    wrap:'R – Ready: "A lot of people hear that. What matters is what your feet tell you in this fitting."',
     why:"Third-party influence is countered by social proof and returning authority to their own experience."},
   {line:"I'm worried I'll waste money if I don't notice a change.",fear:"mistake",principle:"loss",
-    wrap:"P – Pain Better: \"The real cost is continuing to live with this pain. Let's confirm improvement first.\"",
+    wrap:'P – Pain Better: "The real cost is continuing to live with this pain. Let\'s confirm improvement first."',
     why:"Mistake fear + loss aversion: show the cost of inaction and confirm relief live."},
   {line:"I just don't trust sales pitches. I've been burned.",fear:"salesperson",principle:"reciprocity",
-    wrap:"W – Why: \"Then let's start with a free foot analysis only. You'll leave with more clarity either way.\"",
+    wrap:'W – Why: "Then let\'s start with a free foot analysis only. You\'ll leave with more clarity either way."',
     why:"Salesperson fear + past burn is met with pure reciprocity — value first, no pressure."},
   {line:"This seems expensive for something that goes in a shoe.",fear:"debt",principle:"value",
-    wrap:"A – Answer: \"It's an investment in how you move every day. Most say the relief is worth far more.\"",
+    wrap:'A – Answer: "It\'s an investment in how you move every day. Most say the relief is worth far more."',
     why:"Price objection is reframed as perceived value against daily quality of life."},
   {line:"What if my doctor doesn't agree with this?",fear:"thirdparty",principle:"authority",
-    wrap:"A – Answer: \"Many clients come from referrals and medical recommendations. I can share the clinical data.\"",
+    wrap:'A – Answer: "Many clients come from referrals and medical recommendations. I can share the clinical data."',
     why:"Third-party (doctor) concern is met with authority and openness to evidence."},
 ];
 const WRAP_DISTRACTORS=[
-  "W – Why: \"You should buy these because they are the best on the market.\"",
-  "R – Ready: \"Just take my word for it — everyone loves them.\"",
-  "A – Answer: \"Price is the only thing that matters here.\"",
-  "P – Pain Better: \"If it doesn't work, that's on you.\"",
-  "W – Why: \"These are popular this month.\"",
-  "R – Ready: \"You'll figure it out once you get home.\"",
-  "A – Answer: \"Don't worry about the details.\"",
-  "P – Pain Better: \"Pain is normal; just push through.\"",
+  'W – Why: "You should buy these because they are the best on the market."',
+  'R – Ready: "Just take my word for it — everyone loves them."',
+  'A – Answer: "Price is the only thing that matters here."',
+  'P – Pain Better: "If it doesn\'t work, that\'s on you."',
+  'W – Why: "These are popular this month."',
+  'R – Ready: "You\'ll figure it out once you get home."',
+  'A – Answer: "Don\'t worry about the details."',
+  'P – Pain Better: "Pain is normal; just push through."',
 ];
 function shuffle(a){const x=a.slice();for(let i=x.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[x[i],x[j]]=[x[j],x[i]];}return x;}
 function pick(arr,n){return shuffle(arr).slice(0,n);}
 function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));}
-let state={screen:"title",stage:1,score:0,streak:0,bestStreak:0,qi:0,queue:[],step:"fear",selected:{fear:null,principle:null,wrap:null},lastCorrect:{fear:false,principle:false,wrap:false},health:3,maxHealth:3,bossHp:2,bossMax:2,integrity:3,maxIntegrity:3,depth:0,maxDepth:6,timer:0,timerMax:0,timerId:null,perfects:0,high:0,locked:false};
+
+let state={screen:"title",stage:1,score:0,streak:0,bestStreak:0,qi:0,queue:[],step:"fear",
+  selected:{fear:null,principle:null,wrap:null},lastCorrect:{fear:false,principle:false,wrap:false},
+  health:3,maxHealth:3,bossHp:2,bossMax:2,integrity:3,maxIntegrity:3,depth:0,maxDepth:6,
+  timer:0,timerMax:0,timerId:null,perfects:0,high:0,locked:false};
+
 function loadHigh(){try{const r=localStorage.getItem(SAVE_KEY);if(r)state.high=JSON.parse(r).high||0;}catch(e){}}
-function saveHigh(){if(state.score>state.high){state.high=state.score;try{localStorage.setItem(SAVE_KEY,JSON.stringify({high:state.high}));}catch(e){}}if(window.QuadScore)window.QuadScore.report(state.score);}
+function saveHigh(){if(state.score>state.high){state.high=state.score;try{localStorage.setItem(SAVE_KEY,JSON.stringify({high:state.high}));}catch(e){}}
+  if(window.QuadScore)window.QuadScore.report(state.score);}
+
 let ctx=null;
 function unlock(){if(!ctx)ctx=new(window.AudioContext||window.webkitAudioContext)();if(ctx.state==="suspended")ctx.resume();}
-function beep(f,d,type,g){if(!ctx)return;const t=ctx.currentTime,o=ctx.createOscillator(),gn=ctx.createGain();o.type=type||"sine";o.frequency.value=f;gn.gain.setValueAtTime(0.0001,t);gn.gain.exponentialRampToValueAtTime(g||0.07,t+0.01);gn.gain.exponentialRampToValueAtTime(0.0001,t+(d||0.08));o.connect(gn);gn.connect(ctx.destination);o.start(t);o.stop(t+(d||0.08)+0.02);}
-const sfx={ok(){beep(523,.06);beep(659,.08,"triangle",.07);},perfect(){beep(523,.05);beep(659,.06);beep(784,.11,"triangle",.09);},bad(){beep(175,.2,"sawtooth",.055);},depth(){beep(392,.05);beep(523,.07,"triangle",.08);beep(659,.09,"triangle",.09);},start(){beep(330,.07);beep(440,.09,"triangle",.07);}};
-function startStage(n){unlock();sfx.start();clearTimer();state.stage=n;state.score=0;state.streak=0;state.bestStreak=0;state.perfects=0;state.qi=0;state.depth=0;state.step="fear";state.selected={fear:null,principle:null,wrap:null};state.locked=false;state.health=3;state.maxHealth=3;state.integrity=3;state.maxIntegrity=3;if(n===1){state.queue=shuffle(SCENARIOS).slice(0,6);state.screen="stage1";}else if(n===2){state.queue=shuffle(SCENARIOS).slice(0,8);state.bossHp=2;state.bossMax=2;state.timerMax=14;state.timer=14;state.screen="stage2";}else{state.queue=shuffle(SCENARIOS).slice(0,6);state.maxDepth=state.queue.length;state.timerMax=16;state.timer=16;state.screen="stage3";}render();if(n===2||n===3)startTimer();}
+function beep(f,d,type,g){if(!ctx)return;const t=ctx.currentTime,o=ctx.createOscillator(),gn=ctx.createGain();
+  o.type=type||"sine";o.frequency.value=f;gn.gain.setValueAtTime(0.0001,t);
+  gn.gain.exponentialRampToValueAtTime(g||0.065,t+0.01);gn.gain.exponentialRampToValueAtTime(0.0001,t+(d||0.08));
+  o.connect(gn);gn.connect(ctx.destination);o.start(t);o.stop(t+(d||0.08)+0.02);}
+const sfx={
+  ok(){beep(523,.055);beep(659,.075,"triangle",.065);},
+  perfect(){beep(523,.05);beep(659,.055);beep(784,.1,"triangle",.085);},
+  bad(){beep(170,.18,"sawtooth",.05);},
+  depth(){beep(392,.05);beep(523,.065,"triangle",.075);beep(659,.085,"triangle",.085);},
+  start(){beep(330,.065);beep(440,.085,"triangle",.065);},
+  click(){beep(700,.03,"sine",.04);}
+};
+
+function startStage(n){
+  unlock();sfx.start();clearTimer();
+  state.stage=n;state.score=0;state.streak=0;state.bestStreak=0;state.perfects=0;state.qi=0;state.depth=0;
+  state.step="fear";state.selected={fear:null,principle:null,wrap:null};state.locked=false;
+  state.health=3;state.maxHealth=3;state.integrity=3;state.maxIntegrity=3;
+  if(n===1){state.queue=shuffle(SCENARIOS).slice(0,6);state.screen="stage1";}
+  else if(n===2){state.queue=shuffle(SCENARIOS).slice(0,8);state.bossHp=2;state.bossMax=2;state.timerMax=14;state.timer=14;state.screen="stage2";}
+  else{state.queue=shuffle(SCENARIOS).slice(0,6);state.maxDepth=state.queue.length;state.timerMax=16;state.timer=16;state.screen="stage3";}
+  render();if(n===2||n===3)startTimer();
+}
 function clearTimer(){if(state.timerId){clearInterval(state.timerId);state.timerId=null;}}
-function startTimer(){clearTimer();state.timer=state.timerMax;state.timerId=setInterval(()=>{state.timer-=0.1;if(state.timer<=0){state.timer=0;clearTimer();onTimeout();}updateTimerUI();},100);}
-function onTimeout(){if(state.locked)return;sfx.bad();state.locked=true;if(state.stage===2)state.health=Math.max(0,state.health-1);if(state.stage===3)state.integrity=Math.max(0,state.integrity-1);state.streak=0;state.step="feedback";state.lastCorrect={fear:false,principle:false,wrap:false};render();}
+function startTimer(){clearTimer();state.timer=state.timerMax;state.timerId=setInterval(()=>{
+  state.timer-=0.1;if(state.timer<=0){state.timer=0;clearTimer();onTimeout();}updateTimerUI();},100);}
+function onTimeout(){if(state.locked)return;sfx.bad();state.locked=true;
+  if(state.stage===2)state.health=Math.max(0,state.health-1);
+  if(state.stage===3)state.integrity=Math.max(0,state.integrity-1);
+  state.streak=0;state.step="feedback";state.lastCorrect={fear:false,principle:false,wrap:false};render();}
 function current(){return state.queue[state.qi];}
 function depthMult(){return state.stage===3?(1+state.depth*0.35):1;}
 function comboMult(){return Math.min(4,1+state.streak*0.5);}
-function chooseFear(id){if(state.step!=="fear"||state.locked)return;unlock();state.selected.fear=id;state.step="principle";render();}
-function choosePrinciple(id){if(state.step!=="principle"||state.locked)return;unlock();state.selected.principle=id;state.step="wrap";render();}
+function chooseFear(id){if(state.step!=="fear"||state.locked)return;unlock();sfx.click();state.selected.fear=id;state.step="principle";render();}
+function choosePrinciple(id){if(state.step!=="principle"||state.locked)return;unlock();sfx.click();state.selected.principle=id;state.step="wrap";render();}
 function chooseWrap(text){if(state.step!=="wrap"||state.locked)return;unlock();state.selected.wrap=text;scoreRound();}
-function scoreRound(){state.locked=true;const q=current();const fOk=state.selected.fear===q.fear,pOk=state.selected.principle===q.principle,wOk=state.selected.wrap===q.wrap;state.lastCorrect={fear:fOk,principle:pOk,wrap:wOk};let pts=0;if(fOk)pts+=100;if(pOk)pts+=150;if(wOk)pts+=200;const perfect=fOk&&pOk&&wOk;if(perfect){state.streak++;state.bestStreak=Math.max(state.bestStreak,state.streak);state.perfects++;let mult=comboMult();if(state.stage===3)mult*=depthMult();pts=Math.round(pts*mult);sfx.perfect();if(state.stage===2)state.bossHp=Math.max(0,state.bossHp-1);if(state.stage===3){state.depth=Math.min(state.maxDepth,state.depth+1);sfx.depth();}}else{state.streak=0;sfx.bad();if(state.stage===2)state.health=Math.max(0,state.health-1);if(state.stage===3)state.integrity=Math.max(0,state.integrity-1);}state.score+=pts;state.step="feedback";clearTimer();render();}
-function nextRound(){if(state.stage===2&&state.health<=0){endRun();return;}if(state.stage===3&&state.integrity<=0){endRun();return;}state.qi++;if(state.qi>=state.queue.length){endRun();return;}state.step="fear";state.selected={fear:null,principle:null,wrap:null};state.locked=false;if(state.stage===2){if(state.bossHp<=0){state.bossHp=2+Math.floor(state.qi/3);state.bossMax=state.bossHp;}state.timerMax=Math.max(9,14-Math.floor(state.qi/2));state.timer=state.timerMax;startTimer();}if(state.stage===3){state.timerMax=Math.max(8,16-state.depth*1.2);state.timer=state.timerMax;startTimer();}render();}
+function scoreRound(){
+  state.locked=true;const q=current();
+  const fOk=state.selected.fear===q.fear,pOk=state.selected.principle===q.principle,wOk=state.selected.wrap===q.wrap;
+  state.lastCorrect={fear:fOk,principle:pOk,wrap:wOk};
+  let pts=0;if(fOk)pts+=100;if(pOk)pts+=150;if(wOk)pts+=200;
+  const perfect=fOk&&pOk&&wOk;
+  if(perfect){state.streak++;state.bestStreak=Math.max(state.bestStreak,state.streak);state.perfects++;
+    let mult=comboMult();if(state.stage===3)mult*=depthMult();pts=Math.round(pts*mult);sfx.perfect();
+    if(state.stage===2)state.bossHp=Math.max(0,state.bossHp-1);
+    if(state.stage===3){state.depth=Math.min(state.maxDepth,state.depth+1);sfx.depth();}
+  }else{state.streak=0;sfx.bad();
+    if(state.stage===2)state.health=Math.max(0,state.health-1);
+    if(state.stage===3)state.integrity=Math.max(0,state.integrity-1);}
+  state.score+=pts;state.step="feedback";clearTimer();render();
+}
+function nextRound(){
+  if(state.stage===2&&state.health<=0){endRun();return;}
+  if(state.stage===3&&state.integrity<=0){endRun();return;}
+  state.qi++;if(state.qi>=state.queue.length){endRun();return;}
+  state.step="fear";state.selected={fear:null,principle:null,wrap:null};state.locked=false;
+  if(state.stage===2){if(state.bossHp<=0){state.bossHp=2+Math.floor(state.qi/3);state.bossMax=state.bossHp;}
+    state.timerMax=Math.max(9,14-Math.floor(state.qi/2));state.timer=state.timerMax;startTimer();}
+  if(state.stage===3){state.timerMax=Math.max(8,16-state.depth*1.2);state.timer=state.timerMax;startTimer();}
+  render();
+}
 function endRun(){clearTimer();saveHigh();state.screen="result";render();}
-function stepDots(){const order=["fear","principle","wrap"];const idx=order.indexOf(state.step);return order.map((s,i)=>`<div class="step-dot ${i<idx?"done":i===idx?"on":""}"></div>`).join("");}
-function optionsForStep(step){const q=current();if(step==="fear")return shuffle(FEARS).map(f=>({id:f.id,label:f.label,correct:f.id===q.fear}));if(step==="principle"){const correct=PRINCIPLES.find(p=>p.id===q.principle);const others=PRINCIPLES.filter(p=>p.id!==q.principle);return shuffle([correct,...pick(others,3)]).map(p=>({id:p.id,label:p.label,tip:p.tip,correct:p.id===q.principle}));}const correct=q.wrap;const distractors=pick(WRAP_DISTRACTORS.filter(w=>w!==correct),3);return shuffle([correct,...distractors]).map(w=>({id:w,label:w,correct:w===correct}));}
-function render(){const app=document.getElementById("app");if(state.screen==="title")app.innerHTML=viewTitle();else if(state.screen==="stage1")app.innerHTML=viewStage1();else if(state.screen==="stage2")app.innerHTML=viewStage2();else if(state.screen==="stage3")app.innerHTML=viewStage3();else if(state.screen==="result")app.innerHTML=viewResult();bind();}
-function viewTitle(){loadHigh();return `<div class="hud"><span class="chip">Waterman College</span><span class="chip gold">★ ${state.high}</span></div><div class="card pop"><div class="tag">Confidence Protocol</div><h1>Fear Buster</h1><p class="sub">Identify the fear → fire the right principle → seal it with W.R.A.P. Perfect triples build your combo and score.</p><div class="stage-grid"><button class="stage-btn" data-go="1"><strong><span class="num">1</span>Basic Protocol</strong><span>Learn the system. No timer. Pure matching.</span></button><button class="stage-btn" data-go="2"><strong><span class="num">2</span>Fear Arena</strong><span>Boss rush. Health bar. Timed pressure.</span></button><button class="stage-btn" data-go="3"><strong><span class="num">3</span>Mind Breach</strong><span>Deeper chambers. Rising multipliers. Path integrity.</span></button></div><p class="small center" style="margin-top:16px">From Customer Fears · Psychological Principles · W.R.A.P.</p></div>`;}
-function viewStage1(){const q=current();const step=state.step;let body="";if(step==="feedback"){const lc=state.lastCorrect;const perfect=lc.fear&&lc.principle&&lc.wrap;body=`<div class="fb ${perfect?"ok":"bad"} fade-in"><strong>${perfect?"Perfect triple":"Review the gaps"}</strong>Fear ${lc.fear?"✓":"✗"} · Principle ${lc.principle?"✓":"✗"} · W.R.A.P. ${lc.wrap?"✓":"✗"}<div style="margin-top:8px;color:var(--ink)">${esc(q.why)}</div></div><button class="btn gold" data-next>Next scenario</button>`;}else{const opts=optionsForStep(step);const title=step==="fear"?"1 · Identify the Fear":step==="principle"?"2 · Choose the Principle":"3 · Seal with W.R.A.P.";body=`<div class="step-row">${stepDots()}</div><div class="step-label">${title}</div><div class="prompt">"${esc(q.line)}"</div>${opts.map(o=>`<button class="opt" data-${step}="${esc(o.id)}">${esc(o.label)}${o.tip?`<div class="tip">${esc(o.tip)}</div>`:""}</button>`).join("")}`;}return `<div class="hud"><span class="chip">Stage 1</span><span class="chip">${state.qi+1} / ${state.queue.length}</span><span class="chip gold">★ ${state.score}</span><span class="chip combo">×${comboMult().toFixed(1)}</span></div><div class="card pop">${body}</div><button class="btn ghost" style="margin-top:12px" data-menu>Quit to menu</button>`;}
-function viewStage2(){const q=current();const step=state.step;const pct=(state.timer/state.timerMax)*100;let body="";if(step==="feedback"){const lc=state.lastCorrect;const perfect=lc.fear&&lc.principle&&lc.wrap;const dead=state.health<=0;body=`<div class="fb ${perfect?"ok":"bad"} fade-in"><strong>${perfect?"Fear shattered":(dead?"Down":"Hit taken")}</strong>${perfect?"Boss damaged. Keep the streak.":"Combo broken."}<div style="margin-top:8px;color:var(--ink)">${esc(q.why)}</div></div><button class="btn gold" data-next>${dead||state.qi+1>=state.queue.length?"See results":"Next fear"}</button>`;}else{const opts=optionsForStep(step);const title=step==="fear"?"Identify the Fear":step==="principle"?"Fire the Principle":"W.R.A.P. Finish";body=`<div class="step-row">${stepDots()}</div><div class="step-label">${title}</div><div class="prompt">"${esc(q.line)}"</div>${opts.map(o=>`<button class="opt" data-${step}="${esc(o.id)}">${esc(o.label)}</button>`).join("")}`;}return `<div class="hud"><span class="chip">Arena</span><span class="chip gold">★ ${state.score}</span><span class="chip combo">Streak ${state.streak}</span></div><div class="card pop"><div class="row" style="justify-content:space-between;margin-bottom:2px"><span class="small">Your health</span><span class="small">Boss ${state.bossHp}/${state.bossMax}</span></div><div class="hp">${Array.from({length:state.maxHealth},(_,i)=>`<span class="${i<state.health?"on":""}"></span>`).join("")}</div>${step!=="feedback"?`<div class="bar arena"><i id="timerFill" style="width:${pct}%"></i></div><div class="small center">${Math.ceil(state.timer)}s</div>`:""}${body}</div><button class="btn ghost" style="margin-top:12px" data-menu>Quit to menu</button>`;}
-function viewStage3(){const q=current();const step=state.step;const pct=(state.timer/state.timerMax)*100;const mult=(comboMult()*depthMult()).toFixed(2);let body="";if(step==="feedback"){const lc=state.lastCorrect;const perfect=lc.fear&&lc.principle&&lc.wrap;const collapsed=state.integrity<=0;body=`<div class="fb ${perfect?"ok":"bad"} fade-in"><strong>${perfect?"Chamber breached":(collapsed?"Path collapsed":"Integrity damaged")}</strong>${perfect?`Depth ${state.depth} · Multiplier ×${mult}`:"Path integrity reduced."}<div style="margin-top:8px;color:var(--ink)">${esc(q.why)}</div></div><button class="btn breach" data-next>${collapsed||state.qi+1>=state.queue.length?"See results":"Next chamber"}</button>`;}else{const opts=optionsForStep(step);const title=step==="fear"?"Identify the Fear":step==="principle"?"Choose the Principle":"W.R.A.P. Seal";body=`<div class="step-row">${stepDots()}</div><div class="step-label">${title}</div><div class="prompt">"${esc(q.line)}"</div>${opts.map(o=>`<button class="opt" data-${step}="${esc(o.id)}">${esc(o.label)}</button>`).join("")}`;}return `<div class="hud"><span class="chip">Mind Breach</span><span class="chip">Depth ${state.depth}/${state.maxDepth}</span><span class="chip gold">★ ${state.score}</span><span class="chip combo">×${mult}</span></div><div class="card pop"><div class="row" style="justify-content:space-between;margin-bottom:2px"><span class="small">Path integrity</span><span class="small">Chamber ${state.qi+1}</span></div><div class="hp">${Array.from({length:state.maxIntegrity},(_,i)=>`<span class="${i<state.integrity?"int":""}"></span>`).join("")}</div><div class="depth">${Array.from({length:state.maxDepth},(_,i)=>`<i class="${i<state.depth?"done":(i===state.depth?"on":"")}"></i>`).join("")}</div>${step!=="feedback"?`<div class="bar breach"><i id="timerFill" style="width:${pct}%"></i></div><div class="small center">${Math.ceil(state.timer)}s · deeper = higher score, tighter clock</div>`:""}${body}</div><button class="btn ghost" style="margin-top:12px" data-menu>Quit to menu</button>`;}
-function viewResult(){const perfectRate=state.queue.length?Math.round(state.perfects/state.queue.length*100):0;const name=state.stage===1?"Basic Protocol":state.stage===2?"Fear Arena":"Mind Breach";const isHigh=state.score>=state.high&&state.score>0;return `<div class="hud"><span class="chip">Run complete</span><span class="chip gold">Best ★ ${state.high}</span></div><div class="card pop center"><div class="tag">Confidence Protocol</div><h2>${isHigh?"New high score":"Session complete"}</h2><p class="sub">${name} · ${state.perfects} perfect${state.perfects===1?"":"s"} · streak ${state.bestStreak}${state.stage===3?` · depth ${state.depth}`:""}</p><div class="score-big">${state.score}</div><div class="small">Perfect rate ${perfectRate}%</div><button class="btn gold" data-again style="margin-top:18px">Run ${name} again</button><button class="btn primary" data-menu>Back to menu</button></div>`;}
+function stepDots(){const order=["fear","principle","wrap"];const idx=order.indexOf(state.step);
+  return order.map((s,i)=>`<div class="step-dot ${i<idx?"done":i===idx?"on":""}"></div>`).join("");}
+function optionsForStep(step){
+  const q=current();
+  if(step==="fear")return shuffle(FEARS).map(f=>({id:f.id,label:f.label,correct:f.id===q.fear}));
+  if(step==="principle"){const correct=PRINCIPLES.find(p=>p.id===q.principle);
+    const others=PRINCIPLES.filter(p=>p.id!==q.principle);
+    return shuffle([correct,...pick(others,3)]).map(p=>({id:p.id,label:p.label,tip:p.tip,correct:p.id===q.principle}));}
+  const correct=q.wrap;const distractors=pick(WRAP_DISTRACTORS.filter(w=>w!==correct),3);
+  return shuffle([correct,...distractors]).map(w=>({id:w,label:w,correct:w===correct}));
+}
+function render(){
+  const app=document.getElementById("app");
+  if(state.screen==="title")app.innerHTML=viewTitle();
+  else if(state.screen==="stage1")app.innerHTML=viewStage1();
+  else if(state.screen==="stage2")app.innerHTML=viewStage2();
+  else if(state.screen==="stage3")app.innerHTML=viewStage3();
+  else if(state.screen==="result")app.innerHTML=viewResult();
+  bind();
+}
+function viewTitle(){loadHigh();return `
+  <div class="hud"><span class="chip">Waterman College</span><span class="chip gold">★ ${state.high}</span></div>
+  <div class="card pop">
+    <div class="tag">Confidence Protocol</div>
+    <h1>Fear Buster</h1>
+    <p class="sub">Identify the fear → fire the right principle → seal it with W.R.A.P. Perfect triples build your combo and score.</p>
+    <div class="stage-grid">
+      <button class="stage-btn" data-go="1"><strong><span class="num">1</span>Basic Protocol</strong><span>Learn the system. No timer. Pure matching.</span></button>
+      <button class="stage-btn" data-go="2"><strong><span class="num">2</span>Fear Arena</strong><span>Boss rush. Health bar. Timed pressure.</span></button>
+      <button class="stage-btn" data-go="3"><strong><span class="num">3</span>Mind Breach</strong><span>Deeper chambers. Rising multipliers. Path integrity.</span></button>
+    </div>
+    <p class="small center" style="margin-top:18px">Customer Fears · Psychological Principles · W.R.A.P.</p>
+  </div>`;}
+function viewStage1(){
+  const q=current(),step=state.step;let body="";
+  if(step==="feedback"){const lc=state.lastCorrect,perfect=lc.fear&&lc.principle&&lc.wrap;
+    body=`<div class="fb ${perfect?"ok":"bad"} fade-in"><strong>${perfect?"Perfect triple":"Review the gaps"}</strong>
+      Fear ${lc.fear?"✓":"✗"} · Principle ${lc.principle?"✓":"✗"} · W.R.A.P. ${lc.wrap?"✓":"✗"}
+      <div style="margin-top:9px;color:var(--ink)">${esc(q.why)}</div></div>
+      <button class="btn gold" data-next>Next scenario</button>`;}
+  else{const opts=optionsForStep(step);
+    const title=step==="fear"?"1 · Identify the Fear":step==="principle"?"2 · Choose the Principle":"3 · Seal with W.R.A.P.";
+    body=`<div class="step-row">${stepDots()}</div><div class="step-label">${title}</div>
+      <div class="prompt">"${esc(q.line)}"</div>
+      ${opts.map(o=>`<button class="opt" data-${step}="${esc(o.id)}">${esc(o.label)}${o.tip?`<div class="tip">${esc(o.tip)}</div>`:""}</button>`).join("")}`;} 
+  return `<div class="hud"><span class="chip">Stage 1</span><span class="chip">${state.qi+1} / ${state.queue.length}</span>
+    <span class="chip gold">★ ${state.score}</span><span class="chip combo">×${comboMult().toFixed(1)}</span></div>
+    <div class="card pop">${body}</div>
+    <button class="btn ghost" style="margin-top:12px" data-menu>Quit to menu</button>`;}
+function viewStage2(){
+  const q=current(),step=state.step,pct=(state.timer/state.timerMax)*100;let body="";
+  if(step==="feedback"){const lc=state.lastCorrect,perfect=lc.fear&&lc.principle&&lc.wrap,dead=state.health<=0;
+    body=`<div class="fb ${perfect?"ok":"bad"} fade-in"><strong>${perfect?"Fear shattered":(dead?"Down":"Hit taken")}</strong>
+      ${perfect?"Boss damaged. Keep the streak.":"Combo broken."}
+      <div style="margin-top:9px;color:var(--ink)">${esc(q.why)}</div></div>
+      <button class="btn gold" data-next>${dead||state.qi+1>=state.queue.length?"See results":"Next fear"}</button>`;}
+  else{const opts=optionsForStep(step);
+    const title=step==="fear"?"Identify the Fear":step==="principle"?"Fire the Principle":"W.R.A.P. Finish";
+    body=`<div class="step-row">${stepDots()}</div><div class="step-label">${title}</div>
+      <div class="prompt">"${esc(q.line)}"</div>
+      ${opts.map(o=>`<button class="opt" data-${step}="${esc(o.id)}">${esc(o.label)}</button>`).join("")}`;} 
+  return `<div class="hud"><span class="chip">Arena</span><span class="chip gold">★ ${state.score}</span>
+    <span class="chip combo">Streak ${state.streak}</span></div>
+    <div class="card pop">
+      <div class="row" style="justify-content:space-between;margin-bottom:2px"><span class="small">Your health</span><span class="small">Boss ${state.bossHp}/${state.bossMax}</span></div>
+      <div class="hp">${Array.from({length:state.maxHealth},(_,i)=>`<span class="${i<state.health?"on":""}"></span>`).join("")}</div>
+      ${step!=="feedback"?`<div class="bar arena"><i id="timerFill" style="width:${pct}%"></i></div><div class="small center">${Math.ceil(state.timer)}s</div>`:""}
+      ${body}</div>
+    <button class="btn ghost" style="margin-top:12px" data-menu>Quit to menu</button>`;}
+function viewStage3(){
+  const q=current(),step=state.step,pct=(state.timer/state.timerMax)*100,mult=(comboMult()*depthMult()).toFixed(2);let body="";
+  if(step==="feedback"){const lc=state.lastCorrect,perfect=lc.fear&&lc.principle&&lc.wrap,collapsed=state.integrity<=0;
+    body=`<div class="fb ${perfect?"ok":"bad"} fade-in"><strong>${perfect?"Chamber breached":(collapsed?"Path collapsed":"Integrity damaged")}</strong>
+      ${perfect?`Depth ${state.depth} · Multiplier ×${mult}`:"Path integrity reduced."}
+      <div style="margin-top:9px;color:var(--ink)">${esc(q.why)}</div></div>
+      <button class="btn breach" data-next>${collapsed||state.qi+1>=state.queue.length?"See results":"Next chamber"}</button>`;}
+  else{const opts=optionsForStep(step);
+    const title=step==="fear"?"Identify the Fear":step==="principle"?"Choose the Principle":"W.R.A.P. Seal";
+    body=`<div class="step-row">${stepDots()}</div><div class="step-label">${title}</div>
+      <div class="prompt">"${esc(q.line)}"</div>
+      ${opts.map(o=>`<button class="opt" data-${step}="${esc(o.id)}">${esc(o.label)}</button>`).join("")}`;} 
+  return `<div class="hud"><span class="chip">Mind Breach</span><span class="chip">Depth ${state.depth}/${state.maxDepth}</span>
+    <span class="chip gold">★ ${state.score}</span><span class="chip combo">×${mult}</span></div>
+    <div class="card pop">
+      <div class="row" style="justify-content:space-between;margin-bottom:2px"><span class="small">Path integrity</span><span class="small">Chamber ${state.qi+1}</span></div>
+      <div class="hp">${Array.from({length:state.maxIntegrity},(_,i)=>`<span class="${i<state.integrity?"int":""}"></span>`).join("")}</div>
+      <div class="depth">${Array.from({length:state.maxDepth},(_,i)=>`<i class="${i<state.depth?"done":(i===state.depth?"on":"")}"></i>`).join("")}</div>
+      ${step!=="feedback"?`<div class="bar breach"><i id="timerFill" style="width:${pct}%"></i></div>
+        <div class="small center">${Math.ceil(state.timer)}s · deeper = higher score, tighter clock</div>`:""}
+      ${body}</div>
+    <button class="btn ghost" style="margin-top:12px" data-menu>Quit to menu</button>`;}
+function viewResult(){
+  const perfectRate=state.queue.length?Math.round(state.perfects/state.queue.length*100):0;
+  const name=state.stage===1?"Basic Protocol":state.stage===2?"Fear Arena":"Mind Breach";
+  const isHigh=state.score>=state.high&&state.score>0;
+  return `<div class="hud"><span class="chip">Run complete</span><span class="chip gold">Best ★ ${state.high}</span></div>
+    <div class="card pop center">
+      <div class="tag">Confidence Protocol</div>
+      <h2>${isHigh?"New high score":"Session complete"}</h2>
+      <p class="sub">${name} · ${state.perfects} perfect${state.perfects===1?"":"s"} · streak ${state.bestStreak}${state.stage===3?` · depth ${state.depth}`:""}</p>
+      <div class="score-big ${isHigh?"pulse-gold":""}">${state.score}</div>
+      <div class="small">Perfect rate ${perfectRate}%</div>
+      <button class="btn gold" data-again style="margin-top:20px">Run ${name} again</button>
+      <button class="btn primary" data-menu>Back to menu</button>
+    </div>`;}
 function updateTimerUI(){const el=document.getElementById("timerFill");if(!el)return;el.style.width=Math.max(0,state.timer/state.timerMax*100)+"%";}
-function bind(){document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>startStage(+b.getAttribute("data-go")));document.querySelectorAll("[data-fear]").forEach(b=>b.onclick=()=>chooseFear(b.getAttribute("data-fear")));document.querySelectorAll("[data-principle]").forEach(b=>b.onclick=()=>choosePrinciple(b.getAttribute("data-principle")));document.querySelectorAll("[data-wrap]").forEach(b=>b.onclick=()=>chooseWrap(b.getAttribute("data-wrap")));const next=document.querySelector("[data-next]");if(next)next.onclick=nextRound;const menu=document.querySelector("[data-menu]");if(menu)menu.onclick=()=>{clearTimer();state.screen="title";render();};const again=document.querySelector("[data-again]");if(again)again.onclick=()=>startStage(state.stage);}
+function bind(){
+  document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>startStage(+b.getAttribute("data-go")));
+  document.querySelectorAll("[data-fear]").forEach(b=>b.onclick=()=>chooseFear(b.getAttribute("data-fear")));
+  document.querySelectorAll("[data-principle]").forEach(b=>b.onclick=()=>choosePrinciple(b.getAttribute("data-principle")));
+  document.querySelectorAll("[data-wrap]").forEach(b=>b.onclick=()=>chooseWrap(b.getAttribute("data-wrap")));
+  const next=document.querySelector("[data-next]");if(next)next.onclick=nextRound;
+  const menu=document.querySelector("[data-menu]");if(menu)menu.onclick=()=>{clearTimer();state.screen="title";render();};
+  const again=document.querySelector("[data-again]");if(again)again.onclick=()=>startStage(state.stage);
+}
 loadHigh();render();
 })();
 </script>
