@@ -2,11 +2,10 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
 import { useEffect } from "react";
 import { AuthGate } from "@/components/auth-gate";
-import { SiteShell } from "@/components/site-shell";
+import { SiteHeader } from "@/components/site-header";
 import { QUAD_GAMES } from "@/lib/quad";
 import { reportGameResult } from "@/lib/quad-scores";
 import { pageHead } from "@/lib/page-title";
-import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/quad_/$game")({
   component: GamePage,
@@ -16,13 +15,23 @@ export const Route = createFileRoute("/quad_/$game")({
   },
 });
 
+/**
+ * Immersive game view. The games are built as full-viewport pages (100vh, often
+ * with their own overflow handling), so instead of embedding them in a small
+ * fixed-height frame inside a scrolling page — where wheel/touch scroll chains
+ * to the outer page and the game gets cut off — this route locks the outer page
+ * to exactly one viewport (h-dvh + overflow-hidden, no footer) and gives the
+ * iframe everything below the header. With nothing to scroll outside, scrolling
+ * happens inside the game.
+ */
 function GamePage() {
   return (
-    <SiteShell>
+    <div className="flex h-dvh flex-col overflow-hidden overscroll-none bg-paper text-ink">
+      <SiteHeader />
       <AuthGate>
         <GameFrame />
       </AuthGate>
-    </SiteShell>
+    </div>
   );
 }
 
@@ -50,29 +59,26 @@ function GameFrame() {
   }, [game]);
 
   if (!game) throw notFound();
-  const tall = "tall" in game && game.tall === true;
   return (
-    <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8 sm:py-10">
-      <Link
-        to="/quad"
-        className="inline-flex items-center gap-2 text-xs uppercase tracking-[0.16em] text-brass hover:text-navy"
-      >
-        <ArrowLeft className="size-3.5" /> Back to The Quad
-      </Link>
-      <p className="kicker mt-6">Intramural</p>
-      <span className="rule-brass mt-3" />
-      <h1 className="mt-4 font-display text-3xl leading-none sm:text-4xl">{game.title}</h1>
-      <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted">{game.blurb}</p>
-      <div className="mt-7 overflow-hidden rounded-lg border border-line bg-paper shadow-card">
-        <iframe
-          title={game.title}
-          src={game.file}
-          className={cn(
-            "block w-full bg-paper",
-            tall ? "h-[min(88dvh,56rem)] min-h-[32rem]" : "h-[70dvh] min-h-[20rem]",
-          )}
-        />
+    <div className="flex min-h-0 flex-1 flex-col">
+      {/* Slim game bar — back link + title on one line so the game keeps the room */}
+      <div className="flex items-center gap-3 border-b border-line bg-paper-2 px-4 py-2 sm:px-6">
+        <Link
+          to="/quad"
+          className="inline-flex shrink-0 items-center gap-1.5 text-[0.68rem] font-medium uppercase tracking-[0.14em] text-brass hover:text-navy"
+        >
+          <ArrowLeft className="size-3.5" /> The Quad
+        </Link>
+        <span className="h-4 w-px shrink-0 bg-line" aria-hidden />
+        <h1 className="min-w-0 truncate font-display text-lg leading-none" title={game.blurb}>
+          {game.title}
+        </h1>
       </div>
+      <iframe
+        title={game.title}
+        src={game.file}
+        className="block min-h-0 w-full flex-1 bg-paper"
+      />
     </div>
   );
 }
