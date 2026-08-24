@@ -1,11 +1,12 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowLeft } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowLeft, Maximize2, Minimize2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { AuthGate } from "@/components/auth-gate";
 import { SiteHeader } from "@/components/site-header";
 import { QUAD_GAMES } from "@/lib/quad";
 import { reportGameResult } from "@/lib/quad-scores";
 import { pageHead } from "@/lib/page-title";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/quad_/$game")({
   component: GamePage,
@@ -80,9 +81,76 @@ function GameFrame() {
     setGameHeight(null);
   }, [slug]);
 
+  // Fullscreen: native Fullscreen API where available (with the webkit-prefixed
+  // variant for Safari); on iPhone — which has no element fullscreen at all —
+  // fall back to a CSS takeover that pins the game over the whole app viewport.
+  const shellRef = useRef<HTMLDivElement>(null);
+  const [nativeFull, setNativeFull] = useState(false);
+  const [cssFull, setCssFull] = useState(false);
+  const isFull = nativeFull || cssFull;
+
+  useEffect(() => {
+    function onChange() {
+      const d = document as Document & { webkitFullscreenElement?: Element | null };
+      setNativeFull(Boolean(d.fullscreenElement ?? d.webkitFullscreenElement));
+    }
+    document.addEventListener("fullscreenchange", onChange);
+    document.addEventListener("webkitfullscreenchange", onChange);
+    return () => {
+      document.removeEventListener("fullscreenchange", onChange);
+      document.removeEventListener("webkitfullscreenchange", onChange);
+    };
+  }, []);
+
+  // Leaving the page while in CSS-takeover mode shouldn't strand state.
+  useEffect(() => {
+    setCssFull(false);
+  }, [slug]);
+
+  async function toggleFullscreen() {
+    const d = document as Document & {
+      webkitFullscreenElement?: Element | null;
+      webkitExitFullscreen?: () => void;
+    };
+    if (isFull) {
+      setCssFull(false);
+      try {
+        if (d.fullscreenElement ?? d.webkitFullscreenElement) {
+          if (d.exitFullscreen) await d.exitFullscreen();
+          else d.webkitExitFullscreen?.();
+        }
+      } catch {
+        /* already out */
+      }
+      return;
+    }
+    const el = shellRef.current as
+      | (HTMLDivElement & { webkitRequestFullscreen?: () => void })
+      | null;
+    try {
+      if (el?.requestFullscreen) {
+        await el.requestFullscreen();
+        return;
+      }
+      if (el?.webkitRequestFullscreen) {
+        el.webkitRequestFullscreen();
+        return;
+      }
+    } catch {
+      /* fall through to CSS takeover */
+    }
+    setCssFull(true);
+  }
+
   if (!game) throw notFound();
   return (
-    <div className="flex min-h-0 flex-1 flex-col">
+    <div
+      ref={shellRef}
+      className={cn(
+        "flex min-h-0 flex-1 flex-col bg-paper",
+        cssFull && "fixed inset-0 z-50 h-dvh",
+      )}
+    >
       {/* Slim game bar — back link + title on one line so the game keeps the room */}
       <div className="flex items-center gap-3 border-b border-line bg-paper-2 px-4 py-2 sm:px-6">
         <Link
@@ -95,6 +163,19 @@ function GameFrame() {
         <h1 className="min-w-0 truncate font-display text-lg leading-none" title={game.blurb}>
           {game.title}
         </h1>
+        <button
+          type="button"
+          onClick={() => void toggleFullscreen()}
+          className="ml-auto inline-flex h-9 shrink-0 items-center gap-1.5 rounded-sm border border-line bg-surface px-2.5 text-[0.68rem] font-medium uppercase tracking-[0.12em] text-navy transition-colors hover:border-navy/25 hover:bg-paper"
+          title={isFull ? "Exit full screen" : "Full screen"}
+        >
+          {isFull ? (
+            <Minimize2 className="size-3.5" aria-hidden />
+          ) : (
+            <Maximize2 className="size-3.5" aria-hidden />
+          )}
+          <span className="hidden sm:inline">{isFull ? "Exit" : "Full screen"}</span>
+        </button>
       </div>
       {/* The wrapper scrolls (works everywhere, including mobile); the iframe
           grows to the game's content height so its own scrolling is never needed. */}
