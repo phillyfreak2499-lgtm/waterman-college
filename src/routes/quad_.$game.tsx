@@ -6,6 +6,7 @@ import { SiteShell } from "@/components/site-shell";
 import { QUAD_GAMES } from "@/lib/quad";
 import { reportGameResult } from "@/lib/quad-scores";
 import { pageHead } from "@/lib/page-title";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/quad_/$game")({
   component: GamePage,
@@ -49,6 +50,7 @@ function GameFrame() {
   }, [game]);
 
   if (!game) throw notFound();
+  const tall = "tall" in game && game.tall === true;
   return (
     <div className="mx-auto max-w-6xl px-5 py-8 sm:px-8 sm:py-10">
       <Link
@@ -65,7 +67,10 @@ function GameFrame() {
         <iframe
           title={game.title}
           src={game.file}
-          className="block h-[70dvh] min-h-[20rem] w-full bg-paper"
+          className={cn(
+            "block w-full bg-paper",
+            tall ? "h-[min(88dvh,56rem)] min-h-[32rem]" : "h-[70dvh] min-h-[20rem]",
+          )}
         />
       </div>
     </div>

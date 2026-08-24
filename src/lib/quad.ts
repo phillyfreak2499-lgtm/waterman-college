@@ -59,4 +59,11 @@ export const QUAD_GAMES = [
     file: "/games/fear-buster.html",
     blurb: "Confidence Protocol — identify the fear, fire the principle, seal with W.R.A.P.",
   },
+  {
+    slug: "goood-feet-empire",
+    title: "Goood Feet Empire",
+    file: "/games/goood-feet-empire.html",
+    blurb: "SimCity for a Goood Feet store. Found it, run the floor, expand — or go bankrupt.",
+    tall: true,
+  },
 ] as const;
