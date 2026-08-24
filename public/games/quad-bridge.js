@@ -117,4 +117,59 @@
     if (document.visibilityState === "hidden") sync();
   });
   window.addEventListener("pagehide", sync);
+
+  // --- content-height reporting ---
+  // Mobile browsers often refuse to scroll INSIDE an iframe (the gesture chains
+  // to the parent page instead), so games taller than the frame were
+  // unreachable. The parent fixes this by owning the scrollbar: it sizes the
+  // iframe to the game's real content height and scrolls a wrapper. We report
+  // that height here on load, resize, and DOM changes.
+  //
+  // Guard against feedback loops (games sized with 100vh track the iframe
+  // height, which we just changed): only report when the height moved by more
+  // than a small threshold since the last report.
+  var lastHeight = 0;
+  function reportHeight() {
+    try {
+      var doc = document.documentElement;
+      var body = document.body;
+      var h = Math.max(
+        doc ? doc.scrollHeight : 0,
+        body ? body.scrollHeight : 0,
+      );
+      if (!isFinite(h) || h <= 0) return;
+      h = Math.min(h, 20000);
+      if (Math.abs(h - lastHeight) <= 8) return;
+      lastHeight = h;
+      post({ height: Math.ceil(h) });
+    } catch (e) {}
+  }
+  var heightTimer = null;
+  function queueHeight() {
+    if (heightTimer) return;
+    heightTimer = setTimeout(function () {
+      heightTimer = null;
+      reportHeight();
+    }, 120);
+  }
+  window.addEventListener("load", queueHeight);
+  window.addEventListener("resize", queueHeight);
+  if (document.readyState === "complete" || document.readyState === "interactive") {
+    queueHeight();
+  } else {
+    window.addEventListener("DOMContentLoaded", queueHeight);
+  }
+  try {
+    if (window.ResizeObserver && document.body) {
+      new ResizeObserver(queueHeight).observe(document.body);
+    }
+  } catch (e) {}
+  try {
+    if (window.MutationObserver) {
+      new MutationObserver(queueHeight).observe(
+        document.documentElement,
+        { childList: true, subtree: true },
+      );
+    }
+  } catch (e) {}
 })();

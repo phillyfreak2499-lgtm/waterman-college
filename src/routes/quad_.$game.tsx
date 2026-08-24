@@ -1,6 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { AuthGate } from "@/components/auth-gate";
 import { SiteHeader } from "@/components/site-header";
 import { QUAD_GAMES } from "@/lib/quad";
@@ -39,14 +39,31 @@ function GameFrame() {
   const { game: slug } = Route.useParams();
   const game = QUAD_GAMES.find((g) => g.slug === slug);
 
+  // The game's real content height, reported by quad-bridge.js. Mobile browsers
+  // often refuse to scroll INSIDE an iframe (the gesture chains to the parent
+  // instead), so the parent owns the scrollbar: the wrapper below scrolls, and
+  // the iframe is sized to the game's content so nothing inside is ever
+  // unreachable. Games that fit the viewport report ~viewport height and the
+  // wrapper simply never scrolls.
+  const [gameHeight, setGameHeight] = useState<number | null>(null);
+
   // Relay same-origin activity messages from the game (quad-bridge.js) to the
   // Locker ledger. Best-effort — a failed write never disrupts play.
   useEffect(() => {
     if (!game) return;
     function onMessage(event: MessageEvent) {
       if (event.origin !== window.location.origin) return;
-      const data = event.data as { type?: string; slug?: string; opened?: boolean; score?: number };
+      const data = event.data as {
+        type?: string;
+        slug?: string;
+        opened?: boolean;
+        score?: number;
+        height?: number;
+      };
       if (!data || data.type !== "cogs:quad" || data.slug !== game!.slug) return;
+      if (typeof data.height === "number" && isFinite(data.height)) {
+        setGameHeight(Math.min(Math.max(Math.ceil(data.height), 0), 20000) || null);
+      }
       const payload: { slug: string; opened?: boolean; score?: number } = { slug: game!.slug };
       if (data.opened === true) payload.opened = true;
       if (typeof data.score === "number") payload.score = data.score;
@@ -57,6 +74,11 @@ function GameFrame() {
     window.addEventListener("message", onMessage);
     return () => window.removeEventListener("message", onMessage);
   }, [game]);
+
+  // Reset the reported height when switching games.
+  useEffect(() => {
+    setGameHeight(null);
+  }, [slug]);
 
   if (!game) throw notFound();
   return (
@@ -74,11 +96,16 @@ function GameFrame() {
           {game.title}
         </h1>
       </div>
-      <iframe
-        title={game.title}
-        src={game.file}
-        className="block min-h-0 w-full flex-1 bg-paper"
-      />
+      {/* The wrapper scrolls (works everywhere, including mobile); the iframe
+          grows to the game's content height so its own scrolling is never needed. */}
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]">
+        <iframe
+          title={game.title}
+          src={game.file}
+          className="block min-h-full w-full bg-paper"
+          style={gameHeight ? { height: `${gameHeight}px` } : undefined}
+        />
+      </div>
     </div>
   );
 }
