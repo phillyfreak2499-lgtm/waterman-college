@@ -235,7 +235,7 @@ var THE4TH = (() => {
   };
   var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-  // the4th-entry.ts
+  // ../tmp/the4th-entry.ts
   var the4th_entry_exports = {};
   __export(the4th_entry_exports, {
     ACTIVITIES: () => ACTIVITIES,
@@ -277,7 +277,7 @@ var THE4TH = (() => {
     supportScore: () => supportScore
   });
 
-  // ../workspace/src/lib/scenarios.ts
+  // src/lib/scenarios.ts
   var PLACE_LABELS = {
     P: "Playback",
     L: "Locate",
@@ -302,12 +302,12 @@ var THE4TH = (() => {
         { support: "Relaxer", shoe: "House slippers" }
       ],
       leftover: "Pickleball court shoes",
-      ageRead: "42 \u2014 she can handle a sports pair. Pickleball is lateral, not a 5 a.m. lifting session.",
+      ageRead: "42 \u2014 pickleball is lateral court. That's a Sports Maintainer, never a Strengthener.",
       jobRead: "Hospital concrete is the all-day demand. That's already the 3-system.",
-      playRead: "Court shoes are a second life in a different shoe. That's the 4th.",
+      playRead: "Court shoes are a second life in a different shoe. That's the 4th. You work out in a Maintainer.",
       correct: "sports-maintainer",
-      acceptable: ["second-strengthener"],
-      trap: null,
+      acceptable: [],
+      trap: "second-strengthener",
       mentions: [
         {
           id: "g",
@@ -355,9 +355,9 @@ var THE4TH = (() => {
           text: "You never swap, and you don't play on a foot you just worked for twelve hours."
         }
       ],
-      coach: "Leftover shoes are the court shoes. Age 42 + lateral sport = Sports Maintainer. A 2nd Strengthener is only a soft yes \u2014 pickleball is not the box. Everyday sneakers are already covered, so a 2nd Everyday is a miss.",
+      coach: "Leftover shoes are the court shoes. Lateral sport = Sports Maintainer. A 2nd Strengthener in pickleball shoes is a miss \u2014 you do not work out in a Strengthener. Everyday sneakers are already covered.",
       why: "The 3-system is already living in work, everyday, and home. The court is a second life in a second shoe. That's the whole job of the 4th.",
-      trapWhy: "Never price it as a 4-pack add-on. She already told you the locker-room swap is the problem. Use her sentence."
+      trapWhy: "A Strengthener in court shoes is the miss. Heel cups don't do impact sports. And never price it as a 4-pack \u2014 she already told you the locker-room swap is the problem."
     },
     {
       id: "james",
@@ -423,14 +423,14 @@ var THE4TH = (() => {
       quote: "I run before court. Then I'm in these loafers for nine hours. The running shoes feel great. The loafers undo everything.",
       shoes: ["Running shoes", "Loafers", "A heel she can tolerate", "Everyday sneakers", "House slippers"],
       covered: [
-        { support: "Strengthener", shoe: "Running shoes" },
-        { support: "Maintainer", shoe: "Everyday sneakers" },
+        { support: "Strengthener", shoe: "Everyday sneakers \u2014 short window, not the run" },
+        { support: "Maintainer", shoe: "Running shoes" },
         { support: "Relaxer", shoe: "House slippers" }
       ],
       leftover: "Work loafers and heels",
-      ageRead: "34 \u2014 running already owns the Strengthener. Do not double it.",
+      ageRead: "34 \u2014 the run is a Maintainer. Never put a Strengthener in running shoes.",
       jobRead: "Nine hours in a low-volume dress shoe is the uncovered life.",
-      playRead: "The run is covered. The loafer is the gap she named herself.",
+      playRead: "The run is already a Maintainer. The loafer is the gap she named herself.",
       correct: "dress-maintainer",
       acceptable: [],
       trap: "sports-maintainer",
@@ -439,7 +439,7 @@ var THE4TH = (() => {
           id: "g",
           quality: "gold",
           label: "Loafers undo the run",
-          text: "You run before court \u2014 that's the Strengthener, and it stays in the running shoes. Everyday sneakers get the Maintainer. Home gets the Relaxer. Then you said the loafers undo everything. That's the gap. This 4th pair is a Dress Maintainer, low-profile, and it lives in the work shoes so the nine hours after the run don't throw away the morning."
+          text: "You run before court. Running is a Maintainer \u2014 a Strengthener does not go in a run. Everyday sneakers can hold the Strengthener window. Home gets the Relaxer. Then you said the loafers undo everything. That's the gap. This 4th pair is a Dress Maintainer, low-profile, and it lives in the work shoes so the nine hours after the run don't throw away the morning."
         },
         {
           id: "o",
@@ -456,14 +456,14 @@ var THE4TH = (() => {
       ],
       place: [
         { key: "P", title: "Playback", text: "You run before court. Then nine hours in loafers. The loafers undo everything." },
-        { key: "L", title: "Locate", text: "Strengthener stays in the running shoes. Maintainer in everyday sneakers. Relaxer at home." },
+        { key: "L", title: "Locate", text: "The run is a Maintainer. Strengthener window is the everyday pair \u2014 not the run. Relaxer at home." },
         { key: "A", title: "Aperture", text: "The work shoes are the gap \u2014 that's where the morning gets thrown away." },
         { key: "C", title: "Cover", text: "This 4th pair is a Dress Maintainer, low-profile, living in the loafers and heels." },
         { key: "E", title: "Ease", text: "The nine hours after the run don't undo the morning." }
       ],
-      coach: "She diagnosed it: running shoes feel great, loafers undo it. Sports is a miss \u2014 running already has the Strengthener. Dress is the leftover shoe.",
-      why: "When play owns the Strengthener, work dress is almost always the 4th.",
-      trapWhy: "Don't sell a Sports pair into a run that's already covered. Don't make the 4th sound optional. She already told you the loafers are the problem."
+      coach: "She diagnosed it: running shoes feel great, loafers undo it. Sports is a miss \u2014 the run is already a Maintainer. Dress is the leftover shoe.",
+      why: "When the run already owns a Maintainer, work dress is almost always the 4th.",
+      trapWhy: "Don't sell a second Sports pair into a run that's already covered. Don't put a Strengthener in the run. Don't make the 4th sound optional."
     },
     {
       id: "robert",
@@ -533,42 +533,42 @@ var THE4TH = (() => {
         { support: "Relaxer", shoe: "House slides" }
       ],
       leftover: "5 a.m. lifting shoes",
-      ageRead: "29 + the box = 2nd Strengthener. Sports Maintainer is only a soft yes.",
+      ageRead: "29 + the box = Sports Maintainer. You do not work out in a Strengthener.",
       jobRead: "Tile all day is already the wear-schedule pair. Don't add a 2nd Everyday for teaching.",
-      playRead: "High-impact, short window, different shoe, no parking-lot swap.",
-      correct: "second-strengthener",
-      acceptable: ["sports-maintainer"],
-      trap: "second-everyday",
+      playRead: "CrossFit is a workout. Flat heel. Sports Maintainer in the leftover gym shoe.",
+      correct: "sports-maintainer",
+      acceptable: [],
+      trap: "second-strengthener",
       mentions: [
         {
           id: "g",
           quality: "gold",
           label: "No parking-lot swap",
-          text: "Box at 5, kids at 7:30, and you are not swapping in a parking lot. Teaching shoes already have the 3-system wear schedule. Home has the Relaxer. That leaves the lifters empty. You're 29 and that hour is high-impact. This 4th pair is a second Strengthener that lives in the lifting shoes. Morning is covered without touching the school pair."
+          text: "Box at 5, kids at 7:30, and you are not swapping in a parking lot. Teaching shoes already have the 3-system wear schedule. Home has the Relaxer. That leaves the lifters empty. You work out in a Maintainer, not a Strengthener. This 4th pair is a Sports Maintainer that lives in the lifting shoes. Morning is covered without touching the school pair."
         },
         {
           id: "o",
           quality: "okay",
           label: "Gym pair, vague type",
-          text: "For CrossFit I'd add another Strengthener and leave it in the gym shoes so you don't move your work pair."
+          text: "For CrossFit I'd leave a Maintainer in the gym shoes so you don't move your work pair."
         },
         {
           id: "m",
           quality: "miss",
-          label: "Backup teaching pair",
-          text: "You're on your feet all day teaching, so the 4th should be another Maintainer for a backup pair of teaching shoes."
+          label: "Work out in a Strengthener",
+          text: "You're working out at 5 a.m., so I'd put a Strengthener in the lifting shoes."
         }
       ],
       place: [
         { key: "P", title: "Playback", text: "Box at 5. Kids at 7:30. Not swapping in a dark parking lot." },
         { key: "L", title: "Locate", text: "Teaching shoes already have the wear schedule. Relaxer is at home." },
         { key: "A", title: "Aperture", text: "The lifters are empty \u2014 that's the leftover hour." },
-        { key: "C", title: "Cover", text: "This 4th pair is a second Strengthener that lives in the lifting shoes." },
+        { key: "C", title: "Cover", text: "This 4th pair is a Sports Maintainer that lives in the lifting shoes." },
         { key: "E", title: "Ease", text: "Morning is covered without touching the school pair." }
       ],
-      coach: "High-impact + young = 2nd Strengthener in the leftover play shoe. A Sports Maintainer isn't wrong, it's softer than the hour she's actually living. A 2nd Everyday for teaching ignores the box.",
-      why: "The 4th lives in the shoe she refuses to swap into. She named the parking lot. Put the pair in the lifters.",
-      trapWhy: "Don't 'help' the job that's already covered. The uncovered life is 5 a.m."
+      coach: "The leftover shoe is the box. You work out in a Maintainer. A 2nd Strengthener in the lifters is the miss \u2014 heel cups don't do impact sports.",
+      why: "The 4th lives in the shoe she refuses to swap into. She named the parking lot. Put a Sports Maintainer in the lifters.",
+      trapWhy: "A Strengthener in the gym shoes is the miss. Don't work out in a Strengthener. Don't 'help' the teaching pair that's already covered."
     },
     {
       id: "david",
@@ -581,12 +581,12 @@ var THE4TH = (() => {
       quote: "I sit a lot, I know. But Tuesday and Thursday I'm in these dress shoes walking the floor between meetings, and Saturday I play tennis.",
       shoes: ["Tennis shoes", "Office dress shoes", "WFH sneakers", "House shoes"],
       covered: [
-        { support: "Strengthener", shoe: "Tennis shoes" },
-        { support: "Maintainer", shoe: "WFH sneakers" },
+        { support: "Strengthener", shoe: "WFH sneakers \u2014 short window, not the court" },
+        { support: "Maintainer", shoe: "Tennis shoes" },
         { support: "Relaxer", shoe: "House shoes" }
       ],
       leftover: "Office dress shoes \u2014 2 days a week",
-      ageRead: "47 \u2014 tennis already owns the Strengthener.",
+      ageRead: "47 \u2014 tennis is court. That's a Maintainer, never a Strengthener.",
       jobRead: "Desk is not 'no 4th.' Two dress days are still a life in a different shoe.",
       playRead: "Saturday is covered. Tuesday and Thursday are not.",
       correct: "dress-maintainer",
@@ -597,7 +597,7 @@ var THE4TH = (() => {
           id: "g",
           quality: "gold",
           label: "Two dress days",
-          text: "Saturday tennis is the Strengthener \u2014 that pair lives in the tennis shoes. WFH sneakers get the Maintainer. Relaxer at home. Tuesday and Thursday you said you're in dress shoes walking the floor between meetings. Those shoes are empty. This 4th is a Dress Maintainer, low-profile, and it lives in the office pair so those two days don't undo the week."
+          text: "Saturday tennis is court \u2014 that's a Maintainer in the tennis shoes, not a Strengthener. WFH sneakers can hold the Strengthener window. Relaxer at home. Tuesday and Thursday you said you're in dress shoes walking the floor between meetings. Those shoes are empty. This 4th is a Dress Maintainer, low-profile, and it lives in the office pair so those two days don't undo the week."
         },
         {
           id: "o",
@@ -614,14 +614,14 @@ var THE4TH = (() => {
       ],
       place: [
         { key: "P", title: "Playback", text: "You sit a lot \u2014 and Tuesday and Thursday you're in dress shoes walking the floor. Saturday is tennis." },
-        { key: "L", title: "Locate", text: "Strengthener lives in the tennis shoes. Maintainer in the WFH sneakers. Relaxer at home." },
+        { key: "L", title: "Locate", text: "Tennis is a Maintainer. Strengthener window is the WFH pair \u2014 not the court. Relaxer at home." },
         { key: "A", title: "Aperture", text: "The office dress shoes are empty those two days." },
         { key: "C", title: "Cover", text: "This 4th is a Dress Maintainer, low-profile, living in the office pair." },
         { key: "E", title: "Ease", text: "Those two days don't undo the week." }
       ],
-      coach: "Sitting is not a reason to skip the 4th. He named two dress days. Tennis is already placed. Dress is the leftover.",
+      coach: "Sitting is not a reason to skip the 4th. He named two dress days. Tennis is already a Maintainer. Dress is the leftover.",
       why: "Hybrid office is a dress-shoe problem wearing a casual-sneaker 3-system.",
-      trapWhy: "Sports is a miss \u2014 tennis already has the Strengthener. 'Desk job, skip it' is how empty dress shoes stay empty."
+      trapWhy: "Sports is a miss \u2014 tennis already has the Maintainer. Don't put a Strengthener on the court. 'Desk job, skip it' is how empty dress shoes stay empty."
     },
     {
       id: "linda",
@@ -691,12 +691,12 @@ var THE4TH = (() => {
         { support: "Relaxer", shoe: "House shoes" }
       ],
       leftover: "Basketball sneakers",
-      ageRead: "38 + basketball can take a 2nd Strengthener, but the cleaner 4th is a Sports Maintainer that stays in the gym shoe.",
+      ageRead: "38 + basketball is court. Sports Maintainer. You do not work out in a Strengthener.",
       jobRead: "The line already owns the 3-system. Don't add more kitchen.",
-      playRead: "He refused the swap. That's your mention.",
+      playRead: "He refused the swap. That's your mention. Gym shoes get a Maintainer.",
       correct: "sports-maintainer",
-      acceptable: ["second-strengthener"],
-      trap: "second-everyday",
+      acceptable: [],
+      trap: "second-strengthener",
       mentions: [
         {
           id: "g",
@@ -713,8 +713,8 @@ var THE4TH = (() => {
         {
           id: "m",
           quality: "miss",
-          label: "More kitchen aggression",
-          text: "Kitchen is brutal so I'd give you a second Strengthener for the line and you can just use that on Saturday too if you want."
+          label: "Work out in a Strengthener",
+          text: "Basketball is a workout, so I'd put a Strengthener in the gym shoes. You can use that on the line too if you want."
         }
       ],
       place: [
@@ -726,7 +726,7 @@ var THE4TH = (() => {
       ],
       coach: "He already closed it: kitchen pair never goes to the gym. Fill the gym shoe. Don't load more product into the job that's already covered.",
       why: "When they refuse the swap, the 4th is the stay-put pair in the leftover play shoe.",
-      trapWhy: "A 2nd Strengthener 'for the line' ignores the leftover. Casual sneakers can share the everyday Maintainer."
+      trapWhy: "A Strengthener in the gym shoes is the miss \u2014 you do not work out in a Strengthener. Don't stack more Strengthener onto a job that's already covered."
     },
     {
       id: "helen",
@@ -795,42 +795,42 @@ var THE4TH = (() => {
         { support: "Relaxer", shoe: "House slides" }
       ],
       leftover: "Lifting shoes",
-      ageRead: "24 + six-day lift = 2nd Strengthener. Sports Maintainer is the soft yes.",
+      ageRead: "24 + six-day lift = Sports Maintainer. You do not work out in a Strengthener.",
       jobRead: "Warehouse already owns the 3-system. Cheap everyday sneakers can share the Maintainer.",
-      playRead: "He will not put the gym in wrecked work shoes. Believe him.",
-      correct: "second-strengthener",
-      acceptable: ["sports-maintainer"],
-      trap: "second-everyday",
+      playRead: "He will not put the gym in wrecked work shoes. Believe him. Gym is a Maintainer.",
+      correct: "sports-maintainer",
+      acceptable: [],
+      trap: "second-strengthener",
       mentions: [
         {
           id: "g",
           quality: "gold",
           label: "Work pair never leaves work",
-          text: "Ten hours in the warehouse, then you lift six days a week, and you're not putting the gym in wrecked warehouse shoes. The 3-system wear schedule lives in the work pair. Relaxer at home. You're 24 and that lift is high-impact. This 4th pair is a second Strengthener that lives in the lifting shoes. Work pair never leaves work."
+          text: "Ten hours in the warehouse, then you lift six days a week, and you're not putting the gym in wrecked warehouse shoes. The 3-system wear schedule lives in the work pair. Relaxer at home. You work out in a Maintainer, not a Strengthener. This 4th pair is a Sports Maintainer that lives in the lifting shoes. Work pair never leaves work."
         },
         {
           id: "o",
           quality: "okay",
           label: "Gym after shift",
-          text: "Gym after a warehouse shift needs its own pair. I'd add a Strengthener that stays in the lifting shoes."
+          text: "Gym after a warehouse shift needs its own pair. I'd put a Maintainer in the lifting shoes."
         },
         {
           id: "m",
           quality: "miss",
-          label: "Young, just swap",
-          text: "You're young so you might not need a 4th. The 3-system can just move from work to the gym."
+          label: "Work out in a Strengthener",
+          text: "You lift six days a week, so I'd put a second Strengthener in the gym shoes."
         }
       ],
       place: [
         { key: "P", title: "Playback", text: "Ten hours in the warehouse, lift six days a week, not putting the gym in wrecked work shoes." },
         { key: "L", title: "Locate", text: "Wear schedule lives in the work pair. Relaxer at home." },
         { key: "A", title: "Aperture", text: "The lifting shoes are empty." },
-        { key: "C", title: "Cover", text: "This 4th pair is a second Strengthener that lives in the lifting shoes." },
+        { key: "C", title: "Cover", text: "This 4th pair is a Sports Maintainer that lives in the lifting shoes." },
         { key: "E", title: "Ease", text: "Work pair never leaves work." }
       ],
-      coach: "Young is not 'skip the 4th.' Young + high-impact leftover = 2nd Strengthener. 'Just swap' is the sentence he already refused.",
-      why: "High-impact play in a different shoe, after a brutal shift, is the 2nd Strengthener 4th.",
-      trapWhy: "A 2nd Everyday for cheap sneakers ignores the gym. 'You're young, swap it' ignores the wrecked warehouse shoe."
+      coach: "Young is not 'skip the 4th.' The leftover gym shoe is a Sports Maintainer. You do not work out in a Strengthener.",
+      why: "The gym is a different shoe after a brutal shift. That's a Sports Maintainer 4th \u2014 not a Strengthener.",
+      trapWhy: "A Strengthener in the gym shoes is the miss. Heel cups don't do impact sports. Don't skip the 4th because he's young."
     },
     {
       id: "sandra",
@@ -959,14 +959,14 @@ var THE4TH = (() => {
   }
   var ROUND_MAX = SUPPORT_POINTS.correct + MENTION_POINTS.gold;
 
-  // ../workspace/src/lib/supports.ts
+  // src/lib/supports.ts
   var SUPPORTS = {
     "sports-maintainer": {
       id: "sports-maintainer",
       name: "Sports Maintainer",
       short: "Sports",
-      livesIn: "Court, run, gym, hunting boots, cleats",
-      blurb: "Flat heel platform for side-to-side. Miracle Flex, Ultra, Mid-Flex, Flex, SLM, TSS. Not golf \u2014 golf wants a heel counter.",
+      livesIn: "Court, run, gym, box, hunting boots, cleats",
+      blurb: "You work out in a Maintainer. Flat heel platform for side-to-side. Miracle Flex, Ultra, Mid-Flex, Flex, SLM, TSS. Not golf \u2014 golf wants a heel counter.",
       image: "/supports/maintainer.jpg",
       tone: "sport",
       skus: ["miracle-flex", "ultra", "mid-flex", "flex", "slm", "tss"]
@@ -995,8 +995,8 @@ var THE4TH = (() => {
       id: "second-strengthener",
       name: "2nd Strengthener",
       short: "2nd Strengthener",
-      livesIn: "The box, lifters, golf shoes",
-      blurb: "High-impact leftover \u2014 and golf. Heel counter. Classic, Max, Honeycomb. Never a 76-year-old mall walk.",
+      livesIn: "Golf shoes, a second standing boot",
+      blurb: "Heel-counter leftover \u2014 golf, a second work boot. Classic, Max, Honeycomb. You do not work out in a Strengthener.",
       image: "/supports/strengthener.jpg",
       tone: "firm",
       skus: ["classic", "max", "honeycomb", "sls", "diamond", "hug"]
@@ -1020,7 +1020,7 @@ var THE4TH = (() => {
     "second-relaxer"
   ];
 
-  // ../workspace/src/lib/catalog.ts
+  // src/lib/catalog.ts
   var FAMILY = {
     strengthener: {
       name: "Strengthener",
@@ -1073,7 +1073,7 @@ var THE4TH = (() => {
       bestFor: "High arches and pronounced pressure areas",
       bullets: [
         "More pressure relief than Honeycomb",
-        "Weightlifting, golf, standing, work boots",
+        "Standing, golf, work boots. Chart marks weightlifting as a standing load \u2014 not gym or CrossFit.",
         "Available in Narrow"
       ],
       caution: "May not suit feet that are very stiff or very flat.",
@@ -1090,7 +1090,7 @@ var THE4TH = (() => {
       bullets: [
         "Heel cup, stabilizer, and metatarsal rise",
         "Little side-to-side flexion \u2014 rigid through the whole foot",
-        "Weightlifting, golf, standing"
+        "Standing, golf. Chart marks weightlifting as a standing load \u2014 not gym or CrossFit."
       ],
       caution: "Not available in narrow sizes."
     },
@@ -1439,14 +1439,19 @@ var THE4TH = (() => {
       id: "p-lift",
       group: "Play",
       label: "Weightlifting",
-      note: "Max, Honeycomb, Classic among Strengtheners \u2014 not SLS, Diamond, or Hug."
+      note: "Standing load on the chart for Max, Honeycomb, Classic. Gym, CrossFit, cardio, and impact sports are Maintainers \u2014 you do not work out in a Strengthener."
     },
-    { id: "p-gym", group: "Play", label: "Gym / Cardio" },
+    {
+      id: "p-gym",
+      group: "Play",
+      label: "Gym / Cardio",
+      note: "Maintainers. Never a Strengthener. You work out in a Maintainer."
+    },
     {
       id: "p-sport",
       group: "Play",
       label: "Sports",
-      note: "Flat-heel Maintainers + TSS + Flex Relaxer / SLR. Not Deluxe. Not golf."
+      note: "Flat-heel Maintainers + TSS + Flex Relaxer / SLR. Not Deluxe. Not a Strengthener. Not golf."
     },
     { id: "p-team", group: "Play", label: "Team sports" },
     {
@@ -1520,7 +1525,7 @@ var THE4TH = (() => {
       id: "heel-cup",
       title: "Heel cup",
       image: "/supports/features/heel-cup.jpg",
-      body: "Gathers the heel fat pad, absorbs step-shock, and lines up ankle \u2192 knee \u2192 hip \u2192 back. Deeper cup, bigger effect. Motion control is why a pronounced heel cup does not go in running or impact sport."
+      body: "Gathers the heel fat pad, absorbs step-shock, and lines up ankle \u2192 knee \u2192 hip \u2192 back. Deeper cup, bigger effect. Motion control is why a pronounced heel cup does not go in running, gym, or impact sports. You work out in a Maintainer."
     },
     {
       id: "platform",
@@ -1559,12 +1564,16 @@ var THE4TH = (() => {
       body: "Strengtheners are blank on running. Heel cups control motion. Miracle Flex is the pair the deck names out loud for a run."
     },
     {
+      title: "Gym and impact sports are Maintainers",
+      body: "You work out in a Maintainer. CrossFit, the box, cardio, court. A pronounced heel cup is inappropriate for impact sports. Do not put a Strengthener in the gym shoes."
+    },
+    {
       title: "Golf is a heel counter",
       body: "Any Strengthener, Deluxe, Deluxe Plus, Skinny, or Comfort Leather. Flex Sports Maintainers are blank. Court and golf are opposite families."
     },
     {
       title: "Court wants side-to-side",
-      body: "Ultra through Flex Faux, TSS, Flex Relaxer, SLR. Not Deluxe. Not Skinny. Flat heel platform."
+      body: "Ultra through Flex Faux, TSS, Flex Relaxer, SLR. Not Deluxe. Not Skinny. Flat heel platform. Not a Strengthener."
     },
     {
       title: "Dress volume is Slimline",
@@ -1578,7 +1587,7 @@ var THE4TH = (() => {
   var DISCLAIMER = "Good Feet Arch Supports are not intended to treat or correct any physical ailment.";
   var PHOTO_CREDIT = "Photos and marks from DFW Product Knowledge 2024 and the R5 Lifestyle / Activity chart.";
 
-  // ../workspace/src/lib/place-lesson.ts
+  // src/lib/place-lesson.ts
   var PLACE_LESSON_TITLES = [
     "Why PLACE",
     "Why this order",
@@ -1608,7 +1617,7 @@ var THE4TH = (() => {
       sample: "Strengthener lives in the work pair. Maintainer in everyday. Relaxer at home.",
       job: "Make the 3-system feel finished \u2014 so the 4th cannot sound like a replacement.",
       whySeat: "Building Value is sell the system, not a single pair. Continuity across every shoe is the value. Locate is that sentence, parked in real shoes, before you name a leftover.",
-      how: "Three homes. Out loud. Strengthener in the highest-demand window. Maintainer in the all-day pair. Relaxer at home. No SKU names required \u2014 the family and the shoe.",
+      how: "Three homes. Out loud. Strengthener in the highest-demand standing window \u2014 work, not the gym. Maintainer in the all-day pair and any workout shoe. Relaxer at home. No SKU names required \u2014 the family and the shoe.",
       fail: '"The 3-system is the important part. A 4th is optional if you want to spend more." That is how leftover shoes stay empty.'
     },
     {
@@ -1747,7 +1756,7 @@ var THE4TH = (() => {
   ];
   var PLACE_RULE = "If it sounds like a register, it's a miss. If it sounds like their interview, it's gold.";
 
-  // ../workspace/src/lib/framework.ts
+  // src/lib/framework.ts
   var RULE = "The 4th is not an add-on. It is the pair that lives in the shoes the 3-system doesn't cover.";
   var NEVER_SAY = [
     "Want to add a 4th pair today?",
@@ -1756,17 +1765,19 @@ var THE4TH = (() => {
     "You're young, you can just swap them.",
     "It's a desk job, you may not need a 4th.",
     "At your age recovery is everything, so another Relaxer.",
+    "You're working out, so another Strengthener.",
+    "Put the Strengthener in the gym shoes.",
     "This will treat your plantar fasciitis.",
     "These will fix the back pain."
   ];
   var AGE_BANDS = [
     {
       band: "18\u201334",
-      read: "Play is often high-impact. A leftover gym/court shoe is frequently a 2nd Strengthener."
+      read: "Play is often gym or court. That's a Sports Maintainer. You do not work out in a Strengthener."
     },
     {
       band: "35\u201354",
-      read: "Classic split: job owns the 3-system, play or dress is the 4th."
+      read: "Classic split: job owns the 3-system, play or dress is the 4th. Gym and court still take a Maintainer."
     },
     {
       band: "55\u201369",
@@ -1784,7 +1795,7 @@ var THE4TH = (() => {
     },
     {
       title: "Dress office",
-      detail: "Loafers, heels, slacks shoes. If play already owns the Strengthener, dress is the 4th \u2014 SLM, Mid-Flex, Skinny."
+      detail: "Loafers, heels, slacks shoes. If play already owns the athletic pair, dress is the 4th \u2014 SLM, Mid-Flex, Skinny."
     },
     {
       title: "Travel / two kits",
@@ -1799,7 +1810,7 @@ var THE4TH = (() => {
     {
       title: "Court, run, gym, hunting",
       fourth: "Sports Maintainer",
-      detail: "Flat heel platform. Miracle Flex, Ultra, Mid-Flex, Flex, SLM, TSS. Different shoe, leftover life. Don't steal the work Strengthener."
+      detail: "Flat heel platform. Miracle Flex, Ultra, Mid-Flex, Flex, SLM, TSS. You work out in a Maintainer. Don't steal the work Strengthener."
     },
     {
       title: "Golf",
@@ -1808,8 +1819,8 @@ var THE4TH = (() => {
     },
     {
       title: "CrossFit, lifting, box",
-      fourth: "2nd Strengthener",
-      detail: "Short, aggressive, usually under 40. Max, Honeycomb, Classic. Parking-lot swap is the mention."
+      fourth: "Sports Maintainer",
+      detail: "This is a workout. Maintainer, flat heel. A Strengthener in the gym shoes is the miss \u2014 heel cups don't do impact sports."
     },
     {
       title: "Dance, church, heels, loafers",
@@ -1823,18 +1834,23 @@ var THE4TH = (() => {
     }
   ];
   var DECISION = [
-    "Where does the Strengthener live? Highest demand window \u2014 often work, or high-impact play.",
-    "Where does the Maintainer live? The all-day shoe.",
+    "Where does the Strengthener live? Highest demand standing window \u2014 often work. Not the gym. Not the run.",
+    "Where does the Maintainer live? The all-day shoe, and any workout pair.",
     "Where does the Relaxer live? Home / recovery.",
     "What shoe is still empty? That leftover is the 4th.",
     "Age only breaks a tie: impact vs recovery. It does not invent a leftover.",
-    "Then open the chart. Running is not a Strengthener. Golf is not a flex Sports pair."
+    "Then open the chart. Running, gym, and impact sports are Maintainers. Never a Strengthener. Golf is not a flex Sports pair."
   ];
   var CHART_TEACH = [
     {
       kicker: "Running",
       title: "Maintainer. Never a Strengthener.",
       body: "Heel cups control motion. The deck names Miracle Flex out loud for a run. Deluxe is blank too \u2014 same cup problem."
+    },
+    {
+      kicker: "Gym / workout",
+      title: "Maintainer. Never a Strengthener.",
+      body: "CrossFit, the box, lifting as a workout, cardio, court. Heel cups are inappropriate for impact sports. The leftover gym shoe is a Sports Maintainer."
     },
     {
       kicker: "Golf",
@@ -1844,7 +1860,7 @@ var THE4TH = (() => {
     {
       kicker: "Court / team",
       title: "Flat heel. Side-to-side.",
-      body: "Ultra through Flex Faux, TSS, Flex Relaxer, SLR. Not Deluxe. Not Skinny."
+      body: "Ultra through Flex Faux, TSS, Flex Relaxer, SLR. Not Deluxe. Not Skinny. Not a Strengthener."
     },
     {
       kicker: "Heels & dress",
@@ -1853,7 +1869,7 @@ var THE4TH = (() => {
     }
   ];
 
-  // ../workspace/src/lib/shuffle.ts
+  // src/lib/shuffle.ts
   function hashSeed(input) {
     let h = 2166136261;
     for (let i = 0; i < input.length; i++) {
@@ -1885,7 +1901,6 @@ var THE4TH = (() => {
   }
   return __toCommonJS(the4th_entry_exports);
 })();
-
 (function () {
   "use strict";
   var D = window.THE4TH;
