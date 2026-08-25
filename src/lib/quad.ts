@@ -24,6 +24,13 @@ export const QUAD_GAMES = [
     blurb: "Strengthener, Maintainer, Relaxer — call it under pressure.",
   },
   {
+    slug: "the-4th",
+    title: "The 4th",
+    file: "/games/the-4th.html",
+    blurb: "Age. Job. Play. Mention. Pick the leftover support and say it with PLACE.",
+    tall: true,
+  },
+  {
     slug: "new-client-roleplay",
     title: "New Client Roleplay",
     file: "/games/new-client-roleplay.html",
