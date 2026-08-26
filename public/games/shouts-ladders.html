@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Shouts and Ladders — Waterman College</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500;1,9..144,600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="/games/quad-bridge.js"></script>
+<style>
+:root{
+  --navy:#0f1c28; --ink:#1a2a36; --teal:#2a9b8f; --teal-deep:#1e746b;
+  --cream:#f3ede3; --paper:#f7f3ec; --good:#2f7d57; --miss:#9b3b32;
+  --muted:#9aa7b0; --surface:#173041; --border:rgba(243,237,227,.14);
+  --display:"Fraunces","Iowan Old Style",Palatino,Georgia,serif;
+  --sans:"Outfit","Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--navy);color:var(--cream);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
+button:disabled{opacity:.45;cursor:default}
+h1,h2{font-family:var(--display);letter-spacing:-.03em;line-height:1.15;margin:0;font-weight:500}
+p{margin:0}
+.page{max-width:56rem;margin:0 auto;padding:1rem .85rem 3.5rem}
+.kicker{font-size:.7rem;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--teal)}
+.muted{color:var(--muted);font-size:.9rem;line-height:1.55}
+.display{font-style:italic;font-size:clamp(2.2rem,7vw,3.4rem)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;min-height:52px;padding:0 1.15rem;border-radius:16px;font-weight:600}
+.btn.cream{background:var(--cream);color:var(--ink)}
+.btn.dark{background:var(--ink);color:var(--cream)}
+.btn.ghost{border:1px solid var(--border);color:var(--cream)}
+.modes{display:grid;gap:.75rem;margin:1rem 0}
+@media(min-width:640px){.modes{grid-template-columns:1fr 1fr}}
+.mode{border-radius:24px;border:1px solid var(--border);background:var(--surface);padding:1.1rem;text-align:left}
+.mode.on{border-color:var(--teal);background:rgba(42,155,143,.18)}
+.names{display:grid;gap:.75rem;margin:1rem 0}
+@media(min-width:640px){.names{grid-template-columns:1fr 1fr}}
+label{display:flex;flex-direction:column;gap:.4rem;font-size:.85rem;color:var(--muted)}
+input{height:48px;border-radius:14px;border:1px solid var(--border);background:var(--surface);color:var(--cream);padding:0 1rem;font:inherit}
+.tips{display:grid;gap:.65rem;margin:1rem 0 1.25rem}
+@media(min-width:640px){.tips{grid-template-columns:1fr 1fr}}
+.tip{border-radius:20px;border:1px solid var(--border);background:var(--surface);padding:.85rem 1rem}
+.hud{display:grid;gap:.65rem;margin:.75rem 0}
+@media(min-width:640px){.hud{grid-template-columns:1fr 1fr}}
+.seat{display:flex;align-items:center;justify-content:space-between;border-radius:20px;border:1px solid var(--border);background:var(--surface);padding:.7rem 1rem}
+.seat.on{border-color:var(--teal);background:rgba(42,155,143,.18)}
+.dot{width:1.9rem;height:1.9rem;border-radius:999px;display:grid;place-items:center;font-size:.75rem;font-weight:600}
+.dot.a{background:var(--teal);color:var(--cream)}
+.dot.b{background:var(--cream);color:var(--ink)}
+.board{overflow:hidden;border-radius:24px;border:1px solid var(--border);background:var(--ink);padding:.5rem}
+.grid{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:3px}
+.sq{position:relative;aspect-ratio:1;border-radius:8px}
+.sq.door,.sq.chart{background:var(--surface)}
+.sq.step,.sq.place{background:rgba(42,155,143,.22)}
+.sq.close{background:rgba(47,125,87,.28);box-shadow:inset 0 0 0 1px var(--teal)}
+.num{position:absolute;left:3px;top:1px;font-size:9px;color:rgba(243,237,227,.55);font-variant-numeric:tabular-nums}
+.mark{position:absolute;right:2px;top:1px;font-size:10px}
+.mark.up{color:var(--teal)}
+.mark.down{color:var(--miss)}
+.pawns{position:absolute;inset:auto 0 3px 0;display:flex;justify-content:center;gap:2px}
+.pawn{width:11px;height:11px;border-radius:999px;border:1px solid var(--navy)}
+.pawn.a{background:var(--teal)}
+.pawn.b{background:var(--cream)}
+.sheet{position:fixed;inset:0;z-index:20;display:flex;align-items:flex-end;justify-content:center;background:rgba(15,28,40,.72);padding:.75rem}
+@media(min-width:640px){.sheet{align-items:center}}
+.card{width:100%;max-width:32rem;border-radius:28px;background:var(--cream);color:var(--ink);padding:1.2rem}
+.choice{min-height:3.4rem;border-radius:18px;border:1px solid #d9d0c4;background:var(--paper);padding:.7rem .85rem;text-align:left;width:100%;margin:.35rem 0;color:var(--ink)}
+.choice.gold{border-color:var(--good);background:rgba(47,125,87,.15)}
+.choice.bad{border-color:var(--miss);background:rgba(155,59,50,.15)}
+.choice.dim{opacity:.55}
+.back{min-height:44px;color:var(--muted);margin-bottom:.5rem}
+.back:hover{color:var(--cream)}
+.stat{border-radius:24px;background:var(--surface);padding:1rem 1.1rem}
+</style>
+</head>
+<body>
+<div id="app" class="page"></div>
+<script>
+"use strict";
+var SHOUTS = (() => {
+  var __defProp = Object.defineProperty;
+  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+  var __getOwnPropNames = Object.getOwnPropertyNames;
+  var __hasOwnProp = Object.prototype.hasOwnProperty;
+  var __export = (target, all) => {
+    for (var name in all)
+      __defProp(target, name, { get: all[name], enumerable: true });
+  };
+  var __copyProps = (to, from, except, desc) => {
+    if (from && typeof from === "object" || typeof from === "function") {
+      for (let key of __getOwnPropNames(from))
+        if (!__hasOwnProp.call(to, key) && key !== except)
+          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+    }
+    return to;
+  };
+  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+  // src/lib/shouts-ladders.ts
+  var shouts_ladders_exports = {};
+  __export(shouts_ladders_exports, {
+    BOT_NAME: () => BOT_NAME,
+    CARDS: () => CARDS,
+    COLS: () => COLS,
+    LADDERS: () => LADDERS,
+    LAST_SQUARE: () => LAST_SQUARE,
+    ROWS: () => ROWS,
+    SHOUTS: () => SHOUTS,
+    ZONE_OF: () => ZONE_OF,
+    botPicksGold: () => botPicksGold,
+    cardOf: () => cardOf,
+    choicesFor: () => choicesFor,
+    dealSeats: () => dealSeats,
+    isGold: () => isGold,
+    rollDie: () => rollDie,
+    scoreSeat: () => scoreSeat,
+    squareCell: () => squareCell,
+    tryRoll: () => tryRoll,
+    walkPath: () => walkPath,
+    warpAt: () => warpAt,
+    warpPath: () => warpPath,
+    zoneOf: () => zoneOf
+  });
+
+  // src/lib/shuffle.ts
+  function hashSeed(input) {
+    let h = 2166136261;
+    for (let i = 0; i < input.length; i++) {
+      h ^= input.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  }
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return function next() {
+      a |= 0;
+      a = a + 1831565813 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function shuffleCopy(items, seed) {
+    const out = items.slice();
+    const rand = mulberry32(hashSeed(seed));
+    for (let i = out.length - 1; i > 0; i--) {
+      const j = Math.floor(rand() * (i + 1));
+      const tmp = out[i];
+      out[i] = out[j];
+      out[j] = tmp;
+    }
+    return out;
+  }
+
+  // src/lib/shouts-ladders.ts
+  var LAST_SQUARE = 50;
+  var COLS = 10;
+  var ROWS = 5;
+  var BOT_NAME = "Register";
+  var CARDS = {
+    listen: {
+      id: "listen",
+      kind: "ladder",
+      title: "Listen first",
+      hear: "They just sat down. Where does value start?",
+      gold: "Activity, shoes, pain, lifestyle \u2014 then open the chart and show the match.",
+      misses: [
+        "Pull the strongest Strengthener on the wall and start the walk test.",
+        "Quote the 3-pack so they know what they're investing."
+      ],
+      why: "Building Value: listen first. The chart is a visual after they named their life \u2014 not a catalog before they talk."
+    },
+    chart: {
+      id: "chart",
+      kind: "ladder",
+      title: "Show the chart",
+      hear: "Nurse. Twelve hours on tile. They want to know why this isn't a drugstore insert.",
+      gold: "Open the Lifestyle Chart to standing on hard surfaces and let them see the match.",
+      misses: [
+        "Tell them it's the most popular pair we sell.",
+        "Skip the chart and talk price so they don't feel sold."
+      ],
+      why: "The chart turns a general conversation into a precise recommendation. That's confidence. That's value."
+    },
+    system: {
+      id: "system",
+      kind: "ladder",
+      title: "Sell the system",
+      hear: "They love the Strengthener in the walk test. They ask if they can just take that one pair.",
+      gold: "Continuity across every shoe is the value. Strengthener, Maintainer, Relaxer \u2014 then the leftover shoe.",
+      misses: [
+        "One pair is fine if that's the budget. We can always add later.",
+        "The 4-pack is a better value if we add one more today."
+      ],
+      why: "The 3-step is the core value story. A one-time insert sale is not a life-changing solution."
+    },
+    persona: {
+      id: "persona",
+      kind: "ladder",
+      title: "Their life, then features",
+      hear: "Small-business owner. Shop floor all day, client meetings in dress shoes, driving between locations.",
+      gold: "End-of-day fog is the cost. Strengthener for concrete, thinner pair for meetings \u2014 so they can focus on growth.",
+      misses: [
+        "These have a deep heel cup and a metatarsal rise, which is why they're better.",
+        "I can probably do something on the price if we do the system."
+      ],
+      why: "Persona language is the bridge. Then lock it with the feature. Features first is a pitch. Their day first is value."
+    },
+    nurse: {
+      id: "nurse",
+      kind: "ladder",
+      title: "Patients, not feet",
+      hear: "ER nurse. Twelve-hour shifts. Heel barking by hour nine.",
+      gold: "So you can give your full attention to patients instead of your feet.",
+      misses: [
+        "This will treat the plantar fasciitis by the end of the week.",
+        "A lot of our nurses add a 4th pair. Want to add that on today?"
+      ],
+      why: "Ease on their outcome. Nurses want patients, not a product speech. Never diagnose."
+    },
+    gym: {
+      id: "gym",
+      kind: "ladder",
+      title: "Work out in a Maintainer",
+      hear: "They lift after the job. Leftover shoe is the lifting pair.",
+      gold: "Gym, box, run, court \u2014 Sports Maintainer. Flat heel. You do not work out in a Strengthener.",
+      misses: [
+        "Put the Strengthener in the gym shoes so the workout is supported.",
+        "You're working out, so another Strengthener."
+      ],
+      why: "Heel cups don't do impact sports. The leftover gym shoe is a Maintainer. That's a value builder \u2014 the right pair in the right shoe."
+    },
+    golf: {
+      id: "golf",
+      kind: "ladder",
+      title: "Ground Force on the course",
+      hear: "Eighteen holes every Saturday. Golf shoes are empty.",
+      gold: "Ground Force. Heel counter. Comfort and stability on the course \u2014 the slim Strengthener that lives in the golf shoes.",
+      misses: [
+        "Miracle Flex in the golf shoes. You need side-to-side for the swing.",
+        "Ground Force will add yards and lower the handicap."
+      ],
+      why: "Golf is a heel counter, not a flex Sports pair. Comfort and stability only. Never swing, yards, or handicap."
+    },
+    ease: {
+      id: "ease",
+      kind: "ladder",
+      title: "Land on their outcome",
+      hear: "PLACE is built. The leftover is named. How do you close without killing the value you just stacked?",
+      gold: "You never swap, and you don't play on a foot you just worked. Payment ask. No discount.",
+      misses: [
+        "Want to add that 4th pair today? I can do something on the price.",
+        "The 4-pack is a better value if we ring four."
+      ],
+      why: "Ease is their sentence, not yours. Register language, a 4-pack, or a discount dumps the value the visit just built."
+    },
+    diagnose: {
+      id: "diagnose",
+      kind: "shout",
+      title: "Never diagnose",
+      hear: "This will treat your plantar fasciitis and fix the back pain.",
+      gold: "Shout it. We don't diagnose or prescribe. Value is comfort, fit, and the life they named.",
+      misses: [
+        "That's fine if they already have a diagnosis from their doctor.",
+        "Back pain is the strongest close we have \u2014 lean into it."
+      ],
+      why: "A medical claim is an eval flag and it cheapens everything you just built. Comfort and the leftover shoe. Stop."
+    },
+    fourpack: {
+      id: "fourpack",
+      kind: "shout",
+      title: "Register 4th",
+      hear: "A lot of our clients add a 4th. The 4-pack is a better value. Want to add that on today?",
+      gold: "Shout it. That's a register. The 4th is the empty shoe they already named \u2014 PLACE, not a bundle.",
+      misses: [
+        "It's okay if they already love the three. Adding is just math.",
+        "Value is the discount they feel at the register."
+      ],
+      why: "Upsell language is a flag. Callback language is gold. The 4th that sounds like a SKU on a ticket has no value."
+    },
+    gymshout: {
+      id: "gymshout",
+      kind: "shout",
+      title: "Strengthener in the gym",
+      hear: "You're working out, so another Strengthener. Put it in the gym shoes.",
+      gold: "Shout it. You work out in a Maintainer. A Strengthener in the lifters kills the leftover story.",
+      misses: [
+        "If they stand a lot at the gym, a heel cup is the stronger play.",
+        "Max in the gym shoes shows we didn't cheap out."
+      ],
+      why: "Wrong family is not a close. It's a shout. The leftover gym shoe is a Sports Maintainer."
+    },
+    discount: {
+      id: "discount",
+      kind: "shout",
+      title: "Discount to close",
+      hear: "I can probably do something on the price if we add one more.",
+      gold: "Shout it. A discount teaches them the system was never worth the number.",
+      misses: [
+        "A small courtesy close keeps the ticket and the review.",
+        "Financing is a discount by another name, so it's the same tool."
+      ],
+      why: "Value dies when the number becomes the story. Payment ask, financing, HSA \u2014 not a cut."
+    },
+    golfshout: {
+      id: "golfshout",
+      kind: "shout",
+      title: "Yards and handicap",
+      hear: "Ground Force will add yards to your drive and lower your handicap.",
+      gold: "Shout it. Comfort and stability on the course. Never swing, distance, or handicap.",
+      misses: [
+        "Golfers buy performance. Speak their language.",
+        "It's fine if they bring up handicap first \u2014 just agree."
+      ],
+      why: "Compliant golf talk only. The leftover is a heel-counter Strengthener that lives in the golf shoes."
+    },
+    stepdown: {
+      id: "stepdown",
+      kind: "shout",
+      title: "Step down before value",
+      hear: "They winced. Drop them to a $200 pair so we don't lose the close.",
+      gold: "Shout it. Match firmness to the foot after the system has a home \u2014 not to rescue a price objection.",
+      misses: [
+        "Sensitive feet always start at Deluxe. Skip the Strengthener.",
+        "Stepping down fast is how we protect conversion."
+      ],
+      why: "Stores asked for this: stepping down without losing value. You don't dump the system to save a ticket."
+    },
+    wearday: {
+      id: "wearday",
+      kind: "shout",
+      title: "Wear them all day",
+      hear: "Just wear all three all day from day one. You'll get used to them faster.",
+      gold: "Shout it. The wear schedule is the value. Signed in the booth \u2014 not at checkout, not 'all day.'",
+      misses: [
+        "Toughing it out proves the Strengthener is working.",
+        "Tell them at the register so we don't slow the chair."
+      ],
+      why: "Wear schedule in the booth. All-day from day one is how a gold visit becomes a Monday return."
+    },
+    pricefirst: {
+      id: "pricefirst",
+      kind: "shout",
+      title: "Price before PLACE",
+      hear: "Before I forget \u2014 the 3-pack is X, the 4th is Y. Want me to run numbers?",
+      gold: "Shout it. Price before PLACE is a register. Playback, leftover, Ease \u2014 then the number.",
+      misses: [
+        "Logical buyers want the number first. Get it out of the way.",
+        "Mentioning price early builds trust."
+      ],
+      why: "If it sounds like a register, it's a miss. If it sounds like their interview, it's gold."
+    }
+  };
+  var LADDERS = [
+    { from: 4, to: 16, cardId: "listen" },
+    { from: 9, to: 22, cardId: "chart" },
+    { from: 14, to: 27, cardId: "system" },
+    { from: 19, to: 33, cardId: "persona" },
+    { from: 25, to: 38, cardId: "nurse" },
+    { from: 30, to: 41, cardId: "gym" },
+    { from: 35, to: 46, cardId: "golf" },
+    { from: 42, to: 49, cardId: "ease" }
+  ];
+  var SHOUTS = [
+    { from: 7, to: 3, cardId: "diagnose" },
+    { from: 12, to: 5, cardId: "fourpack" },
+    { from: 17, to: 8, cardId: "gymshout" },
+    { from: 21, to: 11, cardId: "discount" },
+    { from: 28, to: 15, cardId: "golfshout" },
+    { from: 32, to: 18, cardId: "stepdown" },
+    { from: 37, to: 23, cardId: "wearday" },
+    { from: 44, to: 29, cardId: "pricefirst" }
+  ];
+  var WARP_BY_FROM = new Map(
+    [...LADDERS, ...SHOUTS].map((w) => [w.from, w])
+  );
+  var ZONE_OF = [
+    { end: 10, label: "Door" },
+    { end: 20, label: "3-Step" },
+    { end: 30, label: "Chart" },
+    { end: 40, label: "PLACE" },
+    { end: 50, label: "Close" }
+  ];
+  function zoneOf(n) {
+    return ZONE_OF.find((z) => n <= z.end)?.label ?? "Close";
+  }
+  function warpAt(square) {
+    return WARP_BY_FROM.get(square) ?? null;
+  }
+  function cardOf(id) {
+    const c = CARDS[id];
+    if (!c) throw new Error(`missing card ${id}`);
+    return c;
+  }
+  function squareCell(n) {
+    const i = Math.max(1, Math.min(LAST_SQUARE, n)) - 1;
+    const rowFromBottom = Math.floor(i / COLS);
+    const colInRow = i % COLS;
+    const col = rowFromBottom % 2 === 0 ? colInRow : COLS - 1 - colInRow;
+    const row = ROWS - 1 - rowFromBottom;
+    return { col, row };
+  }
+  function rollDie(rand = Math.random) {
+    return 1 + Math.floor(rand() * 6);
+  }
+  function walkPath(from, steps) {
+    const path = [];
+    let at = from;
+    for (let i = 0; i < steps; i++) {
+      if (at >= LAST_SQUARE) break;
+      at += 1;
+      path.push(at);
+    }
+    return path;
+  }
+  function tryRoll(from, roll) {
+    if (from + roll > LAST_SQUARE) return [];
+    return walkPath(from, roll);
+  }
+  function warpPath(from, to) {
+    const path = [];
+    if (to === from) return path;
+    const dir = to > from ? 1 : -1;
+    for (let n = from + dir; dir > 0 ? n <= to : n >= to; n += dir) path.push(n);
+    return path;
+  }
+  function choicesFor(card, seed) {
+    return shuffleCopy([card.gold, card.misses[0], card.misses[1]], seed);
+  }
+  function isGold(card, pick) {
+    return pick === card.gold;
+  }
+  function dealSeats(mode, names) {
+    if (mode === "solo") {
+      return [
+        { name: names[0] || "You", kind: "human", pos: 0, climbs: 0, shoutsCaught: 0, shoutsMissed: 0 },
+        { name: BOT_NAME, kind: "bot", pos: 0, climbs: 0, shoutsCaught: 0, shoutsMissed: 0 }
+      ];
+    }
+    return [
+      { name: names[0] || "Chair 1", kind: "human", pos: 0, climbs: 0, shoutsCaught: 0, shoutsMissed: 0 },
+      { name: names[1] || "Chair 2", kind: "human", pos: 0, climbs: 0, shoutsCaught: 0, shoutsMissed: 0 }
+    ];
+  }
+  function botPicksGold(card, rand = Math.random) {
+    const p = card.kind === "shout" ? 0.62 : 0.48;
+    return rand() < p;
+  }
+  function scoreSeat(s) {
+    return s.pos + s.climbs * 3 + s.shoutsCaught * 2 - s.shoutsMissed * 2;
+  }
+  return __toCommonJS(shouts_ladders_exports);
+})();
+</script>
+<script>
+(function () {
+  "use strict";
+  var S = window.SHOUTS;
+  var SAVE = "shouts-ladders-best-v1";
+  var app = document.getElementById("app");
+  var lock = false;
+  var cardLock = false;
+  var state = {
+    phase: "intro",
+    mode: "duo",
+    names: ["Chair 1", "Chair 2"],
+    seats: S.dealSeats("duo", ["Chair 1", "Chair 2"]),
+    turn: 0,
+    die: null,
+    log: "",
+    card: null,
+    warp: null,
+    picks: [],
+    picked: null,
+    seed: 0,
+    best: 0,
+  };
+  try { state.best = Number(localStorage.getItem(SAVE) || 0) || 0; } catch (e) {}
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, "&")
+      .replace(/</g, "<")
+      .replace(/>/g, ">")
+      .replace(/"/g, """)
+      .replace(/'/g, "&#39;");
+  }
+  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function report(score) {
+    try {
+      localStorage.setItem(SAVE, String(Math.max(state.best, score)));
+      state.best = Math.max(state.best, score);
+      if (window.QuadScore && typeof window.QuadScore.report === "function") window.QuadScore.report(score);
+    } catch (e) {}
+  }
+  function squaresAt(row, col) {
+    var rowFromBottom = S.ROWS - 1 - row;
+    var colInRow = rowFromBottom % 2 === 0 ? col : S.COLS - 1 - col;
+    return rowFromBottom * S.COLS + colInRow + 1;
+  }
+  function zoneClass(n) {
+    var z = S.zoneOf(n);
+    if (z === "Door") return "door";
+    if (z === "3-Step") return "step";
+    if (z === "Chart") return "chart";
+    if (z === "PLACE") return "place";
+    return "close";
+  }
+
+  function start() {
+    state.seats = S.dealSeats(state.mode, state.names);
+    state.turn = 0;
+    state.die = null;
+    state.log = "";
+    state.card = null;
+    state.warp = null;
+    state.picks = [];
+    state.picked = null;
+    state.seed += 1;
+    lock = false;
+    cardLock = false;
+    state.phase = "play";
+    render();
+    maybeBot();
+  }
+
+  function maybeBot() {
+    var seat = state.seats[state.turn];
+    if (state.phase === "play" && seat && seat.kind === "bot" && !lock) {
+      setTimeout(function () { takeTurn(); }, 700);
+    }
+  }
+
+  async function takeTurn() {
+    if (lock || state.phase !== "play") return;
+    var seat = state.seats[state.turn];
+    if (!seat) return;
+    lock = true;
+    var roll = S.rollDie();
+    state.die = roll;
+    render();
+    await sleep(280);
+    var path = S.tryRoll(seat.pos, roll);
+    if (!path.length) {
+      state.log = seat.name + " rolled " + roll + " — need exact for Continuity.";
+      render();
+      await sleep(400);
+      advance();
+      return;
+    }
+    await walk(state.turn, path);
+    var land = path[path.length - 1];
+    if (land >= S.LAST_SQUARE) { finish(); return; }
+    var w = S.warpAt(land);
+    if (!w) {
+      state.log = seat.name + " to " + land + " · " + S.zoneOf(land) + ".";
+      render();
+      await sleep(220);
+      advance();
+      return;
+    }
+    var c = S.cardOf(w.cardId);
+    state.warp = w;
+    state.card = c;
+    state.picks = S.choicesFor(c, state.seed + "-" + state.turn + "-" + land);
+    state.picked = null;
+    state.phase = "card";
+    lock = false;
+    render();
+    if (seat.kind === "bot") {
+      await sleep(700);
+      var pick = S.botPicksGold(c) ? c.gold : c.misses[0];
+      await resolve(pick);
+    }
+  }
+
+  async function walk(idx, path) {
+    for (var i = 0; i < path.length; i++) {
+      state.seats[idx].pos = path[i];
+      render();
+      await sleep(90);
+    }
+  }
+
+  async function resolve(pick) {
+    if (cardLock) return;
+    cardLock = true;
+    state.picked = pick;
+    render();
+    await sleep(240);
+    var c = state.card;
+    var w = state.warp;
+    var ok = S.isGold(c, pick);
+    var climb = c.kind === "ladder" && ok;
+    var slide = c.kind === "shout" && !ok;
+    var caught = c.kind === "shout" && ok;
+    var path = climb || slide ? S.warpPath(w.from, w.to) : [];
+    state.phase = "play";
+    if (path.length) await walk(state.turn, path);
+    var seat = state.seats[state.turn];
+    if (climb || slide) seat.pos = w.to;
+    if (climb) seat.climbs += 1;
+    if (caught) seat.shoutsCaught += 1;
+    if (slide) seat.shoutsMissed += 1;
+    state.log = climb
+      ? seat.name + " built value — climbed to " + w.to + "."
+      : slide
+        ? seat.name + " let value drop — shout down to " + w.to + "."
+        : caught
+          ? seat.name + " caught the shout. Value holds at " + w.from + "."
+          : seat.name + " missed the builder. Stays on " + w.from + ".";
+    state.card = null;
+    state.warp = null;
+    if (seat.pos >= S.LAST_SQUARE) { finish(); return; }
+    render();
+    await sleep(220);
+    advance();
+  }
+
+  function advance() {
+    lock = false;
+    cardLock = false;
+    state.turn = (state.turn + 1) % 2;
+    state.seed += 1;
+    render();
+    maybeBot();
+  }
+
+  function finish() {
+    var ranked = state.seats.slice().sort(function (a, b) { return S.scoreSeat(b) - S.scoreSeat(a); });
+    report(S.scoreSeat(ranked[0]));
+    state.phase = "done";
+    lock = false;
+    cardLock = false;
+    render();
+  }
+
+  function boardHtml() {
+    var html = '<div class="board"><div class="grid">';
+    for (var i = 0; i < S.ROWS * S.COLS; i++) {
+      var row = Math.floor(i / S.COLS);
+      var col = i % S.COLS;
+      var n = squaresAt(row, col);
+      var ladder = S.LADDERS.some(function (w) { return w.from === n; });
+      var shout = S.SHOUTS.some(function (w) { return w.from === n; });
+      var here = state.seats.filter(function (s) { return s.pos === n; });
+      html += '<div class="sq ' + zoneClass(n) + '" data-qa="square-' + n + '">';
+      html += '<span class="num">' + n + '</span>';
+      if (ladder) html += '<span class="mark up">▲</span>';
+      if (shout) html += '<span class="mark down">▼</span>';
+      if (here.length) {
+        html += '<span class="pawns">';
+        here.forEach(function (s) {
+          html += '<span class="pawn ' + (s === state.seats[0] ? "a" : "b") + '"></span>';
+        });
+        html += "</span>";
+      }
+      html += "</div>";
+    }
+    return html + "</div></div>";
+  }
+
+  function cardHtml() {
+    if (state.phase !== "card" || !state.card) return "";
+    var c = state.card;
+    var w = state.warp;
+    var locked = !!state.picked;
+    var ladder = c.kind === "ladder";
+    var html = '<div class="sheet"><div class="card">';
+    html += '<p class="kicker" style="color:var(--teal-deep)">' + (ladder ? "Ladder " + w.from + " → " + w.to : "Shout " + w.from + " → " + w.to) + "</p>";
+    html += "<h2>" + esc(c.title) + "</h2>";
+    html += '<p class="muted" style="color:rgba(26,42,54,.7);margin-top:.5rem">' + esc(c.hear) + "</p>";
+    state.picks.forEach(function (p, i) {
+      var gold = S.isGold(c, p);
+      var cls = "choice";
+      if (locked && gold) cls += " gold";
+      if (locked && !gold && state.picked === p) cls += " bad";
+      if (locked && !gold && state.picked !== p) cls += " dim";
+      html += '<button class="' + cls + '" data-qa="choice" data-pick-i="' + i + '" ' + (locked ? "disabled" : "") + ">" + esc(p) + "</button>";
+    });
+    if (locked) {
+      html += '<p style="margin-top:.9rem;line-height:1.5">' + esc(c.why) + "</p>";
+      var label = ladder ? (S.isGold(c, state.picked) ? "Climb" : "Stay") : (S.isGold(c, state.picked) ? "Hold" : "Slide");
+      html += '<button class="btn dark" data-qa="card-continue" style="width:100%;margin-top:1rem">' + label + "</button>";
+    }
+    html += "</div></div>";
+    return html;
+  }
+
+  function render() {
+    if (state.phase === "intro") {
+      app.innerHTML =
+        '<a class="back" href="/quad">Quad</a>' +
+        '<p class="kicker">Two chairs · one board</p>' +
+        '<h1 class="display">Shouts and Ladders</h1>' +
+        '<p class="muted" style="max-width:36rem;margin:.75rem 0 0">Ladders are value builders from Building Value. Shouts dump it — diagnose, discount, gym Strengthener, register 4th. Catch the shout and you stay. Miss it and you slide.</p>' +
+        '<div class="modes">' +
+          '<button class="mode' + (state.mode === "duo" ? " on" : "") + '" data-qa="mode-duo" data-mode="duo"><h2>Two specialists</h2><p class="muted">Pass the iPad. First to Continuity wins.</p></button>' +
+          '<button class="mode' + (state.mode === "solo" ? " on" : "") + '" data-qa="mode-solo" data-mode="solo"><h2>You vs Register</h2><p class="muted">The bot talks like a ticket. Beat it to 50.</p></button>' +
+        "</div>" +
+        '<div class="names"><label>Chair 1<input data-qa="name-1" value="' + esc(state.names[0]) + '"/></label>' +
+        (state.mode === "duo" ? '<label>Chair 2<input data-qa="name-2" value="' + esc(state.names[1]) + '"/></label>' : "") +
+        "</div>" +
+        '<div class="tips"><div class="tip"><p>Ladder</p><p class="muted">Name the value builder. Gold climbs. Miss stays.</p></div>' +
+        '<div class="tip"><p>Shout</p><p class="muted">Catch the line that hurts value. Gold holds. Miss slides.</p></div></div>' +
+        (state.best ? '<p class="muted">Best value score on this device: ' + state.best + "</p>" : "") +
+        '<button class="btn cream" data-qa="start">Roll for the door</button>';
+      return;
+    }
+    if (state.phase === "done") {
+      var ranked = state.seats.slice().sort(function (a, b) { return S.scoreSeat(b) - S.scoreSeat(a); });
+      var top = ranked[0];
+      var rows = ranked.map(function (s) {
+        return '<div class="stat"><h2>' + esc(s.name) + "</h2><p class=\"muted\">Square " + s.pos + " · " + s.climbs + " ladders · " + s.shoutsCaught + " shouts caught · " + s.shoutsMissed + " dropped</p><p style=\"margin-top:.4rem;color:var(--teal);font-size:1.2rem\">" + S.scoreSeat(s) + "</p></div>";
+      }).join("");
+      app.innerHTML =
+        '<a class="back" href="/quad">Quad</a>' +
+        '<p class="kicker">Continuity</p>' +
+        '<h1 class="display">' + esc(top.name) + " holds the value</h1>" +
+        '<p class="muted" style="margin:.75rem 0 1rem">First to the close without dumping the visit.</p>' +
+        '<div class="modes">' + rows + "</div>" +
+        '<button class="btn cream" data-qa="again">Same chairs</button>';
+      return;
+    }
+    var seats = state.seats.map(function (s, i) {
+      return '<div class="seat' + (i === state.turn ? " on" : "") + '"><div style="display:flex;gap:.7rem;align-items:center"><span class="dot ' + (i === 0 ? "a" : "b") + '">' + (i + 1) + "</span><div><p>" + esc(s.name) + "</p><p class=\"muted\">" + (s.pos ? S.zoneOf(s.pos) + " · " + s.pos : "Door") + "</p></div></div></div>";
+    }).join("");
+    var seat = state.seats[state.turn];
+    app.innerHTML =
+      '<a class="back" href="/quad">Quad</a>' +
+      '<p class="kicker">Shouts and Ladders</p>' +
+      '<div class="hud">' + seats + "</div>" +
+      boardHtml() +
+      '<div style="display:flex;flex-wrap:wrap;gap:.7rem;align-items:center;margin-top:.9rem">' +
+        '<button class="btn cream" data-qa="roll"' + (lock || state.phase !== "play" || seat.kind !== "human" ? " disabled" : "") + ">" + (state.die ? "Rolled " + state.die : "Roll") + "</button>" +
+        '<p class="muted">' + (seat.kind === "bot" ? S.BOT_NAME + " is rolling." : esc(seat.name) + " — pass the iPad.") + "</p>" +
+      "</div>" +
+      (state.log ? '<p style="margin-top:.7rem">' + esc(state.log) + "</p>" : "") +
+      (seat.kind === "bot" && state.phase === "card" ? '<p class="muted" style="margin-top:.6rem">' + S.BOT_NAME + " is reading the card…</p>" : "") +
+      cardHtml();
+  }
+
+  app.addEventListener("click", function (e) {
+    var t = e.target.closest("[data-mode],[data-qa],[data-pick]");
+    if (!t) return;
+    if (t.getAttribute("data-mode")) {
+      state.mode = t.getAttribute("data-mode");
+      render();
+      return;
+    }
+    var qa = t.getAttribute("data-qa");
+    if (qa === "start" || qa === "again") { start(); return; }
+    if (qa === "roll") { takeTurn(); return; }
+    if (qa === "choice" && t.getAttribute("data-pick-i") != null) {
+      state.picked = state.picks[Number(t.getAttribute("data-pick-i"))];
+      render();
+      return;
+    }
+    if (qa === "card-continue" && state.picked) { resolve(state.picked); return; }
+  });
+  app.addEventListener("input", function (e) {
+    var el = e.target;
+    if (el.getAttribute("data-qa") === "name-1") state.names[0] = el.value;
+    if (el.getAttribute("data-qa") === "name-2") state.names[1] = el.value;
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

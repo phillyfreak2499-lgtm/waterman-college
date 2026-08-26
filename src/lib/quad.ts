@@ -30,6 +30,12 @@ export const QUAD_GAMES = [
     blurb: "Ninety seconds. Official photos. Name the pair — SLS is dress, Ground Force is golf.",
   },
   {
+    slug: "shouts-ladders",
+    title: "Shouts and Ladders",
+    file: "/games/shouts-ladders.html",
+    blurb: "Ladders build value. Shouts dump it. Catch the diagnose, the discount, the gym Strengthener — or slide.",
+  },
+  {
     slug: "the-4th",
     title: "The 4th",
     file: "/games/the-4th.html",
