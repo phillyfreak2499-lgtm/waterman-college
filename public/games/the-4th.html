@@ -238,6 +238,7 @@ section{margin-top:1.6rem}
 <script>
 "use strict";
 "use strict";
+"use strict";
 var T4 = (() => {
   var __defProp = Object.defineProperty;
   var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -260,25 +261,38 @@ var T4 = (() => {
   // src/lib/quad-api.ts
   var quad_api_exports = {};
   __export(quad_api_exports, {
+    ACTIVITIES: () => ACTIVITIES,
     ARCHES: () => ARCHES,
+    ARCH_GUIDE: () => ARCH_GUIDE,
+    CHART_RULES: () => CHART_RULES,
+    CHART_TEACH: () => CHART_TEACH,
+    DISCLAIMER: () => DISCLAIMER,
+    FAMILY: () => FAMILY,
+    FEATURES: () => FEATURES,
     FEELS: () => FEELS,
     KAREN_BELIEFS: () => KAREN_BELIEFS,
     LIFESTYLES: () => LIFESTYLES,
+    NEVER_SAY: () => NEVER_SAY,
     NEVER_SECONDS: () => NEVER_SECONDS,
     PAINS: () => PAINS,
+    PHOTO_CREDIT: () => PHOTO_CREDIT,
     PLACE_LABELS: () => PLACE_LABELS,
+    PLAY_READS: () => PLAY_READS,
     ROUND_MAX: () => ROUND_MAX,
     SCENARIOS: () => SCENARIOS,
     SHOES: () => SHOES,
     SKUS: () => SKUS,
+    SKU_ORDER: () => SKU_ORDER,
     SUPPORTS: () => SUPPORTS,
     SUPPORT_ORDER: () => SUPPORT_ORDER,
     TRAP_CARDS: () => TRAP_CARDS,
     VOLUMES: () => VOLUMES,
     WWKD_DISCLAIMER: () => WWKD_DISCLAIMER,
+    YOUTH: () => YOUTH,
     dealRounds: () => dealRounds,
     gradePlace: () => gradePlace,
     placeChips: () => placeChips,
+    preferredSkuForActivity: () => preferredSkuForActivity,
     recommendWwkd: () => recommendWwkd,
     resolveRound: () => resolveRound,
     shuffleCopy: () => shuffleCopy,
@@ -290,6 +304,48 @@ var T4 = (() => {
   });
 
   // src/lib/catalog.ts
+  var FAMILY = {
+    strengthener: {
+      name: "Strengthener",
+      plural: "Strengtheners",
+      image: "/supports/catalog/family-strengthener.jpg",
+      pitch: "The workhorse. Repositions the foot and supports all four arches.",
+      bullets: [
+        "Exercises muscles, tendons, and ligaments \u2014 longest adjustment period",
+        "Metatarsal rise sits behind the ball of the foot and keeps plantar fascia stretched",
+        "Deep heel counter stabilizes the foot and redistributes pressure",
+        "Heel cup gathers the fat pad \u2014 great for standing and golf, not for running",
+        "Most flexible (Diamond, Hug) for sensitive, diabetic, or arthritic feet",
+        "Ground Force is the SLS positioned for golf \u2014 slim enough for a low-profile golf shoe"
+      ]
+    },
+    maintainer: {
+      name: "Maintainer",
+      plural: "Maintainers",
+      image: "/supports/catalog/family-maintainer.jpg",
+      pitch: "Holds the alignment the Strengthener built, in shoes a Strengthener will not fit.",
+      bullets: [
+        "Lower arch, little or no metatarsal rise, thinner profile",
+        "Flat heel platform = side-to-side mobility for court, run, gym",
+        "Deluxe / Deluxe Plus are the exception: rigid, no metatarsal, deep heel cup",
+        "Inner longitudinal support is the pronation story",
+        "Firmer for high arches, more flexible for lower arches"
+      ]
+    },
+    relaxer: {
+      name: "Relaxer",
+      plural: "Relaxers",
+      image: "/supports/catalog/family-relaxer.jpg",
+      pitch: "The rest step. Enough support that they never go bare.",
+      bullets: [
+        "Thinnest. Little to no adjustment. Fits almost any shoe",
+        "No metatarsal rise except SLR \u2014 SLR is the wider-foot athletic start",
+        "Flat heel platform, except Skinny (slight heel counter)",
+        "Worn last every day \u2014 slippers, sandals, dress, recovery",
+        "Perfect to start athletic activity in until the foot is ready for a Maintainer"
+      ]
+    }
+  };
   var SKUS = {
     max: {
       id: "max",
@@ -349,9 +405,41 @@ var T4 = (() => {
       bullets: [
         "55% lighter and 5\xD7 thinner than Classic",
         "Gait Enhancement Technology \u2014 patented S-shaped GeT on the sole",
-        "The Strengthener that actually fits dress shoes"
+        "The Strengthener that actually fits dress shoes",
+        "On the course, this chassis is named Ground Force \u2014 same support, golf positioning"
       ],
       caution: "Not for climbing ladders."
+    },
+    "ground-force": {
+      id: "ground-force",
+      name: "Ground Force",
+      short: "Ground Force",
+      family: "strengthener",
+      image: "/supports/catalog/ground-force.jpg",
+      firmness: "Strengthener power, golf-shoe volume",
+      bestFor: "Low-profile golf shoes. The SLS, positioned for the course.",
+      bullets: [
+        "The Ground Force is the SLS: same proven support, positioned for the golf market.",
+        "55% lighter and 5\xD7 thinner than Classic. Fits tighter, low-profile golf shoes.",
+        "Gait Enhancement Technology \u2014 patented S-shaped GeT on the sole.",
+        "Talk comfort, fit, and stability on the course \u2014 how it feels to wear, not what it will do to the game."
+      ],
+      caution: "We do not carry the leather covering. Never claim swing, distance, handicap, or a number.",
+      tag: "Golf",
+      talk: {
+        say: [
+          "Designed for activities like walking a course or standing for extended periods.",
+          "Helps support your foot and promote stability, which matters throughout your swing.",
+          "Many golfers appreciate the added comfort during a full round.",
+          "Speak to how it feels to wear \u2014 not what it will do to their game."
+        ],
+        avoid: [
+          "Any claim of improved swing, more distance, or faster swing speed.",
+          "Lower handicap, better score, or any quantified outcome.",
+          "Saying it will fix or correct a swing flaw.",
+          "Framing comfort as a guaranteed performance result."
+        ]
+      }
     },
     diamond: {
       id: "diamond",
@@ -448,7 +536,7 @@ var T4 = (() => {
       firmness: "Flexible Maintainer",
       bestFor: "Flatter feet and lightweight shoes",
       bullets: [
-        "The black Flex chassis \u2014 flatter feet, light shoes",
+        "Flexible Maintainer \u2014 flatter feet, light shoes",
         "Running, court, hunting, gym",
         "Dress, heels, sandals. Everyday 4th in a second sneaker"
       ]
@@ -544,6 +632,7 @@ var T4 = (() => {
     "honeycomb",
     "classic",
     "sls",
+    "ground-force",
     "diamond",
     "hug",
     "ultra",
@@ -558,7 +647,100 @@ var T4 = (() => {
     "slr",
     "skinny"
   ];
-  var ALL = "11111111111111111";
+  var YOUTH = [
+    {
+      id: "sportflex",
+      name: "Sportflex",
+      family: "Maintainer",
+      image: "/supports/catalog/sportflex.jpg",
+      bullets: [
+        "Reduce foot fatigue, increase performance, improve comfort and balance in sport",
+        "Flat heel platform, flexible inner longitudinal",
+        "10 sizes \xB7 6-month warranty"
+      ]
+    },
+    {
+      id: "enduraflex",
+      name: "Enduraflex",
+      family: "Relaxer",
+      image: "/supports/catalog/enduraflex.jpg",
+      bullets: [
+        "Everyday comfort and balance",
+        "Low inner longitudinal, slight heel cup, flexible",
+        "10 sizes \xB7 6-month warranty"
+      ]
+    }
+  ];
+  var ACTIVITIES = [
+    { id: "w-walk", group: "Work", label: "Walking" },
+    { id: "w-stand", group: "Work", label: "Standing" },
+    { id: "w-sit", group: "Work", label: "Sitting" },
+    { id: "w-drive", group: "Work", label: "Driving" },
+    { id: "w-lift", group: "Work", label: "Lifting heavy objects" },
+    { id: "w-hard", group: "Work", label: "Standing on hard surfaces" },
+    {
+      id: "w-ladder",
+      group: "Work",
+      label: "Climbing ladders",
+      note: "SLS and Ground Force are not marked."
+    },
+    { id: "p-walk", group: "Play", label: "Walking" },
+    {
+      id: "p-run",
+      group: "Play",
+      label: "Running",
+      note: "Maintainers and Relaxers. Never a Strengthener \u2014 heel cups don't run."
+    },
+    { id: "p-hike", group: "Play", label: "Hiking" },
+    { id: "p-cycle", group: "Play", label: "Cycling" },
+    {
+      id: "p-lift",
+      group: "Play",
+      label: "Weightlifting",
+      note: "Standing load on the chart for Max, Honeycomb, Classic. Gym, CrossFit, cardio, and impact sports are Maintainers \u2014 you do not work out in a Strengthener."
+    },
+    {
+      id: "p-gym",
+      group: "Play",
+      label: "Gym / Cardio",
+      note: "Maintainers. Never a Strengthener. You work out in a Maintainer."
+    },
+    {
+      id: "p-sport",
+      group: "Play",
+      label: "Sports",
+      note: "Flat-heel Maintainers + TSS + Flex Relaxer / SLR. Not Deluxe. Not a Strengthener. Not golf."
+    },
+    { id: "p-team", group: "Play", label: "Team sports" },
+    {
+      id: "p-golf",
+      group: "Play",
+      label: "Golf",
+      note: "Heel counter: Ground Force is the named slim golf Strengthener. Any Strengthener, Deluxe, Deluxe Plus, Skinny. Not a flex Sports pair."
+    },
+    {
+      id: "p-hunt",
+      group: "Play",
+      label: "Hunting",
+      note: "Deluxe yes. Deluxe Plus no \u2014 tighter than Deluxe."
+    },
+    { id: "p-garden", group: "Play", label: "Gardening" },
+    { id: "p-shop", group: "Play", label: "Shopping" },
+    { id: "s-ath", group: "Shoes", label: "Athletic shoes" },
+    {
+      id: "s-dress",
+      group: "Shoes",
+      label: "Dress shoes",
+      note: "SLS is the only Strengthener that fits dress. Ground Force is the same chassis \u2014 name SLS in dress, Ground Force on the course."
+    },
+    { id: "s-heel", group: "Shoes", label: "High heels" },
+    { id: "s-flat", group: "Shoes", label: "Flats" },
+    { id: "s-work", group: "Shoes", label: "Work boots" },
+    { id: "s-boot", group: "Shoes", label: "Boots" },
+    { id: "s-slip", group: "Shoes", label: "Slippers" },
+    { id: "s-sand", group: "Shoes", label: "Sandals / Slides" }
+  ];
+  var ALL = "111111111111111111";
   var CHART = {
     "w-walk": ALL,
     "w-stand": ALL,
@@ -566,25 +748,23 @@ var T4 = (() => {
     "w-drive": ALL,
     "w-lift": ALL,
     "w-hard": ALL,
-    "w-ladder": "11101111111111111",
+    "w-ladder": "111001111111111111",
     "p-walk": ALL,
-    "p-run": "00000011111001111",
-    "p-hike": "00000011101101111",
-    "p-cycle": "00000011111001111",
-    "p-lift": "11100011111111111",
-    "p-gym": "00000011111111111",
-    "p-sport": "00000011111001110",
-    "p-team": "00000011111001110",
-    "p-golf": "11111100000110001",
-    // R5: Ultra, Miracle, SLM, Flex, Deluxe, TSS, Flex Relaxer, SLR, Skinny.
-    // Mid-Flex is blank on hiking. Deluxe Plus is blank on hunting / hiking / gardening / flats.
-    "p-hunt": "00000011111101111",
-    "p-garden": "11111111111101111",
+    "p-run": "000000011111001111",
+    "p-hike": "000000011101101111",
+    "p-cycle": "000000011111001111",
+    "p-lift": "111000011111111111",
+    "p-gym": "000000011111111111",
+    "p-sport": "000000011111001110",
+    "p-team": "000000011111001110",
+    "p-golf": "111111100000110001",
+    "p-hunt": "000000011111101111",
+    "p-garden": "111111111111101111",
     "p-shop": ALL,
     "s-ath": ALL,
-    "s-dress": "00010011111111111",
-    "s-heel": "00000011111001111",
-    "s-flat": "11110011111101111",
+    "s-dress": "000110011111111111",
+    "s-heel": "000000011111001111",
+    "s-flat": "111110011111101111",
     "s-work": ALL,
     "s-boot": ALL,
     "s-slip": ALL,
@@ -596,6 +776,83 @@ var T4 = (() => {
     const i = SKU_ORDER.indexOf(skuId);
     return i >= 0 && row[i] === "1";
   }
+  function markedSkus(activityId, family = "all") {
+    return SKU_ORDER.filter(
+      (id) => (family === "all" || SKUS[id].family === family) && skuMarked(activityId, id)
+    );
+  }
+  function preferredSkuForActivity(activityId, family = "all", current) {
+    const marked = markedSkus(activityId, family);
+    if (current && marked.includes(current)) return current;
+    if (activityId === "p-golf" && marked.includes("ground-force")) return "ground-force";
+    return marked[0] ?? null;
+  }
+  var FEATURES = [
+    {
+      id: "heel-cup",
+      title: "Heel cup",
+      image: "/supports/features/heel-cup.jpg",
+      body: "Gathers the heel fat pad, absorbs step-shock, and lines up ankle \u2192 knee \u2192 hip \u2192 back. Deeper cup, bigger effect. Motion control is why a pronounced heel cup does not go in running, gym, or impact sports. You work out in a Maintainer."
+    },
+    {
+      id: "platform",
+      title: "Flat heel platform",
+      image: "/supports/features/heel-platform.jpg",
+      body: "No cup. The heel is free to move \u2014 sports, running, tighter shoes, open heels with Velcro. This is the Sports Maintainer story. Skinny keeps a slight counter instead."
+    },
+    {
+      id: "met",
+      title: "Metatarsal rise",
+      image: "/supports/features/metatarsal.jpg",
+      body: "The mound behind the ball. Lifts the metatarsal heads, unloads toes and heel, supports plantar fascia, stabilizes midfoot. Feels bigger on a flexible pair and on a flatter foot. Deluxe has none. Relaxers have none except SLR."
+    },
+    {
+      id: "get",
+      title: "GeT \u2014 Slimline",
+      image: "/supports/features/get.jpg",
+      body: "Patented S-shaped support on SLS, Ground Force, SLM, and SLR. Built to disperse energy through the gait cycle so the foot spends less of it. Ground Force is that chassis named for the course."
+    },
+    {
+      id: "waffle",
+      title: "Waffling",
+      image: "/supports/features/waffle.jpg",
+      body: "Connected squares or hexagons on the Classic series. Flexes with the step, spreads weight, cuts shoe volume. Diamond uses a diamond structure instead \u2014 that's the extra side-to-side give."
+    },
+    {
+      id: "arches",
+      title: "Four arches",
+      image: "/supports/features/arches.jpg",
+      body: "Inner longitudinal (medial), outer longitudinal (lateral), transverse (inside the midfoot \u2014 you can't see it), and metatarsal across the ball. Strengtheners support all four. Deluxe skips the metatarsal. Relaxers skip it except SLR. Firmer pairs fill a high arch. Flexible pairs fill a flatter foot."
+    }
+  ];
+  var CHART_RULES = [
+    {
+      title: "Running is a Maintainer",
+      body: "Strengtheners are blank on running. Heel cups control motion. Miracle Flex is the pair the deck names out loud for a run."
+    },
+    {
+      title: "Gym and impact sports are Maintainers",
+      body: "You work out in a Maintainer. CrossFit, the box, cardio, court. A pronounced heel cup is inappropriate for impact sports. Do not put a Strengthener in the gym shoes."
+    },
+    {
+      title: "Golf is a heel counter",
+      body: "Ground Force is the named slim golf Strengthener \u2014 the SLS, positioned for the course. Any Strengthener, Deluxe, Deluxe Plus, Skinny. Flex Sports Maintainers are blank. Court and golf are opposite families."
+    },
+    {
+      title: "Court wants side-to-side",
+      body: "Ultra through Flex, TSS, Flex Relaxer, SLR. Not Deluxe. Not Skinny. Flat heel platform. Not a Strengthener."
+    },
+    {
+      title: "Dress volume is Slimline",
+      body: "SLS is the only Strengthener in dress shoes. Ground Force is the same chassis \u2014 name it SLS in dress, Ground Force on the course. Heels take slim Maintainers and Relaxers \u2014 not Deluxe, not a full Classic."
+    },
+    {
+      title: "Match the arch, not the box",
+      body: "High arch wants firmer \u2014 Max, Honeycomb, Classic, Miracle Flex. Average lives in Classic, Hug, Mid-Flex. Flatter foot wants give \u2014 Diamond, Hug, Flex, Deluxe. Max on a flat foot is the miss."
+    }
+  ];
+  var DISCLAIMER = "Good Feet Arch Supports are not intended to treat or correct any physical ailment.";
+  var PHOTO_CREDIT = "Photos and marks from DFW Product Knowledge 2024, the R5 Lifestyle / Activity chart, and the Ground Force talk guide.";
 
   // src/lib/supports.ts
   var SUPPORTS = {
@@ -634,10 +891,10 @@ var T4 = (() => {
       name: "2nd Strengthener",
       short: "2nd Strengthener",
       livesIn: "Golf shoes, a second standing boot",
-      blurb: "Heel-counter leftover \u2014 golf, a second work boot. Classic, Max, Honeycomb. You do not work out in a Strengthener.",
+      blurb: "Heel-counter leftover \u2014 golf, a second work boot. Ground Force is the named slim golf Strengthener (the SLS, for the course). Classic, Max, Honeycomb. You do not work out in a Strengthener.",
       image: "/supports/strengthener.jpg",
       tone: "firm",
-      skus: ["classic", "max", "honeycomb", "sls", "diamond", "hug"]
+      skus: ["ground-force", "classic", "max", "honeycomb", "sls", "diamond", "hug"]
     },
     "second-relaxer": {
       id: "second-relaxer",
@@ -701,10 +958,10 @@ var T4 = (() => {
       acceptable: [],
       trap: "sports-maintainer",
       quote: "Saturday I play 18 and my heel is barking by the back nine.",
-      playRead: "Golf is not court. Heel counter \u2014 Strengthener, Deluxe, Skinny. Not a flex Sports pair.",
+      playRead: "Golf is not court. Heel counter. Ground Force is the named slim golf Strengthener. Classic, Deluxe, Skinny also mark. Not a flex Sports pair.",
       why: "Play shoes that never see the 3-system are the 4th. Golf wants a heel counter.",
       trapWhy: "Sports Maintainer is the trap because golf 'sounds athletic.' Court wants a flat heel. Golf wants the cup.",
-      coach: "Golf is a heel-counter activity. A flat-heel Sports Maintainer is for pickleball, not a golf swing.",
+      coach: "Golf is a heel-counter activity. Ground Force is the SLS positioned for the course \u2014 slim enough for a low-profile golf shoe. A flat-heel Sports Maintainer is for pickleball, not a swing.",
       aperture: "Saturday the golf shoes are doing the round alone.",
       ease: "The back nine isn't starting from zero."
     },
@@ -1311,6 +1568,22 @@ var T4 = (() => {
       why: "Golf wants the heel counter. Cover plus Ease on the back nine."
     },
     {
+      id: "golf-distance",
+      who: "Warehouse \xB7 Saturday 18",
+      quote: "Saturday I play 18 and my left heel starts screaming by the back nine.",
+      said: "The Ground Force will add distance to your drive and drop your handicap.",
+      gold: false,
+      why: "Comfort, fit, stability on the course. Never swing, distance, handicap, or a number."
+    },
+    {
+      id: "gold-ground-force",
+      who: "Warehouse \xB7 back nine",
+      quote: "Concrete all week. Saturday 18. Tight golf shoes. Heel barking by the back nine.",
+      said: "Saturday the golf shoes are doing the round alone. This 4th is a Ground Force \u2014 the slim Strengthener that actually fits a low-profile golf shoe. Comfort and stability from the first tee to the last hole.",
+      gold: true,
+      why: "Named leftover. Named SKU. Comfort and stability \u2014 no swing claim."
+    },
+    {
       id: "gold-dress",
       who: "Attorney \xB7 loafers",
       quote: "I run before court. The loafers undo everything.",
@@ -1344,6 +1617,76 @@ var T4 = (() => {
     }
   ];
   var NEVER_SECONDS = 90;
+
+  // src/lib/framework.ts
+  var NEVER_SAY = [
+    "Want to add a 4th pair today?",
+    "The 4-pack is a better value.",
+    "I can probably do something on the price if we add one more.",
+    "You're young, you can just swap them.",
+    "It's a desk job, you may not need a 4th.",
+    "At your age recovery is everything, so another Relaxer.",
+    "You're working out, so another Strengthener.",
+    "Put the Strengthener in the gym shoes.",
+    "This will treat your plantar fasciitis.",
+    "These will fix the back pain.",
+    "This will add yards to your drive.",
+    "Ground Force will lower your handicap."
+  ];
+  var PLAY_READS = [
+    {
+      title: "Court, run, gym, hunting",
+      fourth: "Sports Maintainer",
+      detail: "Flat heel platform. Miracle Flex, Ultra, Mid-Flex, Flex, SLM, TSS. You work out in a Maintainer. Don't steal the work Strengthener."
+    },
+    {
+      title: "Golf",
+      fourth: "2nd Strengthener",
+      detail: "Heel counter, not side-to-side. Ground Force is the named slim golf Strengthener \u2014 the SLS, for the course. Chart marks every Strengthener, Deluxe, Deluxe Plus, Skinny. A flex Sports pair is blank."
+    },
+    {
+      title: "CrossFit, lifting, box",
+      fourth: "Sports Maintainer",
+      detail: "This is a workout. Maintainer, flat heel. A Strengthener in the gym shoes is the miss \u2014 heel cups don't do impact sports."
+    },
+    {
+      title: "Dance, church, heels, loafers",
+      fourth: "Dress Maintainer",
+      detail: "Tiny shoes. SLM, Mid-Flex, Flex, Skinny, SLR. If they said 'these undo everything,' that's the 4th."
+    },
+    {
+      title: "Second house / packed bag",
+      fourth: "2nd Relaxer or 2nd Everyday",
+      detail: "Recovery in two places, or an all-day pair that has to live in a bag."
+    }
+  ];
+  var CHART_TEACH = [
+    {
+      kicker: "Running",
+      title: "Maintainer. Never a Strengthener.",
+      body: "Heel cups control motion. The deck names Miracle Flex out loud for a run. Deluxe is blank too \u2014 same cup problem."
+    },
+    {
+      kicker: "Gym / workout",
+      title: "Maintainer. Never a Strengthener.",
+      body: "CrossFit, the box, lifting as a workout, cardio, court. Heel cups are inappropriate for impact sports. The leftover gym shoe is a Sports Maintainer."
+    },
+    {
+      kicker: "Golf",
+      title: "Heel counter.",
+      body: "Any Strengthener, Deluxe, Deluxe Plus, Skinny. Court flex Maintainers are blank. Grouping golf with pickleball is how you miss."
+    },
+    {
+      kicker: "Court / team",
+      title: "Flat heel. Side-to-side.",
+      body: "Ultra through Flex, TSS, Flex Relaxer, SLR. Not Deluxe. Not Skinny. Not a Strengthener."
+    },
+    {
+      kicker: "Heels & dress",
+      title: "Slimline volume.",
+      body: "SLS is the only Strengthener in dress shoes. Heels take slim Maintainers and Relaxers."
+    }
+  ];
 
   // src/lib/wwkd.ts
   var WWKD_DISCLAIMER = "We do not diagnose medical conditions. We do not prescribe. Listen to what they said, explain how the support is designed to help, and leave the name of the condition to a licensed provider.";
@@ -1392,6 +1735,32 @@ var T4 = (() => {
     { id: "average", label: "Average arch", they: "an average arch" },
     { id: "flat", label: "Flatter foot", they: "a flatter foot" }
   ];
+  var ARCH_GUIDE = {
+    high: {
+      title: "High arch",
+      firmness: "Firmer pairs",
+      pull: "Max, Honeycomb, Classic. Miracle Flex on a sports leftover. Ground Force in a slim golf shoe.",
+      skip: "Flex and Diamond usually under-fill a high arch. Deluxe is a flatter-foot cup.",
+      size: "If you're between sizes, start longer. High arches can lengthen as they relax.",
+      named: "the firm end"
+    },
+    average: {
+      title: "Average arch",
+      firmness: "The middle",
+      pull: "Classic is the core. Hug if Classic feels aggressive. Mid-Flex or Ultra as the leftover Maintainer. Ground Force if the leftover is a slim golf shoe.",
+      skip: "Don't jump to Max just because they asked for the firmest. Match the foot.",
+      size: "Stay on the chart number unless volume or a between-size story moves you one.",
+      named: "Classic / Hug / Mid-Flex"
+    },
+    flat: {
+      title: "Flatter foot",
+      firmness: "More give",
+      pull: "Diamond, Hug, Flex, Deluxe, SLM. Ground Force only if golf volume is tight \u2014 never Max.",
+      skip: "Max is usually too much. Honeycomb can be too rigid.",
+      size: "If you're between sizes, start shorter. Flat feet can shorten as the arch is raised.",
+      named: "flexible structure they can tolerate"
+    }
+  };
   var FEELS = [
     { id: "firm", label: "Can take firm", they: "they can take a firmer pair" },
     { id: "sensitive", label: "Sensitive", they: "the foot is sensitive" }
@@ -1442,7 +1811,7 @@ var T4 = (() => {
     high: {
       title: "High, tight arch",
       familyLead: "strengthener",
-      helps: "Max and Honeycomb are built for a high arch and pronounced pressure. Miracle Flex is the high-arch sports 4th. The Maintainer spreads the load; the Relaxer cushions the midfoot.",
+      helps: "Max and Honeycomb are built for a high arch and pronounced pressure. Miracle Flex is the high-arch sports 4th. Ground Force if the leftover is a slim golf shoe. The Maintainer spreads the load; the Relaxer cushions the midfoot.",
       never: "Never diagnose a cavus foot. Match the height they showed you."
     },
     achilles: {
@@ -1519,7 +1888,7 @@ var T4 = (() => {
     golf: {
       activityId: "p-golf",
       family: "second-strengthener",
-      coach: "Golf wants a heel counter \u2014 Strengthener, Deluxe, Deluxe Plus, Skinny. A flex Sports pair is blank."
+      coach: "Golf wants a heel counter. Ground Force is the named slim golf Strengthener \u2014 the SLS, for the course. Deluxe, Skinny also mark. A flex Sports pair is blank."
     },
     hunt: {
       activityId: "p-hunt",
@@ -1567,6 +1936,7 @@ var T4 = (() => {
     "honeycomb",
     "classic",
     "sls",
+    "ground-force",
     "diamond",
     "hug",
     "miracle-flex",
@@ -1577,6 +1947,7 @@ var T4 = (() => {
     "honeycomb",
     "classic",
     "sls",
+    "ground-force",
     "diamond",
     "hug",
     "deluxe",
@@ -1591,10 +1962,11 @@ var T4 = (() => {
     "flex-relaxer",
     "slr"
   ];
-  var FIRM = ["max", "honeycomb", "ultra", "classic", "miracle-flex"];
-  var SLIM = ["sls", "slm", "slr", "skinny", "flex", "tss"];
+  var FIRM = ["max", "honeycomb", "ultra", "classic", "miracle-flex", "ground-force"];
+  var SLIM = ["sls", "ground-force", "slm", "slr", "skinny", "flex", "tss"];
   var WIDE = ["slm", "slr", "deluxe", "hug"];
-  var HIGH_ARCH = ["max", "honeycomb", "miracle-flex", "classic"];
+  var HIGH_ARCH = ["max", "honeycomb", "miracle-flex", "classic", "ground-force"];
+  var AVERAGE_ARCH = ["classic", "hug", "mid-flex", "ultra", "sls", "ground-force", "slm"];
   var FLAT_FOOT = ["diamond", "hug", "flex", "deluxe", "slm"];
   var FLAT_HEEL = [
     "ultra",
@@ -1619,7 +1991,8 @@ var T4 = (() => {
     help: null,
     talk: "Tap what they said. Karen starts talking when you name a leftover or a pain.",
     sizing: [],
-    wear: null
+    wear: null,
+    archGuide: null
   };
   function painWhy(id, input) {
     const bits = [];
@@ -1707,16 +2080,25 @@ var T4 = (() => {
       }
     }
     if (input.arch === "high") {
-      if (has(HIGH_ARCH, id)) score += 16;
-      if (id === "flex" || id === "diamond" || id === "deluxe") score -= 8;
+      if (has(HIGH_ARCH, id)) score += 18;
+      if (id === "flex" || id === "diamond" || id === "deluxe") score -= 12;
+      if (input.leftover && SPORT_LIFE.has(input.leftover) && id === "miracle-flex") score += 14;
+      if (input.leftover === "golf" && (id === "ground-force" || id === "max" || id === "honeycomb"))
+        score += 10;
     }
     if (input.arch === "average") {
-      if (id === "classic" || id === "hug" || id === "mid-flex") score += 12;
+      if (has(AVERAGE_ARCH, id)) score += 16;
+      if (id === "max") score -= 10;
+      if (id === "flex" || id === "diamond") score -= 4;
     }
     if (input.arch === "flat") {
-      if (has(FLAT_FOOT, id)) score += 16;
-      if (id === "max") score -= 20;
-      if (id === "honeycomb") score -= 10;
+      if (has(FLAT_FOOT, id)) score += 20;
+      if (id === "max") score -= 24;
+      if (id === "honeycomb") score -= 14;
+      if (id === "miracle-flex") score -= 8;
+      if (input.leftover && SPORT_LIFE.has(input.leftover) && (id === "flex" || id === "tss" || id === "slm"))
+        score += 10;
+      if (input.leftover === "golf" && (id === "hug" || id === "deluxe" || id === "diamond")) score += 10;
     }
     if (input.feel === "sensitive") {
       if (has(FLEXIBLE, id)) score += 14;
@@ -1730,10 +2112,13 @@ var T4 = (() => {
     if (input.volume === "wide" && has(WIDE, id)) score += 14;
     if (input.volume === "slender") {
       if (id === "skinny") score += 20;
-      if (id === "sls") score += 8;
+      if (id === "sls" || id === "ground-force") score += 8;
     }
     if (input.narrow && sku.narrow) score += 10;
     if (input.leftover === "golf" && has(CUP, id)) score += 8;
+    if (input.leftover === "golf" && id === "ground-force") score += 26;
+    if (input.leftover === "golf" && id === "sls") score += 4;
+    if (input.leftover === "dress" && id === "ground-force") score -= 10;
     if (input.leftover && SPORT_LIFE.has(input.leftover)) {
       if (has(FLAT_HEEL, id)) score += 14;
       if (id === "deluxe" || id === "deluxe-plus" || id === "skinny") score -= 28;
@@ -1755,8 +2140,13 @@ var T4 = (() => {
       const meta = LIFESTYLE_META[input.leftover];
       if (skuMarked(meta.activityId, id)) parts.unshift(meta.coach);
     }
-    if (input.arch === "high" && has(HIGH_ARCH, id)) parts.push("Built for a high arch.");
-    if (input.arch === "flat" && has(FLAT_FOOT, id)) parts.push("Tolerable on a flatter foot.");
+    if (input.arch === "high" && has(HIGH_ARCH, id)) parts.push("High arch wants the firm end.");
+    if (input.arch === "average" && has(AVERAGE_ARCH, id))
+      parts.push("Average arch \u2014 Classic / Hug / Mid-Flex is the middle, not Max.");
+    if (input.arch === "flat" && has(FLAT_FOOT, id)) parts.push("Flatter foot: give it structure it can actually tolerate.");
+    if (id === "ground-force" && input.leftover === "golf")
+      parts.push("Ground Force is the SLS positioned for the course. Comfort and stability \u2014 never swing or handicap.");
+    if (id === "max" && input.arch === "flat") parts.push("Max is usually too much on a flatter foot.");
     if (input.volume === "tight" && has(SLIM, id)) parts.push("The leftover shoe is tight \u2014 Slimline volume.");
     if (input.volume === "wide" && has(WIDE, id)) parts.push("Wider platform.");
     if (input.volume === "slender" && id === "skinny") parts.push("Skinny is the slender-foot / golf Relaxer.");
@@ -1764,7 +2154,7 @@ var T4 = (() => {
     parts.push(sku.bestFor + ".");
     const uniq = [];
     for (const p of parts) if (!uniq.includes(p)) uniq.push(p);
-    return uniq.slice(0, 3).join(" ");
+    return uniq.slice(0, 4).join(" ");
   }
   function buildTalk(input, family, top) {
     const they = [];
@@ -1778,10 +2168,14 @@ var T4 = (() => {
     }
     const fam = SUPPORTS[family];
     const sku = SKUS[top.id];
-    if (sku.family === "strengthener" && family !== "second-strengthener") {
-      return `They said ${heard}. First pull: ${sku.name} \u2014 the Strengthener that still fits that leftover shoe. If the 3-system already owns the Strengthener, the 4th is a ${fam.name}.`;
+    const archBit = input.arch ? ` ${ARCH_GUIDE[input.arch].firmness} for ${ARCHES.find((a) => a.id === input.arch).they}.` : "";
+    if (top.id === "ground-force") {
+      return `They said ${heard}.${archBit} First pull: Ground Force \u2014 the SLS, positioned for the course. Slim enough for a low-profile golf shoe. Comfort, fit, stability. Never swing, distance, or handicap.`;
     }
-    return `They said ${heard}. That's a ${fam.name}. First pull: ${sku.name}. ${fam.blurb.split(". ").slice(0, 2).join(". ")}.`;
+    if (sku.family === "strengthener" && family !== "second-strengthener") {
+      return `They said ${heard}.${archBit} First pull: ${sku.name} \u2014 the Strengthener that still fits that leftover shoe. If the 3-system already owns the Strengthener, the 4th is a ${fam.name}.`;
+    }
+    return `They said ${heard}.${archBit} That's a ${fam.name}. First pull: ${sku.name}. ${fam.blurb.split(". ").slice(0, 2).join(". ")}.`;
   }
   function sizingNotes(input) {
     const notes = [
@@ -1792,8 +2186,10 @@ var T4 = (() => {
       notes.push("If you're between sizes, start shorter. Flat feet can shorten as the arch is raised.");
     if (input.arch === "high")
       notes.push("If you're between sizes, start longer. High arches can lengthen as they relax.");
+    if (input.arch === "average")
+      notes.push("Average arch: stay on the chart number unless volume or a between-size story moves you one.");
     if (input.volume === "tight" || input.leftover === "dress" || input.shoe === "dress")
-      notes.push("SLS runs one size longer than it is labeled. Don't assume the number matches Classic.");
+      notes.push("SLS and Ground Force run one size longer than labeled. Don't assume the number matches Classic.");
     if (input.narrow) notes.push("Narrows run shorter than the same number in wide. Use the chart, not the stamp.");
     notes.push("Fit the right size from day one. Wrong size is why 'other inserts never worked.'");
     return notes;
@@ -1814,7 +2210,13 @@ var T4 = (() => {
     const flags = [WWKD_DISCLAIMER];
     if (input.leftover === "gym" || input.leftover === "run" || input.leftover === "court")
       flags.push("You do not work out in a Strengthener. Heel cups don't do impact sports.");
-    if (input.leftover === "golf") flags.push("Golf is not court. A flex Sports Maintainer is blank.");
+    if (input.leftover === "golf") {
+      flags.push("Golf is not court. A flex Sports Maintainer is blank.");
+      flags.push("Ground Force talk: comfort, fit, stability on the course. Never swing, distance, handicap, or a number.");
+    }
+    if (input.arch === "high") flags.push("High arch wants firmer. Max, Honeycomb, Classic. Miracle Flex if the leftover is sports.");
+    if (input.arch === "average") flags.push("Average arch lives in the middle. Classic, Hug, Mid-Flex. Don't jump to Max.");
+    if (input.arch === "flat") flags.push("Flatter foot wants give. Diamond, Hug, Flex, Deluxe. Max is usually too much.");
     if (input.leftover === "dress" || input.shoe === "dress" || input.shoe === "heels")
       flags.push("SLS is the only Strengthener in dress. Heels take slim Maintainers and Relaxers.");
     if (input.pains.length) flags.push("Use their words. Never put a condition name in their mouth.");
@@ -1847,7 +2249,8 @@ var T4 = (() => {
       help,
       talk: buildTalk(input, family, picks[0]),
       sizing: sizingNotes(input),
-      wear: wearNote(picks)
+      wear: wearNote(picks),
+      archGuide: input.arch ? ARCH_GUIDE[input.arch] : null
     };
   }
   var KAREN_BELIEFS = [
@@ -1864,12 +2267,16 @@ var T4 = (() => {
       body: "Flatter foot \u2192 the shorter size. Higher arch \u2192 the longer size. You may go one up or one down \u2014 never both. That's a red flag."
     },
     {
+      title: "Match the arch, not the box",
+      body: "High arch wants firmer \u2014 Max, Honeycomb, Classic, Miracle Flex. Average lives in Classic, Hug, Mid-Flex. Flatter foot wants give \u2014 Diamond, Hug, Flex, Deluxe. Max on a flat foot is the miss. There are no Max clients or Flex clients. There is a foot in front of you."
+    },
+    {
       title: "Chart, then eyes, then balance",
       body: "Measure the arch. Use the sizing chart. Confirm visually \u2014 on a Strengthener it's the mound, not the lip. Then the balance technique."
     },
     {
-      title: "SLS and Narrows lie about their number",
-      body: "SLS runs one size longer than labeled. Narrows run shorter. Don't assume a 458 is a 458. Use the chart."
+      title: "SLS, Ground Force, and Narrows lie about their number",
+      body: "SLS and Ground Force run one size longer than labeled. Narrows run shorter. Don't assume a 458 is a 458. Use the chart."
     },
     {
       title: "Match the system",
@@ -1878,6 +2285,7 @@ var T4 = (() => {
   ];
   return __toCommonJS(quad_api_exports);
 })();
+
 
 
 var THE4TH = (() => {
@@ -3508,7 +3916,7 @@ var THE4TH = (() => {
 })();
 (function () {
   "use strict";
-  var D = window.THE4TH;
+  var D = Object.assign({}, window.THE4TH, T4);
   var SAVE = "the-4th-progress-v2";
   var BASE = "/games/the-4th";
   var FW_TITLES = [
@@ -4326,6 +4734,13 @@ var THE4TH = (() => {
         sku.bullets.map(function (b) { return "<li>" + esc(b) + "</li>"; }).join("") +
         "</ul>" +
         (sku.caution ? '<p class="warn">' + esc(sku.caution) + "</p>" : "") +
+        (sku.talk
+          ? '<p class="kicker">Say this</p><ul>' +
+            sku.talk.say.map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") +
+            '</ul><p class="kicker">Never this</p><ul>' +
+            sku.talk.avoid.map(function (l) { return "<li>" + esc(l) + "</li>"; }).join("") +
+            "</ul>"
+          : "") +
         (sku.narrow ? '<p class="kicker">Available in Narrow</p>' : "") +
         '<p class="mini">' +
         (markedOpen
@@ -4419,7 +4834,7 @@ var THE4TH = (() => {
         '<section><div class="chips">' +
         '<button type="button" class="chip-btn' +
         (state.catFamily === "all" ? " cream" : "") +
-        '" data-act="fam" data-id="all">All 17</button>' +
+        '" data-act="fam" data-id="all">All 18</button>' +
         FAMILIES.map(function (fid) {
           return (
             '<button type="button" class="chip-btn' +
@@ -4459,6 +4874,7 @@ var THE4TH = (() => {
               esc(D.FAMILY[s.family].name) +
               "</p><p class=\"name\">" +
               esc(s.name) +
+              (s.tag ? " · " + esc(s.tag) : "") +
               '</p><p class="muted tight">' +
               esc(s.bestFor) +
               "</p></div></button>"
