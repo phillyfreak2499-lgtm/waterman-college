@@ -22,14 +22,13 @@ button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
 button:disabled{opacity:.45;cursor:default}
 h1,h2{font-family:var(--display);letter-spacing:-.03em;line-height:1.15;margin:0;font-weight:500}
 p{margin:0}
-.page{max-width:56rem;margin:0 auto;padding:1rem .85rem 3.5rem}
+.page{max-width:56rem;margin:0 auto;padding:1rem .85rem 6rem}
 .kicker{font-size:.7rem;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--teal)}
 .muted{color:var(--muted);font-size:.9rem;line-height:1.55}
 .display{font-style:italic;font-size:clamp(2.2rem,7vw,3.4rem)}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;min-height:52px;padding:0 1.15rem;border-radius:16px;font-weight:600}
 .btn.cream{background:var(--cream);color:var(--ink)}
 .btn.dark{background:var(--ink);color:var(--cream)}
-.btn.ghost{border:1px solid var(--border);color:var(--cream)}
 .modes{display:grid;gap:.75rem;margin:1rem 0}
 @media(min-width:640px){.modes{grid-template-columns:1fr 1fr}}
 .mode{border-radius:24px;border:1px solid var(--border);background:var(--surface);padding:1.1rem;text-align:left}
@@ -43,42 +42,65 @@ input{height:48px;border-radius:14px;border:1px solid var(--border);background:v
 .tip{border-radius:20px;border:1px solid var(--border);background:var(--surface);padding:.85rem 1rem}
 .hud{display:grid;gap:.65rem;margin:.75rem 0}
 @media(min-width:640px){.hud{grid-template-columns:1fr 1fr}}
-.seat{display:flex;align-items:center;justify-content:space-between;border-radius:20px;border:1px solid var(--border);background:var(--surface);padding:.7rem 1rem}
+.seat{display:flex;align-items:center;justify-content:space-between;border-radius:20px;border:1px solid var(--border);background:var(--surface);padding:.7rem 1rem;gap:.6rem}
 .seat.on{border-color:var(--teal);background:rgba(42,155,143,.18)}
-.dot{width:1.9rem;height:1.9rem;border-radius:999px;display:grid;place-items:center;font-size:.75rem;font-weight:600}
-.dot.a{background:var(--teal);color:var(--cream)}
-.dot.b{background:var(--cream);color:var(--ink)}
-.board{overflow:hidden;border-radius:24px;border:1px solid var(--border);background:var(--ink);padding:.5rem}
+.chip{width:1.9rem;height:1.9rem;border-radius:999px;display:grid;place-items:center;font-size:.7rem;font-weight:700;border:1px solid var(--navy)}
+.chip.a{background:var(--teal);color:var(--cream)}
+.chip.b{background:var(--cream);color:var(--ink)}
+.chip.on{box-shadow:0 0 0 2px rgba(243,237,227,.8)}
+.chip.sm{width:1.45rem;height:1.45rem;font-size:.58rem}
+.board-wrap{border-radius:24px;border:1px solid var(--border);background:var(--ink);padding:.55rem}
+.door-row{display:flex;align-items:center;justify-content:space-between;gap:.5rem;padding:.15rem .25rem .45rem}
+.door-left{display:flex;align-items:center;gap:.45rem}
+.board{display:flex;gap:.4rem}
+.ylabels{width:3rem;display:flex;flex-direction:column;flex-shrink:0;overflow:hidden}
+.ylabels span{flex:1;display:flex;align-items:center;justify-content:flex-end;padding-right:6px;font-size:8px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500;text-align:right;line-height:1.1}
+@media(min-width:640px){.ylabels{width:4rem}.ylabels span{font-size:10px}}
+.stage{position:relative;flex:1;min-width:0}
 .grid{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:3px}
-.sq{position:relative;aspect-ratio:1;border-radius:8px}
-.sq.door,.sq.chart{background:var(--surface)}
-.sq.step,.sq.place{background:rgba(42,155,143,.22)}
-.sq.close{background:rgba(47,125,87,.28);box-shadow:inset 0 0 0 1px var(--teal)}
-.num{position:absolute;left:3px;top:1px;font-size:9px;color:rgba(243,237,227,.55);font-variant-numeric:tabular-nums}
-.mark{position:absolute;right:2px;top:1px;font-size:10px}
-.mark.up{color:var(--teal)}
-.mark.down{color:var(--miss)}
-.pawns{position:absolute;inset:auto 0 3px 0;display:flex;justify-content:center;gap:2px}
-.pawn{width:11px;height:11px;border-radius:999px;border:1px solid var(--navy)}
-.pawn.a{background:var(--teal)}
-.pawn.b{background:var(--cream)}
+.sq{position:relative;min-height:2.25rem;border-radius:7px}
+@media(min-width:640px){.sq{aspect-ratio:1;min-height:0;border-radius:10px}}
+.sq.door{background:var(--surface)}
+.sq.step{background:rgba(42,155,143,.2)}
+.sq.chart{background:var(--navy)}
+.sq.place{background:rgba(42,155,143,.28)}
+.sq.close{background:rgba(47,125,87,.3);box-shadow:inset 0 0 0 1px var(--teal)}
+.sq.land{box-shadow:inset 0 0 0 1px rgba(243,237,227,.7)}
+.num{position:absolute;left:3px;top:1px;font-size:8px;color:rgba(243,237,227,.5);font-variant-numeric:tabular-nums}
+.warps{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.tokens{position:absolute;inset:0;pointer-events:none}
+.token{position:absolute;transform:translate(-50%,-50%);transition:left .25s cubic-bezier(.23,1,.32,1),top .25s cubic-bezier(.23,1,.32,1)}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:10;border-top:1px solid var(--border);background:rgba(15,28,40,.95);padding:.75rem .85rem calc(.75rem + env(safe-area-inset-bottom));display:flex;flex-wrap:wrap;align-items:center;gap:.7rem}
+@media(min-width:640px){.bar{position:static;border:0;background:none;padding:.9rem 0 0}.page{padding-bottom:2.5rem}}
+.die{width:3.4rem;height:3.4rem;border-radius:14px;background:var(--cream);display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(3,1fr);gap:2px;padding:8px;flex-shrink:0;box-shadow:0 8px 24px rgba(0,0,0,.28)}
+.pip{width:7px;height:7px;border-radius:999px;margin:auto}
+.pip.on{background:var(--ink)}
+.die.tumble{animation:tumble 80ms ease-out}
+@keyframes tumble{0%{transform:rotate(-18deg) scale(.92)}50%{transform:rotate(14deg) scale(1.06)}100%{transform:rotate(0) scale(1)}}
 .sheet{position:fixed;inset:0;z-index:20;display:flex;align-items:flex-end;justify-content:center;background:rgba(15,28,40,.72);padding:.75rem}
 @media(min-width:640px){.sheet{align-items:center}}
-.card{width:100%;max-width:32rem;border-radius:28px;background:var(--cream);color:var(--ink);padding:1.2rem}
+.card{width:100%;max-width:32rem;max-height:90dvh;overflow:auto;border-radius:28px;background:var(--cream);color:var(--ink);padding:1.2rem;animation:sheet .25s cubic-bezier(.22,1,.36,1)}
+@keyframes sheet{from{opacity:0;transform:translateY(12px) scale(.96)}to{opacity:1;transform:none}}
 .choice{min-height:3.4rem;border-radius:18px;border:1px solid #d9d0c4;background:var(--paper);padding:.7rem .85rem;text-align:left;width:100%;margin:.35rem 0;color:var(--ink)}
 .choice.gold{border-color:var(--good);background:rgba(47,125,87,.15)}
 .choice.bad{border-color:var(--miss);background:rgba(155,59,50,.15)}
 .choice.dim{opacity:.55}
-.back{min-height:44px;color:var(--muted);margin-bottom:.5rem}
+.back{min-height:44px;color:var(--muted);margin-bottom:.5rem;display:inline-flex;align-items:center}
 .back:hover{color:var(--cream)}
 .stat{border-radius:24px;background:var(--surface);padding:1rem 1.1rem}
+.stat.win{background:rgba(42,155,143,.2);box-shadow:inset 0 0 0 1px var(--teal)}
+.log{border-radius:16px;background:var(--surface);padding:.75rem 1rem;margin-top:.7rem}
+@media(prefers-reduced-motion:reduce){
+  .token{transition:none}
+  .card,.die.tumble{animation:none}
+}
 </style>
 </head>
 <body>
 <div id="app" class="page"></div>
 <script>
 "use strict";
-var SHOUTS = (() => {
+var SLDATA = (() => {
   var __defProp = Object.defineProperty;
   var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
   var __getOwnPropNames = Object.getOwnPropertyNames;
@@ -103,6 +125,9 @@ var SHOUTS = (() => {
     BOT_NAME: () => BOT_NAME,
     CARDS: () => CARDS,
     COLS: () => COLS,
+    DIE_MS: () => DIE_MS,
+    DIE_PIPS: () => DIE_PIPS,
+    HOP_MS: () => HOP_MS,
     LADDERS: () => LADDERS,
     LAST_SQUARE: () => LAST_SQUARE,
     ROWS: () => ROWS,
@@ -110,11 +135,17 @@ var SHOUTS = (() => {
     ZONE_OF: () => ZONE_OF,
     botPicksGold: () => botPicksGold,
     cardOf: () => cardOf,
+    cellCenter: () => cellCenter,
     choicesFor: () => choicesFor,
     dealSeats: () => dealSeats,
+    initials: () => initials,
     isGold: () => isGold,
+    ladderRails: () => ladderRails,
+    needForClose: () => needForClose,
     rollDie: () => rollDie,
+    rowZone: () => rowZone,
     scoreSeat: () => scoreSeat,
+    shoutCurve: () => shoutCurve,
     squareCell: () => squareCell,
     tryRoll: () => tryRoll,
     walkPath: () => walkPath,
@@ -386,6 +417,69 @@ var SHOUTS = (() => {
   function zoneOf(n) {
     return ZONE_OF.find((z) => n <= z.end)?.label ?? "Close";
   }
+  var DIE_MS = 420;
+  var HOP_MS = 120;
+  function initials(name) {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return "?";
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  function rowZone(row) {
+    const fromBottom = ROWS - 1 - row;
+    return ZONE_OF[fromBottom]?.label ?? "Close";
+  }
+  function cellCenter(n) {
+    const c = squareCell(Math.max(1, n));
+    return { x: c.col + 0.5, y: c.row + 0.5 };
+  }
+  function needForClose(pos) {
+    return LAST_SQUARE - Math.max(0, pos);
+  }
+  var DIE_PIPS = {
+    1: [4],
+    2: [0, 8],
+    3: [0, 4, 8],
+    4: [0, 2, 6, 8],
+    5: [0, 2, 4, 6, 8],
+    6: [0, 2, 3, 5, 6, 8]
+  };
+  function perpOffset(a, b, d) {
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const mag = Math.hypot(dx, dy) || 1;
+    return { x: -dy / mag * d, y: dx / mag * d };
+  }
+  function ladderRails(from, to) {
+    const a = cellCenter(from);
+    const b = cellCenter(to);
+    const o = perpOffset(a, b, 0.13);
+    const a1 = { x: a.x + o.x, y: a.y + o.y };
+    const a2 = { x: a.x - o.x, y: a.y - o.y };
+    const b1 = { x: b.x + o.x, y: b.y + o.y };
+    const b2 = { x: b.x - o.x, y: b.y - o.y };
+    const len = Math.hypot(b.x - a.x, b.y - a.y);
+    const steps = Math.max(3, Math.round(len / 0.4));
+    const rungs = [];
+    for (let i = 1; i < steps; i++) {
+      const t = i / steps;
+      rungs.push({
+        x1: a1.x + (b1.x - a1.x) * t,
+        y1: a1.y + (b1.y - a1.y) * t,
+        x2: a2.x + (b2.x - a2.x) * t,
+        y2: a2.y + (b2.y - a2.y) * t
+      });
+    }
+    return { a1, a2, b1, b2, rungs };
+  }
+  function shoutCurve(from, to) {
+    const a = cellCenter(from);
+    const b = cellCenter(to);
+    const mx = (a.x + b.x) / 2;
+    const my = (a.y + b.y) / 2;
+    const o = perpOffset(a, b, 0.62);
+    return `M ${a.x.toFixed(3)} ${a.y.toFixed(3)} Q ${(mx + o.x).toFixed(3)} ${(my + o.y).toFixed(3)} ${b.x.toFixed(3)} ${b.y.toFixed(3)}`;
+  }
   function warpAt(square) {
     return WARP_BY_FROM.get(square) ?? null;
   }
@@ -457,11 +551,16 @@ var SHOUTS = (() => {
 <script>
 (function () {
   "use strict";
-  var S = window.SHOUTS;
-  var SAVE = "shouts-ladders-best-v1";
   var app = document.getElementById("app");
+  var S = window.SLDATA;
+  if (!S || typeof S.dealSeats !== "function") {
+    app.innerHTML = "<p class=\"muted\">The board could not load. Refresh the Quad.</p>";
+    return;
+  }
+  var SAVE = "shouts-ladders-best-v1";
   var lock = false;
   var cardLock = false;
+  var tumbleTimer = 0;
   var state = {
     phase: "intro",
     mode: "duo",
@@ -469,25 +568,33 @@ var SHOUTS = (() => {
     seats: S.dealSeats("duo", ["Chair 1", "Chair 2"]),
     turn: 0,
     die: null,
+    tumbling: false,
+    tumbleFace: 1,
+    motion: "idle",
     log: "",
     card: null,
     warp: null,
     picks: [],
     picked: null,
     seed: 0,
+    land: null,
     best: 0,
   };
   try { state.best = Number(localStorage.getItem(SAVE) || 0) || 0; } catch (e) {}
 
   function esc(s) {
-    return String(s)
-      .replace(/&/g, "&")
-      .replace(/</g, "<")
-      .replace(/>/g, ">")
-      .replace(/"/g, """)
-      .replace(/'/g, "&#39;");
+    return String(s).replace(/[&<>"']/g, function (ch) {
+      if (ch === "&") return "\u0026amp;";
+      if (ch === "<") return "\u0026lt;";
+      if (ch === ">") return "\u0026gt;";
+      if (ch === '"') return "\u0026quot;";
+      return "\u0026#39;";
+    });
   }
   function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+  function reduced() {
+    try { return window.matchMedia("(prefers-reduced-motion: reduce)").matches; } catch (e) { return false; }
+  }
   function report(score) {
     try {
       localStorage.setItem(SAVE, String(Math.max(state.best, score)));
@@ -508,16 +615,29 @@ var SHOUTS = (() => {
     if (z === "PLACE") return "place";
     return "close";
   }
+  function chip(i, label, on, sm) {
+    return '<span class="chip ' + (i === 0 ? "a" : "b") + (on ? " on" : "") + (sm ? " sm" : "") + '">' + esc(label) + "</span>";
+  }
+  function dieHtml() {
+    var face = state.tumbling ? state.tumbleFace : (state.die || 1);
+    var pips = (S.DIE_PIPS && S.DIE_PIPS[face]) || [];
+    var cells = "";
+    for (var i = 0; i < 9; i++) cells += '<span class="pip' + (pips.indexOf(i) >= 0 ? " on" : "") + '"></span>';
+    return '<div class="die' + (state.tumbling ? " tumble" : "") + '" data-qa="die">' + cells + "</div>";
+  }
 
   function start() {
     state.seats = S.dealSeats(state.mode, state.names);
     state.turn = 0;
     state.die = null;
+    state.tumbling = false;
+    state.motion = "idle";
     state.log = "";
     state.card = null;
     state.warp = null;
     state.picks = [];
     state.picked = null;
+    state.land = null;
     state.seed += 1;
     lock = false;
     cardLock = false;
@@ -528,25 +648,52 @@ var SHOUTS = (() => {
 
   function maybeBot() {
     var seat = state.seats[state.turn];
-    if (state.phase === "play" && seat && seat.kind === "bot" && !lock) {
-      setTimeout(function () { takeTurn(); }, 700);
+    if (state.phase === "play" && state.motion === "idle" && seat && seat.kind === "bot" && !lock) {
+      setTimeout(function () { takeTurn(); }, 650);
     }
   }
 
+  function startTumble() {
+    stopTumble();
+    state.tumbling = true;
+    tumbleTimer = setInterval(function () {
+      state.tumbleFace = 1 + Math.floor(Math.random() * 6);
+      var die = app.querySelector(".die");
+      if (die) {
+        die.outerHTML = dieHtml();
+      }
+    }, 70);
+  }
+  function stopTumble() {
+    if (tumbleTimer) clearInterval(tumbleTimer);
+    tumbleTimer = 0;
+    state.tumbling = false;
+  }
+
   async function takeTurn() {
-    if (lock || state.phase !== "play") return;
+    if (lock || state.phase !== "play" || state.motion !== "idle") return;
     var seat = state.seats[state.turn];
     if (!seat) return;
     lock = true;
-    var roll = S.rollDie();
-    state.die = roll;
+    state.motion = "rolling";
+    var forced = window.__shoutsRoll;
+    window.__shoutsRoll = undefined;
+    var roll = typeof forced === "number" ? forced : S.rollDie();
+    startTumble();
     render();
-    await sleep(280);
+    await sleep(reduced() ? 40 : S.DIE_MS);
+    stopTumble();
+    state.die = roll;
+    state.motion = "moving";
+    render();
+    await sleep(reduced() ? 80 : 220);
     var path = S.tryRoll(seat.pos, roll);
     if (!path.length) {
-      state.log = seat.name + " rolled " + roll + " — need exact for Continuity.";
+      state.log = seat.name + " rolled " + roll + " — need exact " + S.needForClose(seat.pos) + " for Continuity.";
+      state.land = S.LAST_SQUARE;
       render();
-      await sleep(400);
+      await sleep(480);
+      state.land = null;
       advance();
       return;
     }
@@ -558,6 +705,7 @@ var SHOUTS = (() => {
       state.log = seat.name + " to " + land + " · " + S.zoneOf(land) + ".";
       render();
       await sleep(220);
+      state.land = null;
       advance();
       return;
     }
@@ -567,6 +715,7 @@ var SHOUTS = (() => {
     state.picks = S.choicesFor(c, state.seed + "-" + state.turn + "-" + land);
     state.picked = null;
     state.phase = "card";
+    state.motion = "idle";
     lock = false;
     render();
     if (seat.kind === "bot") {
@@ -577,10 +726,12 @@ var SHOUTS = (() => {
   }
 
   async function walk(idx, path) {
+    var wait = reduced() ? 0 : S.HOP_MS;
     for (var i = 0; i < path.length; i++) {
       state.seats[idx].pos = path[i];
+      state.land = path[i];
       render();
-      await sleep(90);
+      if (wait) await sleep(wait);
     }
   }
 
@@ -589,7 +740,7 @@ var SHOUTS = (() => {
     cardLock = true;
     state.picked = pick;
     render();
-    await sleep(240);
+    await sleep(reduced() ? 80 : 260);
     var c = state.card;
     var w = state.warp;
     var ok = S.isGold(c, pick);
@@ -598,6 +749,7 @@ var SHOUTS = (() => {
     var caught = c.kind === "shout" && ok;
     var path = climb || slide ? S.warpPath(w.from, w.to) : [];
     state.phase = "play";
+    state.motion = "moving";
     if (path.length) await walk(state.turn, path);
     var seat = state.seats[state.turn];
     if (climb || slide) seat.pos = w.to;
@@ -613,15 +765,18 @@ var SHOUTS = (() => {
           : seat.name + " missed the builder. Stays on " + w.from + ".";
     state.card = null;
     state.warp = null;
+    state.land = seat.pos;
     if (seat.pos >= S.LAST_SQUARE) { finish(); return; }
     render();
     await sleep(220);
+    state.land = null;
     advance();
   }
 
   function advance() {
     lock = false;
     cardLock = false;
+    state.motion = "idle";
     state.turn = (state.turn + 1) % 2;
     state.seed += 1;
     render();
@@ -634,32 +789,65 @@ var SHOUTS = (() => {
     state.phase = "done";
     lock = false;
     cardLock = false;
+    state.motion = "idle";
     render();
   }
 
+  function warpSvg() {
+    var html = '<svg class="warps" viewBox="0 0 ' + S.COLS + " " + S.ROWS + '" preserveAspectRatio="none" aria-hidden="true">';
+    html += '<defs><marker id="sl-head" markerWidth="4" markerHeight="4" refX="2.2" refY="2" orient="auto"><path d="M0 0 L4 2 L0 4 Z" fill="#9b3b32"/></marker></defs>';
+    S.LADDERS.forEach(function (w) {
+      var r = S.ladderRails(w.from, w.to);
+      html += '<g stroke="#2a9b8f" stroke-linecap="round" fill="none">';
+      html += '<line x1="' + r.a1.x + '" y1="' + r.a1.y + '" x2="' + r.b1.x + '" y2="' + r.b1.y + '" stroke-width="0.07"/>';
+      html += '<line x1="' + r.a2.x + '" y1="' + r.a2.y + '" x2="' + r.b2.x + '" y2="' + r.b2.y + '" stroke-width="0.07"/>';
+      r.rungs.forEach(function (g) {
+        html += '<line x1="' + g.x1 + '" y1="' + g.y1 + '" x2="' + g.x2 + '" y2="' + g.y2 + '" stroke-width="0.055"/>';
+      });
+      html += "</g>";
+    });
+    S.SHOUTS.forEach(function (w) {
+      html += '<path d="' + S.shoutCurve(w.from, w.to) + '" fill="none" stroke="#9b3b32" stroke-width="0.11" stroke-linecap="round" marker-end="url(#sl-head)" opacity="0.92"/>';
+    });
+    return html + "</svg>";
+  }
+
+  function tokensHtml() {
+    var html = '<div class="tokens">';
+    state.seats.forEach(function (s, i) {
+      if (s.pos <= 0) return;
+      var c = S.cellCenter(s.pos);
+      var same = state.seats.filter(function (x) { return x.pos === s.pos; });
+      var slot = 0;
+      same.forEach(function (x, n) { if (x.name === s.name) slot = n; });
+      var shift = same.length > 1 ? (slot === 0 ? -0.16 : 0.16) : 0;
+      var left = ((c.x + shift) / S.COLS) * 100;
+      var top = (c.y / S.ROWS) * 100;
+      html += '<span class="token" style="left:' + left + "%;top:" + top + '%">' + chip(i, S.initials(s.name), i === state.turn, false) + "</span>";
+    });
+    return html + "</div>";
+  }
+
   function boardHtml() {
-    var html = '<div class="board"><div class="grid">';
+    var html = '<div class="board-wrap"><div class="door-row"><div class="door-left"><span class="kicker">Door</span>';
+    state.seats.forEach(function (s, i) {
+      html += '<span style="opacity:' + (s.pos === 0 ? "1" : ".25") + '">' + chip(i, S.initials(s.name), s.pos === 0 && i === state.turn, true) + "</span>";
+    });
+    html += '</div><span class="muted" style="font-size:10px;letter-spacing:.14em;text-transform:uppercase">Teal climbs · Red slides · Exact 50</span></div>';
+    html += '<div class="board"><div class="ylabels">';
+    for (var row = 0; row < S.ROWS; row++) html += "<span>" + esc(S.rowZone(row)) + "</span>";
+    html += '</div><div class="stage"><div class="grid">';
     for (var i = 0; i < S.ROWS * S.COLS; i++) {
-      var row = Math.floor(i / S.COLS);
+      var r = Math.floor(i / S.COLS);
       var col = i % S.COLS;
-      var n = squaresAt(row, col);
-      var ladder = S.LADDERS.some(function (w) { return w.from === n; });
-      var shout = S.SHOUTS.some(function (w) { return w.from === n; });
-      var here = state.seats.filter(function (s) { return s.pos === n; });
-      html += '<div class="sq ' + zoneClass(n) + '" data-qa="square-' + n + '">';
-      html += '<span class="num">' + n + '</span>';
-      if (ladder) html += '<span class="mark up">▲</span>';
-      if (shout) html += '<span class="mark down">▼</span>';
-      if (here.length) {
-        html += '<span class="pawns">';
-        here.forEach(function (s) {
-          html += '<span class="pawn ' + (s === state.seats[0] ? "a" : "b") + '"></span>';
-        });
-        html += "</span>";
-      }
+      var n = squaresAt(r, col);
+      html += '<div class="sq ' + zoneClass(n) + (state.land === n ? " land" : "") + '" data-qa="square-' + n + '">';
+      html += '<span class="num">' + n + "</span>";
+      if (n === S.LAST_SQUARE) html += '<span class="num" style="left:auto;right:3px;top:auto;bottom:2px;color:var(--teal)">Close</span>';
       html += "</div>";
     }
-    return html + "</div></div>";
+    html += "</div>" + warpSvg() + tokensHtml() + "</div></div></div>";
+    return html;
   }
 
   function cardHtml() {
@@ -669,7 +857,7 @@ var SHOUTS = (() => {
     var locked = !!state.picked;
     var ladder = c.kind === "ladder";
     var html = '<div class="sheet"><div class="card">';
-    html += '<p class="kicker" style="color:var(--teal-deep)">' + (ladder ? "Ladder " + w.from + " → " + w.to : "Shout " + w.from + " → " + w.to) + "</p>";
+    html += '<p class="kicker" style="color:' + (ladder ? "var(--teal-deep)" : "var(--miss)") + '">' + (ladder ? "Ladder " + w.from + " → " + w.to : "Shout " + w.from + " → " + w.to) + "</p>";
     html += "<h2>" + esc(c.title) + "</h2>";
     html += '<p class="muted" style="color:rgba(26,42,54,.7);margin-top:.5rem">' + esc(c.hear) + "</p>";
     state.picks.forEach(function (p, i) {
@@ -691,11 +879,17 @@ var SHOUTS = (() => {
 
   function render() {
     if (state.phase === "intro") {
+      var preview = S.dealSeats(state.mode, state.names);
+      var hold = state.seats;
+      state.seats = preview;
+      var mini = boardHtml();
+      state.seats = hold;
       app.innerHTML =
         '<a class="back" href="/quad">Quad</a>' +
         '<p class="kicker">Two chairs · one board</p>' +
         '<h1 class="display">Shouts and Ladders</h1>' +
-        '<p class="muted" style="max-width:36rem;margin:.75rem 0 0">Ladders are value builders from Building Value. Shouts dump it — diagnose, discount, gym Strengthener, register 4th. Catch the shout and you stay. Miss it and you slide.</p>' +
+        '<p class="muted" style="max-width:36rem;margin:.75rem 0 1rem">Ladders are value builders from Building Value. Shouts dump it — diagnose, discount, gym Strengthener, register 4th. Catch the shout and you stay. Miss it and you slide. First exact 50 closes the visit.</p>' +
+        mini +
         '<div class="modes">' +
           '<button class="mode' + (state.mode === "duo" ? " on" : "") + '" data-qa="mode-duo" data-mode="duo"><h2>Two specialists</h2><p class="muted">Pass the iPad. First to Continuity wins.</p></button>' +
           '<button class="mode' + (state.mode === "solo" ? " on" : "") + '" data-qa="mode-solo" data-mode="solo"><h2>You vs Register</h2><p class="muted">The bot talks like a ticket. Beat it to 50.</p></button>' +
@@ -712,38 +906,50 @@ var SHOUTS = (() => {
     if (state.phase === "done") {
       var ranked = state.seats.slice().sort(function (a, b) { return S.scoreSeat(b) - S.scoreSeat(a); });
       var top = ranked[0];
-      var rows = ranked.map(function (s) {
-        return '<div class="stat"><h2>' + esc(s.name) + "</h2><p class=\"muted\">Square " + s.pos + " · " + s.climbs + " ladders · " + s.shoutsCaught + " shouts caught · " + s.shoutsMissed + " dropped</p><p style=\"margin-top:.4rem;color:var(--teal);font-size:1.2rem\">" + S.scoreSeat(s) + "</p></div>";
+      var rows = ranked.map(function (s, i) {
+        return '<div class="stat' + (i === 0 ? " win" : "") + '"><h2>' + esc(s.name) + "</h2><p class=\"muted\">Square " + s.pos + " · " + s.climbs + " ladders · " + s.shoutsCaught + " shouts caught · " + s.shoutsMissed + " dropped</p><p style=\"margin-top:.4rem;color:var(--teal);font-size:1.2rem\">" + S.scoreSeat(s) + "</p></div>";
       }).join("");
       app.innerHTML =
         '<a class="back" href="/quad">Quad</a>' +
         '<p class="kicker">Continuity</p>' +
         '<h1 class="display">' + esc(top.name) + " holds the value</h1>" +
         '<p class="muted" style="margin:.75rem 0 1rem">First to the close without dumping the visit.</p>' +
+        boardHtml() +
         '<div class="modes">' + rows + "</div>" +
         '<button class="btn cream" data-qa="again">Same chairs</button>';
       return;
     }
     var seats = state.seats.map(function (s, i) {
-      return '<div class="seat' + (i === state.turn ? " on" : "") + '"><div style="display:flex;gap:.7rem;align-items:center"><span class="dot ' + (i === 0 ? "a" : "b") + '">' + (i + 1) + "</span><div><p>" + esc(s.name) + "</p><p class=\"muted\">" + (s.pos ? S.zoneOf(s.pos) + " · " + s.pos : "Door") + "</p></div></div></div>";
+      var sub = s.pos === 0 ? "At the door" : S.zoneOf(s.pos) + " · " + s.pos;
+      return '<div class="seat' + (i === state.turn ? " on" : "") + '"><div style="display:flex;gap:.7rem;align-items:center">' + chip(i, S.initials(s.name), i === state.turn, false) + "<div><p>" + esc(s.name) + "</p><p class=\"muted\">" + esc(sub) + "</p></div></div></div>";
     }).join("");
     var seat = state.seats[state.turn];
+    var need = S.needForClose(seat.pos);
+    var hint = seat.kind === "bot"
+      ? S.BOT_NAME + " is rolling."
+      : (seat.pos > 0 && need <= 6)
+        ? "Need exact " + need + " for Continuity."
+        : seat.pos === 0
+          ? esc(seat.name) + " — step onto the floor."
+          : esc(seat.name) + " — pass the iPad.";
+    var rollLabel = state.motion === "rolling" ? "Rolling…" : state.motion === "moving" ? "Walking…" : state.die ? "Roll again" : "Roll";
+    var disabled = lock || state.motion !== "idle" || state.phase !== "play" || seat.kind !== "human";
     app.innerHTML =
       '<a class="back" href="/quad">Quad</a>' +
       '<p class="kicker">Shouts and Ladders</p>' +
       '<div class="hud">' + seats + "</div>" +
       boardHtml() +
-      '<div style="display:flex;flex-wrap:wrap;gap:.7rem;align-items:center;margin-top:.9rem">' +
-        '<button class="btn cream" data-qa="roll"' + (lock || state.phase !== "play" || seat.kind !== "human" ? " disabled" : "") + ">" + (state.die ? "Rolled " + state.die : "Roll") + "</button>" +
-        '<p class="muted">' + (seat.kind === "bot" ? S.BOT_NAME + " is rolling." : esc(seat.name) + " — pass the iPad.") + "</p>" +
+      (state.log ? '<p class="log">' + esc(state.log) + "</p>" : "") +
+      '<div class="bar">' + dieHtml() +
+        '<button class="btn cream" data-qa="roll"' + (disabled ? " disabled" : "") + ">" + rollLabel + "</button>" +
+        '<p class="muted">' + hint + "</p>" +
       "</div>" +
-      (state.log ? '<p style="margin-top:.7rem">' + esc(state.log) + "</p>" : "") +
       (seat.kind === "bot" && state.phase === "card" ? '<p class="muted" style="margin-top:.6rem">' + S.BOT_NAME + " is reading the card…</p>" : "") +
       cardHtml();
   }
 
   app.addEventListener("click", function (e) {
-    var t = e.target.closest("[data-mode],[data-qa],[data-pick]");
+    var t = e.target.closest("[data-mode],[data-qa]");
     if (!t) return;
     if (t.getAttribute("data-mode")) {
       state.mode = t.getAttribute("data-mode");
