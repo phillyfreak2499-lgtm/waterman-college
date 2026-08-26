@@ -67,8 +67,21 @@ p{margin:0}
 .stat b{display:block;font-family:var(--display);font-size:1.6rem;font-variant-numeric:tabular-nums;margin-top:.2rem}
 .miss-row{display:flex;gap:.75rem;align-items:center;border-radius:18px;background:var(--surface);padding:.55rem .7rem;margin:.45rem 0}
 .miss-row img{height:3.4rem;width:4.6rem;object-fit:contain;background:var(--paper);border-radius:10px}
-.back{min-height:44px;color:var(--muted)}
-.back:hover{color:var(--cream)}
+.sku-row{display:flex;gap:.7rem;align-items:stretch;border:1px solid var(--border);background:var(--surface);border-radius:20px;padding:.4rem;margin:.4rem 0}
+.sku-row.off{opacity:.55}
+.sku-row img{height:5.5rem;width:6.5rem;object-fit:contain;background:var(--paper);border-radius:14px}
+.sku-row .meta{flex:1;min-width:0;padding:.2rem 0}
+.sku-row select{width:100%;margin-top:.4rem;min-height:36px;border-radius:10px;border:1px solid var(--border);background:var(--navy);color:var(--cream);font:inherit;font-size:.75rem}
+.wall-btn{width:4.2rem;border-radius:14px;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;background:rgba(42,155,143,.15);color:var(--teal)}
+.sku-row.off .wall-btn{background:var(--navy);color:var(--muted)}
+.never{border:1px solid var(--border);border-radius:20px;background:var(--surface);overflow:hidden}
+.never li{padding:.75rem 1rem;border-top:1px solid var(--border);list-style:none}
+.never li:first-child{border-top:0}
+.chips{display:flex;flex-wrap:wrap;gap:.4rem;margin:1rem 0}
+.chip-n{border-radius:999px;padding:.3rem .75rem;font-size:.8rem;background:var(--surface);color:var(--muted)}
+.chip-n.on{background:rgba(42,155,143,.15);color:var(--teal)}
+.chip-n.no{background:rgba(155,59,50,.15);color:#e8a39c}
+
 </style>
 </head>
 <body>
@@ -102,14 +115,23 @@ var FLASH = (() => {
     FLASH_LOCK_MS: () => FLASH_LOCK_MS,
     FLASH_SECONDS: () => FLASH_SECONDS,
     FLASH_TELLS: () => FLASH_TELLS,
+    LEATHER_COVERS: () => LEATHER_COVERS,
+    LOCKED_PHOTO: () => LOCKED_PHOTO,
+    MIN_FLASH_SKUS: () => MIN_FLASH_SKUS,
     SKUS: () => SKUS,
     SKU_ORDER: () => SKU_ORDER,
+    carriedSkus: () => carriedSkus,
     dealFlashChoices: () => dealFlashChoices,
     dealFlashOrder: () => dealFlashOrder,
+    familyGroups: () => familyGroups,
     familyName: () => familyName,
     flashTell: () => flashTell,
     gradeFlash: () => gradeFlash,
-    pointsForHit: () => pointsForHit
+    loadInventory: () => loadInventory,
+    photoChoices: () => photoChoices,
+    pointsForHit: () => pointsForHit,
+    saveInventory: () => saveInventory,
+    skuPhoto: () => skuPhoto
   });
 
   // src/lib/catalog.ts
@@ -488,6 +510,81 @@ var FLASH = (() => {
     return out;
   }
 
+  // src/lib/flash-inventory.ts
+  var INV_KEY = "flash-sku-inventory-v1";
+  var MIN_FLASH_SKUS = 6;
+  var LEATHER_COVERS = [
+    { id: "sls-leather", name: "SLS Leather", note: "Dress leftover is the polymer SLS." },
+    { id: "mid-flex-leather", name: "Mid-Flex Leather", note: "Mid-Flex on the floor is black polymer." },
+    { id: "flex-faux-leather", name: "Flex Faux Leather", note: "Flex is the two-tone polymer." },
+    { id: "comfort-leather", name: "Comfort Leather", note: "Deluxe family is the tan polymer cup." }
+  ];
+  var LOCKED_PHOTO = {
+    "ground-force": { src: "/supports/catalog/sls.jpg", label: "SLS polymer \xB7 golf leftover" },
+    "deluxe-plus": { src: "/supports/catalog/deluxe.jpg", label: "Deluxe polymer \xB7 tighter shoe" }
+  };
+  var EMPTY_INV = { off: [], photos: {} };
+  function loadInventory() {
+    if (typeof window === "undefined") return EMPTY_INV;
+    try {
+      const raw = window.localStorage.getItem(INV_KEY);
+      if (!raw) return EMPTY_INV;
+      const parsed = JSON.parse(raw);
+      const off = Array.isArray(parsed.off) ? parsed.off.filter((id) => id in SKUS) : [];
+      const photos = {};
+      if (parsed.photos && typeof parsed.photos === "object") {
+        for (const id of SKU_ORDER) {
+          const src = parsed.photos[id];
+          if (typeof src === "string" && src.startsWith("/supports/catalog/") && !isLeatherFile(src)) {
+            photos[id] = src;
+          }
+        }
+      }
+      return { off, photos };
+    } catch {
+      return EMPTY_INV;
+    }
+  }
+  function saveInventory(state) {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(INV_KEY, JSON.stringify(state));
+  }
+  function isLeatherFile(src) {
+    const n = src.toLowerCase();
+    return n.includes("leather") || n.includes("faux");
+  }
+  function carriedSkus(state) {
+    return SKU_ORDER.filter((id) => !state.off.includes(id));
+  }
+  function skuPhoto(id, state = EMPTY_INV) {
+    const locked = LOCKED_PHOTO[id];
+    if (locked) return locked.src;
+    return state.photos[id] || SKUS[id].image;
+  }
+  function photoChoices(id) {
+    const locked = LOCKED_PHOTO[id];
+    if (locked) return [locked];
+    const family = SKUS[id].family;
+    const seen = /* @__PURE__ */ new Set();
+    const out = [];
+    for (const other of SKU_ORDER) {
+      if (SKUS[other].family !== family) continue;
+      if (LOCKED_PHOTO[other]) continue;
+      const src = SKUS[other].image;
+      if (seen.has(src) || isLeatherFile(src)) continue;
+      seen.add(src);
+      out.push({ src, label: SKUS[other].short });
+    }
+    return out;
+  }
+  function familyGroups() {
+    return Object.keys(FAMILY).map((id) => ({
+      id,
+      name: FAMILY[id].name,
+      skus: SKU_ORDER.filter((s) => SKUS[s].family === id)
+    }));
+  }
+
   // src/lib/flash-sku.ts
   var FLASH_SECONDS = 90;
   var FLASH_CHOICES = 6;
@@ -604,19 +701,24 @@ var FLASH = (() => {
   function pointsForHit(streakBefore) {
     return 100 + Math.min(Math.max(streakBefore, 0), 5) * 20;
   }
-  function dealFlashOrder(seed) {
-    return shuffleCopy(SKU_ORDER, seed);
+  function dealFlashOrder(seed, pool = SKU_ORDER) {
+    const live = pool.length ? pool : SKU_ORDER;
+    return shuffleCopy(live, seed);
   }
-  function dealFlashChoices(correct, seed) {
+  function dealFlashChoices(correct, seed, pool = SKU_ORDER) {
+    const live = (pool.includes(correct) ? pool : [correct, ...pool]).filter(
+      (id, i, arr) => arr.indexOf(id) === i
+    );
     const twins = FLASH_TELLS[correct]?.twins ?? [];
     const likes = (LOOKALIKES[correct] ?? []).filter(
-      (id) => id !== correct && !twins.includes(id)
+      (id) => id !== correct && !twins.includes(id) && live.includes(id)
     );
-    const preferred = [...twins, ...likes];
-    const rest = SKU_ORDER.filter((id) => id !== correct && !preferred.includes(id));
+    const preferred = [...twins, ...likes].filter((id) => live.includes(id));
+    const rest = live.filter((id) => id !== correct && !preferred.includes(id));
+    const n = Math.min(FLASH_CHOICES, live.length);
     const picks = [correct];
     for (const id of [...preferred, ...shuffleCopy(rest, seed + "-r")]) {
-      if (picks.length >= FLASH_CHOICES) break;
+      if (picks.length >= n) break;
       if (!picks.includes(id)) picks.push(id);
     }
     return shuffleCopy(picks, seed + "-c");
@@ -641,6 +743,7 @@ var FLASH = (() => {
   "use strict";
   var F = window.FLASH;
   var SAVE = "flash-sku-best-v1";
+  var INV_SAVE = "flash-sku-inventory-v1";
   var LOCK = 720;
   var app = document.getElementById("app");
   var state = {
@@ -654,10 +757,14 @@ var FLASH = (() => {
     study: null,
     best: 0,
     endAt: 0,
+    inv: { off: [], photos: {} },
   };
   try {
     state.best = Number(localStorage.getItem(SAVE) || 0) || 0;
   } catch (e) {}
+  try {
+    state.inv = F.loadInventory();
+  } catch (e2) {}
 
   function asset(p) {
     if (!p) return p;
@@ -673,8 +780,10 @@ var FLASH = (() => {
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#39;");
   }
+  function pool() { return F.carriedSkus(state.inv); }
+  function photo(id) { return F.skuPhoto(id, state.inv); }
   function grade() { return F.gradeFlash(state.log); }
-  function order() { return F.dealFlashOrder(state.seed); }
+  function order() { return F.dealFlashOrder(state.seed, pool()); }
   function current() {
     var o = order();
     return o[state.index % o.length];
@@ -711,7 +820,7 @@ var FLASH = (() => {
     state.mode = "play";
     F.SKU_ORDER.forEach(function (id) {
       var img = new Image();
-      img.src = asset(F.SKUS[id].image);
+      img.src = asset(photo(id));
     });
     render();
     cancelAnimationFrame(raf);
@@ -749,6 +858,7 @@ var FLASH = (() => {
   function render() {
     if (state.mode === "intro") app.innerHTML = viewIntro();
     else if (state.mode === "study") app.innerHTML = viewStudy();
+    else if (state.mode === "inventory") app.innerHTML = viewInventory();
     else if (state.mode === "play") app.innerHTML = viewPlay();
     else app.innerHTML = viewDone();
   }
@@ -764,6 +874,7 @@ var FLASH = (() => {
       '<div class="row">' +
         '<button type="button" class="btn cream" data-act="start">Start the 90</button>' +
         '<button type="button" class="btn ghost" data-act="study">Study the lineup</button>' +
+        '<button type="button" class="btn ghost" data-act="inventory">Floor inventory</button>' +
       "</div>" +
       '<ul class="tips">' +
         "<li>Lookalikes sit next to each other on purpose. Mid-Flex is black. Flex is two-tone.</li>" +
@@ -778,7 +889,7 @@ var FLASH = (() => {
       var s = F.SKUS[id];
       return (
         '<button type="button" class="sku-card" data-act="open" data-id="' + id + '">' +
-          '<div class="ph"><img src="' + asset(s.image) + '" alt=""></div>' +
+          '<div class="ph"><img src="' + asset(photo(id)) + '" alt=""></div>' +
           '<div class="pad"><p class="kicker">' + esc(F.FAMILY[s.family].name) + "</p><p>" + esc(s.short) + "</p></div>" +
         "</button>"
       );
@@ -803,11 +914,60 @@ var FLASH = (() => {
     );
   }
 
+  function viewInventory() {
+    var onWall = pool();
+    var groups = F.familyGroups();
+    var body = groups.map(function (g) {
+      var rows = g.skus.map(function (id) {
+        var s = F.SKUS[id];
+        var on = onWall.indexOf(id) >= 0;
+        var src = photo(id);
+        var locked = F.LOCKED_PHOTO[id];
+        var choices = F.photoChoices(id);
+        var sel = "";
+        if (choices.length > 1) {
+          sel =
+            '<select data-act="photo" data-id="' + id + '">' +
+            choices.map(function (c) {
+              return '<option value="' + esc(c.src) + '"' + (c.src === src ? " selected" : "") + ">Photo · " + esc(c.label) + "</option>";
+            }).join("") +
+            "</select>";
+        }
+        return (
+          '<article class="sku-row' + (on ? "" : " off") + '">' +
+            '<img src="' + asset(src) + '" alt="">' +
+            '<div class="meta"><p class="kicker">' + esc(g.name) + "</p><p>" + esc(s.name) + "</p>" +
+            '<p class="muted">' + esc(locked ? locked.label : s.firmness) + "</p>" + sel + "</div>" +
+            '<button type="button" class="wall-btn" data-act="toggle" data-id="' + id + '">' + (on ? "On wall" : "Off") + "</button>" +
+          "</article>"
+        );
+      }).join("");
+      return '<p class="kicker" style="margin:1rem 0 .35rem">' + esc(g.name) + "</p>" + rows;
+    }).join("");
+    var leather = F.LEATHER_COVERS.map(function (row) {
+      return "<li><p>" + esc(row.name) + '</p><p class="muted">' + esc(row.note) + "</p></li>";
+    }).join("");
+    return (
+      '<div class="top"><button type="button" class="back" data-act="intro">Home</button><p class="kicker">Floor inventory</p></div>' +
+      "<h1>What we carry</h1>" +
+      '<p class="muted" style="margin:.6rem 0">Flash SKU only deals pairs on the wall. Leather covers stay off. Ground Force and Deluxe Plus stay locked to the polymer twin.</p>' +
+      '<div class="chips">' +
+        '<span class="chip-n on">' + onWall.length + " on the wall</span>" +
+        '<span class="chip-n">' + state.inv.off.length + " off</span>" +
+        '<span class="chip-n no">' + F.LEATHER_COVERS.length + " leather never</span>" +
+        '<button type="button" class="btn ghost" data-act="reset" style="min-height:36px;padding:.3rem .8rem">DFW default</button>' +
+      "</div>" +
+      body +
+      '<p class="kicker" style="margin:1.25rem 0 .4rem">Never on the wall</p>' +
+      '<ul class="never">' + leather + "</ul>"
+    );
+  }
+
   function viewPlay() {
     var id = current();
     var s = F.SKUS[id];
     var t = F.flashTell(id);
-    var choices = F.dealFlashChoices(id, state.seed + "-" + state.index);
+    var choices = F.dealFlashChoices(id, state.seed + "-" + state.index, pool());
     var g = grade();
     var btns = choices.map(function (cid) {
       var gold = state.pick && cid === id;
@@ -834,7 +994,7 @@ var FLASH = (() => {
       '<div class="muted">' + g.score + " pts<br>" + g.hits + " gold · " + g.asked + " seen" +
       (state.streak > 1 ? " · ×" + state.streak : "") + "</div></div>" +
       '<div class="bar"><i id="bar" style="width:' + (state.left / F.FLASH_SECONDS) * 100 + '%"></i></div>' +
-      '<article class="paper"><img src="' + asset(s.image) + '" alt="">' +
+      '<article class="paper"><img src="' + asset(photo(id)) + '" alt="">' +
       (t.leftover ? '<span class="chip">' + esc(t.leftover) + "</span>" : "") +
       banner + "</article>" +
       '<p class="kicker" style="margin:1rem 0 .4rem">Name this pair</p>' +
@@ -849,7 +1009,7 @@ var FLASH = (() => {
       ? '<p class="kicker" style="margin:1rem 0 .4rem">Missed — study these</p>' +
         missed.map(function (r) {
           return (
-            '<div class="miss-row"><img src="' + asset(F.SKUS[r.id].image) + '" alt="">' +
+            '<div class="miss-row"><img src="' + asset(photo(r.id)) + '" alt="">' +
             "<div><p>You said " + esc(F.SKUS[r.pick].short) + "</p>" +
             "<p class=\"muted\">" + esc(F.SKUS[r.id].short) + " · " + esc(F.flashTell(r.id).tell) + "</p></div></div>"
           );
@@ -879,9 +1039,38 @@ var FLASH = (() => {
     var id = t.getAttribute("data-id");
     if (act === "start") start();
     else if (act === "study") { state.mode = "study"; state.study = null; render(); }
+    else if (act === "inventory") { state.mode = "inventory"; render(); }
     else if (act === "intro") { cancelAnimationFrame(raf); state.mode = "intro"; render(); }
     else if (act === "open") { state.study = id; render(); }
     else if (act === "pick") answer(id);
+    else if (act === "reset") {
+      state.inv = { off: [], photos: {} };
+      F.saveInventory(state.inv);
+      render();
+    }
+    else if (act === "toggle" && id) {
+      var off = state.inv.off.slice();
+      var i = off.indexOf(id);
+      if (i >= 0) off.splice(i, 1);
+      else {
+        if (F.SKU_ORDER.length - off.length <= F.MIN_FLASH_SKUS) return;
+        off.push(id);
+      }
+      state.inv = { off: off, photos: state.inv.photos };
+      F.saveInventory(state.inv);
+      render();
+    }
+  });
+  app.addEventListener("change", function (e) {
+    var t = e.target.closest("[data-act=photo]");
+    if (!t) return;
+    var id = t.getAttribute("data-id");
+    if (!id || F.LOCKED_PHOTO[id]) return;
+    var photos = Object.assign({}, state.inv.photos);
+    photos[id] = t.value;
+    state.inv = { off: state.inv.off, photos: photos };
+    F.saveInventory(state.inv);
+    render();
   });
 
   render();
