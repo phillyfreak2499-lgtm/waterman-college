@@ -57,8 +57,24 @@ canvas{display:block;border-radius:14px;box-shadow:0 0 0 1px rgba(201,162,39,.30
 .btn:hover{filter:brightness(1.12)}.btn:active{transform:translateY(1px)}
 .btn.gold{background:linear-gradient(180deg,#dfb63a,#C9A227);color:#0B2A4A;box-shadow:0 4px 0 #9c7c19}
 .btn.gold:active{box-shadow:0 2px 0 #9c7c19}
+.btn:disabled{opacity:.45;cursor:default;filter:none;box-shadow:none}
 .btn.ghost{background:transparent;color:#0B2A4A;border:1.5px solid #c9d2d9;min-height:44px;font-size:14px}
+.btn.slim{min-height:36px;margin:0;width:auto;padding:0 12px;font-size:12.5px;border-radius:9px}
 .hint{font-size:12px;color:#8a9ba6;margin-top:10px;line-height:1.4}
+.card.shop{max-width:540px;text-align:left;padding:18px 16px}
+.shop-top{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.shop-gold{background:#0B2A4A;color:#e7c964;border-radius:999px;padding:6px 12px;font-weight:800;font-size:13px;letter-spacing:.02em;white-space:nowrap}
+.tabs{display:flex;gap:6px;margin:12px 0 10px}
+.tab{flex:1;min-height:40px;border:1.5px solid #d7cfbc;background:#fff;border-radius:10px;font-weight:800;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#5d6b74;cursor:pointer}
+.tab.on{background:#0B2A4A;color:#f7f4ec;border-color:#0B2A4A}
+.shelf{display:grid;gap:8px;max-height:min(52vh,340px);overflow:auto;padding-right:2px}
+.item{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center;background:#fff;border:1px solid #e2dbca;border-radius:12px;padding:10px 12px}
+.item.have{border-color:#C9A227;box-shadow:inset 0 0 0 1px rgba(201,162,39,.35)}
+.item h3{font-size:14px;color:#0B2A4A;margin:0;line-height:1.2}
+.item p{font-size:12px;color:#54646f;margin:2px 0 0;line-height:1.35}
+.swatch{display:flex;gap:4px;margin-top:6px}
+.swatch i{width:12px;height:12px;border-radius:3px;border:1px solid rgba(11,42,74,.18);display:block}
+.toast{font-size:12px;color:#186241;margin:8px 0 0;min-height:16px}
 #rot{display:none;position:absolute;bottom:14px;left:0;right:0;text-align:center;font-size:12px;
   font-weight:700;letter-spacing:.04em;color:#9fb4c6;pointer-events:none}
 @media (orientation:portrait) and (max-width:820px){#rot{display:block}}
@@ -89,7 +105,7 @@ canvas{display:block;border-radius:14px;box-shadow:0 0 0 1px rgba(201,162,39,.30
 <div id="hud">
   <div class="grp">
     <span class="chip"><span id="hearts"></span></span>
-    <span class="chip"><span class="k">Coins</span><span id="coins">0</span></span>
+    <span class="chip"><span class="k">Bank</span><span id="coins">0</span></span>
   </div>
   <div class="grp">
     <span class="chip"><span class="k">Floor</span><span id="pips"></span></span>
@@ -157,11 +173,14 @@ const DEEP = 17 * T;                // camera never drops below this: no dead gr
 const TOP_ROWS = 6;         // rows 0-5 are always open sky; chunks author 6-17
 const FLOORS = 5;           // floors per run
 const CHUNKS_PER_FLOOR = 16;
-const MAX_HEARTS = 3;
+const BASE_HEARTS = 3;
+const HEART_CAP = 5;
+const MAX_HEARTS = BASE_HEARTS; // default; kit.heartsMax can raise it
 
 const GRAV = 0.58;
 const JUMP = -11.2;         // apex ~108px: clears a 3-tile step with room
 const JUMP2 = -10.0;        // double jump
+const JUMP3 = -9.2;         // third jump (loadout)
 const SPRING = -16.4;
 const RUN = 4.3;            // top speed
 const ACCEL = 0.62;
@@ -945,8 +964,74 @@ let timeScale = 1, tick = 0, inv = 0, checkpoint = null, best = 0;
 let lastHurt = "", hurtLog = [];
 let dropping = null;                // {tunnel, t} while falling into a mouth
 let combo = 0, hitStop = 0, pops = [];
+let activePower = null, shieldOn = 0, heartSlots = BASE_HEARTS, shopTab = "looks", shopNote = "";
+let winBonus = 0, lastOver = "";
+
+/* ---------------------------------------------------------- locker / bank
+   Coins picked up on the floor go into kit.gold immediately. Death does
+   not take them. The locker spends that gold on looks, hearts, and a
+   single loadout for the next run. */
+const SAVE_KEY = "tunnel-run-locker";
+const SAVE_VERSION = 1;
+const LOOKS = [
+  { id: "rookie", name: "Rookie", cost: 0, blurb: "Cream shirt, gold visor. Everyone starts here.",
+    shirt: ["#f6ecd2", "#ddcfae"], jacket: "#15476f", hat: "#C9A227", shoe: "#C9A227", skin: "#f7ecd2", legs: "#2c6ea0" },
+  { id: "closer", name: "Closer", cost: 120, blurb: "Navy jacket. The floor already knows you.",
+    shirt: ["#1d4a72", "#0f2c48"], jacket: "#0B2A4A", hat: "#C9A227", shoe: "#C9A227", skin: "#f3e4c4", legs: "#16324c" },
+  { id: "weekend", name: "Saturday Fit", cost: 150, blurb: "Light shirt, navy visor. Easy speed.",
+    shirt: ["#e8eef4", "#c5d3e0"], jacket: "#3d6f94", hat: "#0B2A4A", shoe: "#C9A227", skin: "#f7ecd2", legs: "#2c6ea0" },
+  { id: "trainer", name: "Trainer", cost: 180, blurb: "Burgundy polo. You teach while you run.",
+    shirt: ["#7a3344", "#4e1f2c"], jacket: "#8b3a4a", hat: "#f7f4ec", shoe: "#C9A227", skin: "#f3e4c4", legs: "#3a2430" },
+  { id: "lead", name: "Floor Lead", cost: 260, blurb: "Charcoal with a gold stripe. The floor follows.",
+    shirt: ["#2a333c", "#161c22"], jacket: "#C9A227", hat: "#0B2A4A", shoe: "#f7f4ec", skin: "#e8d5b5", legs: "#1a2228" },
+  { id: "gold", name: "Gold Standard", cost: 400, blurb: "Full gold visor and belt. You earned the look.",
+    shirt: ["#e8c547", "#C9A227"], jacket: "#0B2A4A", hat: "#f6dc7f", shoe: "#0B2A4A", skin: "#f7ecd2", legs: "#0B2A4A" }
+];
+const POWERS = [
+  { id: "shield", name: "First-hit pass", cost: 80, blurb: "The first clip of the run does not cost a heart." },
+  { id: "magnet", name: "Coin pull", cost: 70, blurb: "Nearby coins drift to you on the floor." },
+  { id: "pace", name: "Pace shoes", cost: 90, blurb: "Faster run. The slide carries a little farther." },
+  { id: "bounce", name: "Stomp lift", cost: 100, blurb: "Stomps bounce higher. Chains pay extra." },
+  { id: "triple", name: "Third jump", cost: 110, blurb: "One extra jump in the air." }
+];
+function defaultKit() {
+  return { version: SAVE_VERSION, gold: 0, look: "rookie", unlocked: ["rookie"],
+    heartsMax: BASE_HEARTS, spares: 0, powers: {}, equip: null };
+}
+function loadKit() {
+  try {
+    const raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return defaultKit();
+    const s = JSON.parse(raw);
+    const d = defaultKit();
+    return {
+      version: SAVE_VERSION,
+      gold: Math.max(0, +s.gold || 0),
+      look: LOOKS.some(l => l.id === s.look) ? s.look : "rookie",
+      unlocked: Array.isArray(s.unlocked) && s.unlocked.length ? s.unlocked : ["rookie"],
+      heartsMax: Math.min(HEART_CAP, Math.max(BASE_HEARTS, +s.heartsMax || BASE_HEARTS)),
+      spares: Math.max(0, Math.min(3, +s.spares || 0)),
+      powers: s.powers && typeof s.powers === "object" ? s.powers : {},
+      equip: POWERS.some(p => p.id === s.equip) ? s.equip : null
+    };
+  } catch (e) { return defaultKit(); }
+}
+function saveKit() {
+  try { localStorage.setItem(SAVE_KEY, JSON.stringify(kit)); } catch (e) {}
+}
+let kit = loadKit();
+if (!kit.unlocked.includes("rookie")) kit.unlocked.push("rookie");
+function currentLook() { return LOOKS.find(l => l.id === kit.look) || LOOKS[0]; }
+function earn(n) {
+  n = Math.max(0, n | 0);
+  if (!n) return;
+  coins += n;
+  kit.gold += n;
+  saveKit();
+}
 
 try { best = +localStorage.getItem("tunnel-run-best") || 0; } catch (e) {}
+document.addEventListener("visibilitychange", () => { if (document.hidden) saveKit(); });
 
 function report(n) {
   try { if (window.QuadScore) window.QuadScore.report(Math.max(0, Math.round(n))); } catch (e) {}
@@ -1004,9 +1089,21 @@ function startRun() {
   beep(392, 0.08, "square", 0.05);
   const deck = shuffle(BANK).slice(0, FLOORS);
   floors = deck.map((q, i) => buildFloor(i, q));
-  fi = 0; hearts = MAX_HEARTS; coins = 0; score = 0; correct = 0; answered = 0;
+  fi = 0; coins = 0; score = 0; correct = 0; answered = 0;
   combo = 0; hitStop = 0; pops = [];
-  parts = []; loadFloor(0); mode = "play"; ov.classList.add("hid");
+  heartSlots = kit.heartsMax;
+  hearts = kit.heartsMax;
+  if (kit.spares > 0) { hearts++; kit.spares--; saveKit(); }
+  heartSlots = hearts;
+  activePower = null; shieldOn = 0;
+  if (kit.equip && (kit.powers[kit.equip] | 0) > 0) {
+    activePower = kit.equip;
+    kit.powers[kit.equip]--;
+    if ((kit.powers[kit.equip] | 0) <= 0) { kit.powers[kit.equip] = 0; kit.equip = null; }
+    saveKit();
+    if (activePower === "shield") shieldOn = 1;
+  }
+  parts = []; loadFloor(0); mode = "play"; ov.classList.add("hid"); card.classList.remove("shop");
   report(0); hud();
 }
 function loadFloor(i) {
@@ -1042,6 +1139,13 @@ function respawn() {
 }
 function hurt(reason) {
   if (inv > 0 || P.dead || mode !== "play") return;
+  if (shieldOn) {
+    shieldOn = 0; inv = IFRAMES; shake = 8; flash = 8; flashCol = "#C9A227";
+    burst(P.x + 12, P.y + 14, "#f0cd55", 18, 6, 5);
+    popTxt(P.x, P.y - 8, "pass");
+    beep(420, 0.12, "triangle", 0.07);
+    return;
+  }
   lastHurt = reason; hurtLog.push({ reason, x: Math.round(P.x), floor: fi + 1 });
   hearts--; cleanFloor = false; shake = 15; flash = 9; flashCol = "#b42318";
   burst(P.x + 12, P.y + 14, "#ff6b5e", 18, 7, 5);
@@ -1083,14 +1187,15 @@ function step() {
   if (kL) { P.vx -= ACCEL * (P.duck ? 0.7 : 1); P.face = -1; }
   else if (kR) { P.vx += ACCEL * (P.duck ? 0.7 : 1); P.face = 1; }
   else P.vx *= (P.duck && Math.abs(P.vx) > 1.8 ? 0.94 : FRICTION);
-  const cap = P.duck ? RUN * 1.12 : RUN;
+  const cap = (P.duck ? RUN * 1.12 : RUN) * (activePower === "pace" ? 1.22 : 1);
   if (P.vx > cap) P.vx = cap;
   if (P.vx < -cap) P.vx = -cap;
 
-  if (P.gnd) { P.coy = COYOTE; P.jumps = 2; } else if (P.coy > 0) P.coy--;
+  const jumpMax = activePower === "triple" ? 3 : 2;
+  if (P.gnd) { P.coy = COYOTE; P.jumps = jumpMax; } else if (P.coy > 0) P.coy--;
   if (P.jbuf > 0 && (P.coy > 0 || P.jumps > 0)) {
-    if (P.coy > 0) { P.vy = JUMP; P.coy = 0; P.jumps = 1; dust(P.x + 12, P.y + P.h, 7); }
-    else { P.vy = JUMP2; P.jumps--; burst(P.x + 12, P.y + P.h - 4, "#C9A227", 10, 4.5, 2); }
+    if (P.coy > 0) { P.vy = JUMP; P.coy = 0; P.jumps = jumpMax - 1; dust(P.x + 12, P.y + P.h, 7); }
+    else { P.vy = P.jumps > 1 ? JUMP2 : JUMP3; P.jumps--; burst(P.x + 12, P.y + P.h - 4, "#C9A227", 10, 4.5, 2); }
     P.jbuf = 0; P.gnd = 0; P.sq = 0.80;
   }
   if (!kJ && P.vy < -3.4) P.vy *= 0.55;
@@ -1256,13 +1361,21 @@ function step() {
   else if (P.trail.length) P.trail.shift();
 
   /* ---- pickups --------------------------------------------------------- */
+  if (activePower === "magnet") {
+    for (const c of W.coins) {
+      if (c.got) continue;
+      const dx = (P.x + P.w / 2) - (c.x + 8), dy = (P.y + P.h / 2) - (c.y + 8);
+      const d = Math.sqrt(dx * dx + dy * dy);
+      if (d < 92 && d > 1) { c.x += dx / d * 3.2; c.y += dy / d * 3.2; }
+    }
+  }
   for (const c of W.coins) if (!c.got && aabb(pbox(), c)) {
-    c.got = 1; coins++; score += 10; burst(c.x + 8, c.y + 8, "#f0cd55", 9, 4.5, 3); hud();
+    c.got = 1; earn(1); score += 10; burst(c.x + 8, c.y + 8, "#f0cd55", 9, 4.5, 3); hud();
     beep(880, 0.07, "square", 0.05);
   }
   for (const h of W.hearts) if (!h.got && aabb(pbox(), h)) {
     h.got = 1;
-    if (hearts < MAX_HEARTS) { hearts++; hud(true); } else { score += 120; hud(); }
+    if (hearts < heartSlots) { hearts++; hud(true); } else { score += 120; hud(); }
     burst(h.x + 10, h.y + 9, "#ff8f86", 16, 5, 4);
   }
   for (const k of W.checkpoints) if (!k.on && P.x + P.w > k.x) {
@@ -1336,10 +1449,11 @@ function step() {
 function doStomp(q, held) {
   q.flat = 220;
   combo++;
-  const boost = (held ? 1.16 : 1) + Math.min(combo - 1, 4) * 0.08;
+  const lift = activePower === "bounce" ? 1.22 : 1;
+  const boost = ((held ? 1.16 : 1) + Math.min(combo - 1, 4) * 0.08) * lift;
   P.vy = STOMP * boost; P.gnd = 0; P.jumps = 1; P.sq = 0.70;
-  const pts = 50 * combo;
-  score += pts; coins += 1;
+  const pts = (activePower === "bounce" ? 75 : 50) * combo;
+  score += pts; earn(1);
   popTxt(q.x + 4, q.y - 6, combo > 1 ? combo + "× +" + pts : "+" + pts);
   burst(q.x + 14, q.y + 10, "#C9A227", 16, 5.5, 4);
   shake = Math.max(shake, 5); hitStop = 4; hud();
@@ -1828,6 +1942,7 @@ function drawFork() {
 
 /* ---- the runner --------------------------------------------------------- */
 function drawRunner(x, y, face, phase, grounded, sq, alpha) {
+  const look = currentLook();
   ctx.save(); ctx.globalAlpha = alpha;
   ctx.translate(x + 12, y + 34);
   ctx.scale(face, 1);
@@ -1835,26 +1950,26 @@ function drawRunner(x, y, face, phase, grounded, sq, alpha) {
   ctx.scale(2 - sq, sq);                       // squash and stretch about the feet
   const sw = grounded ? Math.sin(phase) : .5, sw2 = grounded ? Math.sin(phase + Math.PI) : -.4;
   /* legs */
-  ctx.strokeStyle = "#2c6ea0"; ctx.lineWidth = 4.6; ctx.lineCap = "round";
+  ctx.strokeStyle = look.legs; ctx.lineWidth = 4.6; ctx.lineCap = "round";
   ctx.beginPath(); ctx.moveTo(-1, -12); ctx.lineTo(sw * 7, -2.5); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(-1, -12); ctx.lineTo(sw2 * 7, -2.5); ctx.stroke();
-  /* shoes — gold, naturally */
-  ctx.fillStyle = "#C9A227";
+  /* shoes */
+  ctx.fillStyle = look.shoe;
   roundRect(sw * 7 - 3.4, -3.2, 7.4, 3.2, 1.4); ctx.fill();
   roundRect(sw2 * 7 - 3.4, -3.2, 7.4, 3.2, 1.4); ctx.fill();
   /* torso */
   const g = ctx.createLinearGradient(0, -26, 0, -10);
-  g.addColorStop(0, "#f6ecd2"); g.addColorStop(1, "#ddcfae");
+  g.addColorStop(0, look.shirt[0]); g.addColorStop(1, look.shirt[1]);
   ctx.fillStyle = g; roundRect(-6, -25, 12, 15, 4); ctx.fill();
   ctx.strokeStyle = "rgba(5,18,32,.55)"; ctx.lineWidth = 1; roundRect(-6, -25, 12, 15, 4); ctx.stroke();
-  ctx.fillStyle = "#15476f"; roundRect(-6, -25, 12, 7, 3); ctx.fill();
+  ctx.fillStyle = look.jacket; roundRect(-6, -25, 12, 7, 3); ctx.fill();
   /* arm */
-  ctx.strokeStyle = "#f0e3c4"; ctx.lineWidth = 3.6;
+  ctx.strokeStyle = look.skin; ctx.lineWidth = 3.6;
   ctx.beginPath(); ctx.moveTo(1, -22); ctx.lineTo(3 + sw2 * 6, -14); ctx.stroke();
   /* head */
-  ctx.fillStyle = "#f7ecd2"; ctx.beginPath(); ctx.arc(1, -30, 6.2, 0, 6.3); ctx.fill();
+  ctx.fillStyle = look.skin; ctx.beginPath(); ctx.arc(1, -30, 6.2, 0, 6.3); ctx.fill();
   ctx.strokeStyle = "rgba(5,18,32,.5)"; ctx.lineWidth = 1; ctx.stroke();
-  ctx.fillStyle = "#C9A227";
+  ctx.fillStyle = look.hat;
   ctx.beginPath(); ctx.moveTo(-5.4, -32.4); ctx.lineTo(7.4, -32.4); ctx.lineTo(7.4, -34.6);
   ctx.quadraticCurveTo(1, -38.6, -5.4, -34.6); ctx.closePath(); ctx.fill();
   ctx.fillStyle = "#0B2A4A"; ctx.fillRect(3, -30.6, 2.4, 2.4);
@@ -1938,8 +2053,9 @@ const $ = (id) => document.getElementById(id);
 
 function hud(pulse) {
   const hb = $("hearts");
-  if (hb.children.length !== MAX_HEARTS) hb.innerHTML = Array.from({ length: MAX_HEARTS }, () => '<span class="hp">' + HEART_SVG + '</span>').join("");
-  for (let i = 0; i < MAX_HEARTS; i++) {
+  const slots = Math.max(heartSlots || BASE_HEARTS, hearts, kit.heartsMax);
+  if (hb.children.length !== slots) hb.innerHTML = Array.from({ length: slots }, () => '<span class="hp">' + HEART_SVG + '</span>').join("");
+  for (let i = 0; i < slots; i++) {
     const n = hb.children[i];
     n.classList.toggle("off", i >= hearts);
     if (pulse) { n.classList.remove("pulse"); void n.offsetWidth; if (i < hearts) n.classList.add("pulse"); }
@@ -1948,31 +2064,162 @@ function hud(pulse) {
   if (pb.children.length !== FLOORS) pb.innerHTML = Array.from({ length: FLOORS }, () => '<span class="pip"></span>').join("");
   for (let i = 0; i < FLOORS; i++) {
     const n = pb.children[i];
-    n.className = "pip" + (i < fi ? " on" : i === fi && mode !== "title" ? " now" : "");
+    n.className = "pip" + (i < fi ? " on" : i === fi && mode === "play" ? " now" : "");
   }
-  $("coins").textContent = coins;
+  $("coins").textContent = kit.gold;
   $("sc").textContent = score;
 }
-function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+function esc(s) { return String(s).replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">"); }
 function statRow(pairs) {
   return '<div class="stats">' + pairs.map(p => '<div class="stat"><b>' + p[0] + '</b><span>' + p[1] + '</span></div>').join("") + '</div>';
 }
 
+function bindCard() {
+  card.querySelectorAll("[data-act]").forEach(el => {
+    el.onclick = () => shopAct(el.getAttribute("data-act"), el.getAttribute("data-id"));
+  });
+  const go = $("go"); if (go) go.onclick = startRun;
+  const hub = $("hub"); if (hub) hub.onclick = title;
+  const lk = $("locker"); if (lk) lk.onclick = () => openShop();
+}
+
 function title() {
-  mode = "title"; W = null; P = null; parts = []; fi = 0; hearts = MAX_HEARTS; coins = 0; score = 0;
-  ov.classList.remove("hid"); hud();
+  mode = "title"; W = null; P = null; parts = []; fi = 0; hearts = kit.heartsMax; score = 0;
+  ov.classList.remove("hid"); card.classList.remove("shop"); hud();
+  const worn = currentLook().name;
+  const load = activePowerPreview();
   card.innerHTML =
     '<p class="tag">Waterman College · The Quad</p>' +
     '<h1>Tunnel Run</h1>' +
-    '<p class="lead">Run the floor. Stomp the walk-ins. Jump the sliding rails. Duck the hanging saws. Pop-pins, hopping closers, and hanging charts will take a heart if you sleep.</p>' +
+    '<p class="lead">Coins you pick up stay in the bank. Spend them in the locker on looks, extra hearts, and a loadout for the next run.</p>' +
     '<div class="rule"></div>' +
-    '<p><strong>Three hearts.</strong> Jump on a navy walk-in from above — side-check still hurts. Chain stomps for extra bounce. Hold Down to duck under a hanging saw or crawl. A wrong tunnel costs a heart too, but the run keeps going and you keep the lesson.</p>' +
-    '<p class="hint">Five floors · Complete Solution · W.R.A.P. · product · inquiries · reviews · WOW</p>' +
+    statRow([[kit.gold, "bank"], [worn, "look"], [kit.heartsMax + (kit.spares ? "+" + kit.spares : ""), "hearts"]]) +
+    (load ? '<p class="hint">Next run: <strong>' + esc(load) + '</strong></p>' : '') +
     (best ? '<p class="hint">Personal best <strong>' + best + '</strong></p>' : '') +
     '<button class="btn gold" id="go">Start the run</button>' +
-    '<p class="hint"><span class="keys">A</span><span class="keys">D</span> or <span class="keys">←</span><span class="keys">→</span> to run · ' +
-    '<span class="keys">Space</span> jump (twice) · <span class="keys">↓</span> duck / slide</p>';
-  $("go").onclick = startRun;
+    '<button class="btn ghost" id="locker">Open the locker</button>' +
+    '<p class="hint"><span class="keys">A</span><span class="keys">D</span> run · ' +
+    '<span class="keys">Space</span> jump · <span class="keys">↓</span> duck / slide</p>';
+  bindCard();
+}
+
+function activePowerPreview() {
+  if (kit.equip && (kit.powers[kit.equip] | 0) > 0) {
+    const p = POWERS.find(x => x.id === kit.equip);
+    return p ? p.name : "";
+  }
+  if (kit.spares > 0) return kit.spares + " spare heart" + (kit.spares > 1 ? "s" : "") + " packed";
+  return "";
+}
+
+function openShop() {
+  ov.classList.remove("hid");
+  card.classList.add("shop");
+  renderShop();
+}
+
+function renderShop() {
+  const tabs = [["looks", "Looks"], ["lives", "Lives"], ["kit", "Loadout"]];
+  let body = "";
+  if (shopTab === "looks") {
+    body = LOOKS.map(l => {
+      const have = kit.unlocked.indexOf(l.id) >= 0;
+      const on = kit.look === l.id;
+      const btn = on ? '<button class="btn slim" disabled>Wearing</button>'
+        : have ? '<button class="btn slim gold" data-act="wear" data-id="' + l.id + '">Wear</button>'
+        : kit.gold >= l.cost ? '<button class="btn slim gold" data-act="buy-look" data-id="' + l.id + '">Buy · ' + l.cost + '</button>'
+        : '<button class="btn slim" disabled>' + l.cost + '</button>';
+      return '<div class="item' + (on ? " have" : "") + '"><div><h3>' + esc(l.name) + '</h3><p>' + esc(l.blurb) + '</p>' +
+        '<div class="swatch"><i style="background:' + l.hat + '"></i><i style="background:' + l.jacket + '"></i><i style="background:' + l.shirt[0] + '"></i><i style="background:' + l.shoe + '"></i></div></div>' + btn + '</div>';
+    }).join("");
+  } else if (shopTab === "lives") {
+    const nextHeart = kit.heartsMax < 4 ? 4 : kit.heartsMax < HEART_CAP ? 5 : 0;
+    const heartCost = nextHeart === 4 ? 250 : 450;
+    const heartBtn = !nextHeart ? '<button class="btn slim" disabled>Maxed</button>'
+      : kit.gold >= heartCost ? '<button class="btn slim gold" data-act="buy-heart">Buy · ' + heartCost + '</button>'
+      : '<button class="btn slim" disabled>' + heartCost + '</button>';
+    const spareBtn = kit.spares >= 3 ? '<button class="btn slim" disabled>Packed 3</button>'
+      : kit.gold >= 75 ? '<button class="btn slim gold" data-act="buy-spare">Buy · 75</button>'
+      : '<button class="btn slim" disabled>75</button>';
+    body =
+      '<div class="item' + (kit.heartsMax >= 4 ? " have" : "") + '"><div><h3>' + (nextHeart ? nextHeart + "th heart slot" : "Heart slots") + '</h3><p>' +
+        (nextHeart ? "Permanent. Every run starts with " + nextHeart + " hearts." : "You already run with " + kit.heartsMax + " hearts.") +
+        '</p></div>' + heartBtn + '</div>' +
+      '<div class="item"><div><h3>Spare heart</h3><p>Packed for the next run only. You have ' + kit.spares + ' waiting.</p></div>' + spareBtn + '</div>';
+  } else {
+    body = POWERS.map(p => {
+      const n = kit.powers[p.id] | 0;
+      const on = kit.equip === p.id && n > 0;
+      const buy = kit.gold >= p.cost
+        ? '<button class="btn slim gold" data-act="buy-power" data-id="' + p.id + '">Buy · ' + p.cost + '</button>'
+        : '<button class="btn slim" disabled>' + p.cost + '</button>';
+      const wear = n > 0
+        ? (on ? '<button class="btn slim" data-act="unequip">Equipped ×' + n + '</button>'
+              : '<button class="btn slim gold" data-act="equip" data-id="' + p.id + '">Equip ×' + n + '</button>')
+        : buy;
+      return '<div class="item' + (on ? " have" : "") + '"><div><h3>' + esc(p.name) + '</h3><p>' + esc(p.blurb) + (n && on ? "" : n ? " · " + n + " packed" : "") + '</p></div><div style="display:flex;gap:6px;flex-direction:column;align-items:stretch">' + wear + (n > 0 ? buy : "") + '</div></div>';
+    }).join("");
+  }
+  card.innerHTML =
+    '<div class="shop-top"><div><p class="tag" style="margin:0">Locker</p><h2 style="margin:2px 0 0">Spend the floor</h2></div>' +
+    '<span class="shop-gold">' + kit.gold + ' banked</span></div>' +
+    '<p class="hint" style="margin-top:8px">Coins you grab on a run stay here even if you drop. Looks are yours. Loadouts fire on the next start.</p>' +
+    '<div class="tabs">' + tabs.map(t => '<button class="tab' + (shopTab === t[0] ? " on" : "") + '" data-act="tab" data-id="' + t[0] + '">' + t[1] + '</button>').join("") + '</div>' +
+    '<div class="shelf">' + body + '</div>' +
+    (shopNote ? '<p class="toast">' + esc(shopNote) + '</p>' : '') +
+    '<button class="btn ghost" data-act="back">Back</button>';
+  hud();
+  bindCard();
+}
+
+function shopAct(act, id) {
+  shopNote = "";
+  if (act === "tab") { shopTab = id; renderShop(); return; }
+  if (act === "back") { card.classList.remove("shop"); if (mode === "win") return showWin(); if (mode === "over") return showOver(); title(); return; }
+  if (act === "wear") {
+    if (kit.unlocked.indexOf(id) >= 0) { kit.look = id; saveKit(); shopNote = "Wearing " + LOOKS.find(l => l.id === id).name + "."; beep(660, 0.08, "triangle", 0.05); }
+    renderShop(); return;
+  }
+  if (act === "buy-look") {
+    const l = LOOKS.find(x => x.id === id);
+    if (!l || kit.unlocked.indexOf(id) >= 0) return;
+    if (kit.gold < l.cost) { shopNote = "Need " + l.cost + " in the bank."; renderShop(); return; }
+    kit.gold -= l.cost; kit.unlocked.push(id); kit.look = id; saveKit();
+    shopNote = l.name + " unlocked. You are wearing it."; beep(784, 0.1, "square", 0.06);
+    renderShop(); return;
+  }
+  if (act === "buy-heart") {
+    const next = kit.heartsMax < 4 ? 4 : kit.heartsMax < HEART_CAP ? 5 : 0;
+    const cost = next === 4 ? 250 : 450;
+    if (!next) return;
+    if (kit.gold < cost) { shopNote = "Need " + cost + " in the bank."; renderShop(); return; }
+    kit.gold -= cost; kit.heartsMax = next; saveKit();
+    shopNote = "Runs now start with " + next + " hearts."; beep(784, 0.1, "square", 0.06);
+    renderShop(); return;
+  }
+  if (act === "buy-spare") {
+    if (kit.spares >= 3) return;
+    if (kit.gold < 75) { shopNote = "Need 75 in the bank."; renderShop(); return; }
+    kit.gold -= 75; kit.spares++; saveKit();
+    shopNote = "Spare packed. Next run starts with one extra heart."; beep(700, 0.09, "square", 0.05);
+    renderShop(); return;
+  }
+  if (act === "buy-power") {
+    const p = POWERS.find(x => x.id === id);
+    if (!p) return;
+    if (kit.gold < p.cost) { shopNote = "Need " + p.cost + " in the bank."; renderShop(); return; }
+    kit.gold -= p.cost;
+    kit.powers[id] = (kit.powers[id] | 0) + 1;
+    kit.equip = id;
+    saveKit();
+    shopNote = p.name + " packed and equipped for the next run."; beep(740, 0.09, "square", 0.05);
+    renderShop(); return;
+  }
+  if (act === "equip") {
+    if ((kit.powers[id] | 0) > 0) { kit.equip = id; saveKit(); shopNote = "Equipped for the next run."; }
+    renderShop(); return;
+  }
+  if (act === "unequip") { kit.equip = null; saveKit(); shopNote = "Loadout cleared."; renderShop(); }
 }
 
 function resolveFork(tunnel) {
@@ -2005,32 +2252,47 @@ function resolveFork(tunnel) {
 }
 
 function win() {
-  const bonus = hearts * 150;
-  score += bonus; report(score);
-  mode = "win"; ov.classList.remove("hid"); hud();
+  if (mode !== "win") {
+    winBonus = hearts * 150;
+    score += winBonus; report(score);
+    mode = "win";
+  }
+  showWin();
+}
+function showWin() {
+  ov.classList.remove("hid"); card.classList.remove("shop"); hud();
   const perfect = correct === FLOORS;
   card.innerHTML =
     '<p class="tag">Campus clear</p>' +
     '<h2>' + (perfect ? "Every tunnel, first try" : "All five floors behind you") + '</h2>' +
-    statRow([[score, "score"], [correct + "/" + FLOORS, "tunnels"], [coins, "coins"], [hearts, "hearts left"]]) +
-    '<p class="hint">' + (bonus ? "Hearts carried to the end: +" + bonus + ". " : "") +
-      (score > best ? "New personal best." : "Personal best " + best + ".") + '</p>' +
+    statRow([[score, "score"], [correct + "/" + FLOORS, "tunnels"], [coins, "this run"], [kit.gold, "bank"]]) +
+    '<p class="hint">' + (winBonus ? "Hearts carried to the end: +" + winBonus + ". " : "") +
+      (score > best ? "New personal best." : "Personal best " + best + ".") +
+      ' Coins from this run are already in the bank.</p>' +
     '<button class="btn gold" id="go">Run it again</button>' +
+    '<button class="btn ghost" id="locker">Open the locker</button>' +
     '<button class="btn ghost" id="hub">Back to the title</button>';
-  $("go").onclick = startRun; $("hub").onclick = title;
+  bindCard();
 }
 
 function gameOver(reason) {
-  mode = "over"; report(score); ov.classList.remove("hid"); hud();
+  lastOver = reason || "The floor got you.";
+  mode = "over"; report(score);
+  showOver();
+}
+function showOver() {
+  ov.classList.remove("hid"); card.classList.remove("shop"); hud();
   card.innerHTML =
     '<p class="tag">Out of hearts</p>' +
     '<h2>Run over on floor ' + (fi + 1) + '</h2>' +
-    '<p class="lead">' + esc(reason || "The floor got you.") + '</p>' +
-    statRow([[score, "score"], [correct + "/" + answered, "correct"], [coins, "coins"]]) +
-    '<p class="hint">' + (score >= best && score > 0 ? "That is your best run so far." : "Best so far " + best + ".") + '</p>' +
+    '<p class="lead">' + esc(lastOver) + '</p>' +
+    statRow([[score, "score"], [correct + "/" + answered, "correct"], [coins, "this run"], [kit.gold, "bank"]]) +
+    '<p class="hint">' + (score >= best && score > 0 ? "That is your best run so far. " : "Best so far " + best + ". ") +
+      'You keep every coin you banked.</p>' +
     '<button class="btn gold" id="go">Try again</button>' +
+    '<button class="btn ghost" id="locker">Open the locker</button>' +
     '<button class="btn ghost" id="hub">Back to the title</button>';
-  $("go").onclick = startRun; $("hub").onclick = title;
+  bindCard();
 }
 
 /* ---- input -------------------------------------------------------------- */
@@ -2091,13 +2353,17 @@ window.__TR = {
         coins: W.coins.length, checkpoints: W.checkpoints.length,
         patrols: W.patrols.length, sliders: W.sliders.length, crushers: W.crushers.length,
         poppers: W.poppers && W.poppers.length, q: W.q, flip: W.flip },
-      combo };
+      combo, gold: kit.gold, look: kit.look, heartsMax: kit.heartsMax, power: activePower, shield: shieldOn };
   },
+  get kit() { return kit; },
   get floors() { return floors; },
   get hurts() { return hurtLog; },
   get lastHurt() { return lastHurt; },
   build: buildFloor, chunks: CHUNKS, bank: BANK,
-  start: startRun, title: title, load: loadFloor,
+  start: startRun, title: title, load: loadFloor, shop: openShop,
+  grant(n) { kit.gold += Math.max(0, n | 0); saveKit(); hud(); return kit.gold; },
+  resetKit() { kit = defaultKit(); saveKit(); hud(); return kit; },
+  earn: (n) => { earn(n); hud(); return kit.gold; },
   warp(x) { if (P) { P.x = x; P.vx = 0; } },
   dropInto(t) { if (mode === "play") startDrop(t); },
   correctTunnel() { return W ? correctTunnel(W) : null; },
