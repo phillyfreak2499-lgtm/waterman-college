@@ -2729,16 +2729,14 @@ var THE4TH = (() => {
           : "Gold uses PLACE: their words, leftover shoe, named 4th, their outcome. A miss sounds like a register.") +
         '</p><div class="stack">' +
         mentions
-          .map(function (m, mi) {
+          .map(function (m) {
             var on = state.mentionPick === m.id;
             return (
               '<button type="button" class="mention' +
               (on ? " on" : "") +
               '" data-act="mention" data-id="' +
               m.id +
-              '"><span class="kicker">' +
-              esc(exam ? "Mention " + String.fromCharCode(65 + mi) : m.label) +
-              "</span><span class=\"body\">" +
+              '"><span class="body">' +
               esc(m.text) +
               "</span></button>"
             );
@@ -2761,7 +2759,7 @@ var THE4TH = (() => {
     });
   }
 
-  function gradeCard(label, tone, title, body) {
+  function gradeCard(label, tone, title, body, note) {
     var tag = tone === "gold" ? "Gold" : tone === "okay" ? "Okay" : "Miss";
     return (
       '<div class="panel"><div class="row-between"><p class="mini">' +
@@ -2770,7 +2768,9 @@ var THE4TH = (() => {
       tone +
       '">' +
       tag +
-      "</p></div><p class=\"cream-text strong\">" +
+      "</p></div>" +
+      (note ? '<p class="mini teal">' + esc(note) + "</p>" : "") +
+      '<p class="cream-text strong">' +
       esc(title) +
       '</p><p class="muted">' +
       esc(body) +
@@ -2806,10 +2806,11 @@ var THE4TH = (() => {
           ? "You got the pair in the right shoe, but you didn't playback the quote. Gold repeats the leftover life, then eases."
           : "That sounded like a register. Gold uses their words, names the leftover shoe, and eases. Don't price it, don't 4-pack it, don't skip the leftover.";
     var goldText = scenario.mentions.find(function (m) { return m.quality === "gold"; }).text;
+    var pickedMention = scenario.mentions.find(function (m) { return m.id === result.mentionPick; });
     return (
       '<div class="grade-grid">' +
       gradeCard("The 4th", supportTone, supportTitle, supportBody) +
-      gradeCard("The mention", result.mentionQuality, mentionTitle, mentionBody) +
+      gradeCard("The mention", result.mentionQuality, mentionTitle, mentionBody, pickedMention && pickedMention.label) +
       '</div><div class="paper-box"><p class="mini teal-deep">Age · Job · Play</p><ul class="plain ink">' +
       "<li>" + esc(scenario.ageRead) + "</li><li>" + esc(scenario.jobRead) + "</li><li>" + esc(scenario.playRead) + "</li></ul></div>" +
       '<div class="paper-box"><p class="mini teal-deep">What gold sounds like</p><p class="italic ink">' +
