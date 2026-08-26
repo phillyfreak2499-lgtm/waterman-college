@@ -14,10 +14,11 @@ import { toast } from "sonner";
 import { AuthGate } from "@/components/auth-gate";
 import { useAccess } from "@/components/access-provider";
 import { MetricSuggestions } from "@/components/metrics-panel";
+import { MetricsSyncPanel } from "@/components/metrics-sync-panel";
 import { SiteShell } from "@/components/site-shell";
 import { Button } from "@/components/ui/button";
 import { Redirect } from "@/lib/auth/gates";
-import { isLeader } from "@/lib/access";
+import { isLeader, roleRank } from "@/lib/access";
 import { pageHead } from "@/lib/page-title";
 import { cn, errorMessage } from "@/lib/utils";
 import {
@@ -44,6 +45,7 @@ import {
   type MetricsBoard,
   type TrendPoint,
 } from "@/lib/metrics";
+import { loadStoreMetricsBoard, type StoreMetricRow } from "@/lib/metrics-sync";
 
 export const Route = createFileRoute("/metrics")({
   component: MetricsPage,
@@ -82,9 +84,12 @@ const ALL_COLORS: MetricColor[] = ["green", "blue", "orange", "red"];
 type SortKey = "severity" | "name" | "store";
 
 function BoardView() {
+  const { access } = useAccess();
+  const canSync = roleRank(access.role) >= 3;
   const periods = useMemo(() => recentPeriods(8), []);
   const [period, setPeriod] = useState<MetricPeriod>(() => currentPeriod());
   const [board, setBoard] = useState<MetricsBoard | null>(null);
+  const [stores, setStores] = useState<StoreMetricRow[]>([]);
   const [loading, setLoading] = useState(true);
 
   // filters
@@ -100,7 +105,12 @@ function BoardView() {
   const load = useCallback(async (p: MetricPeriod) => {
     setLoading(true);
     try {
-      setBoard(await loadMetricsBoard({ data: { year: p.year, period: p.period } }));
+      const [nextBoard, storeBoard] = await Promise.all([
+        loadMetricsBoard({ data: { year: p.year, period: p.period } }),
+        loadStoreMetricsBoard({ data: { year: p.year, period: p.period } }).catch(() => null),
+      ]);
+      setBoard(nextBoard);
+      setStores(storeBoard?.stores ?? []);
     } catch (err) {
       toast.error(errorMessage(err) || "Could not load the board");
     } finally {
@@ -231,8 +241,11 @@ function BoardView() {
       </h1>
       <p className="mt-3 max-w-2xl text-muted">
         Everyone&rsquo;s numbers for the period, graded by color. Filter to who needs attention,
-        drill into trends, and walk away with a coaching list.
+        drill into trends, and walk away with a coaching list. Store totals come from Tableau
+        when you paste an export — lockers update with the same write.
       </p>
+
+      {canSync && <MetricsSyncPanel period={period} onSynced={() => void load(period)} />}
 
       {/* Period + primary actions */}
       <div className="mt-6 flex flex-wrap items-center gap-2.5">
@@ -270,6 +283,8 @@ function BoardView() {
           </Button>
         </div>
       </div>
+
+      {stores.length > 0 && <StoreStrip stores={stores} />}
 
       {/* Filters */}
       <div className="mt-4 rounded-lg border border-line bg-surface p-4 shadow-card">
@@ -916,6 +931,47 @@ function HeatBar({
         ) : null,
       )}
     </span>
+  );
+}
+
+function StoreStrip({ stores }: { stores: StoreMetricRow[] }) {
+  const filled = stores.filter((s) => METRICS.some((m) => s.values[m.key] != null));
+  return (
+    <section className="mt-6">
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-brass">Stores this period</p>
+        <p className="text-xs text-muted">
+          {filled.length} of {stores.length} have Tableau or entered numbers
+        </p>
+      </div>
+      <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {stores.map((s) => (
+          <div key={s.id} className="rounded-md border border-line bg-surface px-3.5 py-3 shadow-card">
+            <div className="flex items-center justify-between gap-2">
+              <p className="font-medium text-ink">{s.name}</p>
+              {s.source === "tableau" ? (
+                <span className="text-[0.65rem] uppercase tracking-[0.12em] text-brass">Tableau</span>
+              ) : s.updatedAt ? (
+                <span className="text-[0.65rem] uppercase tracking-[0.12em] text-muted">Manual</span>
+              ) : null}
+            </div>
+            <dl className="mt-2 grid grid-cols-3 gap-x-2 gap-y-1 text-xs tabular-nums">
+              {METRICS.slice(0, 6).map((m) => {
+                const c = metricColor(m.key, s.values[m.key]);
+                return (
+                  <div key={m.key}>
+                    <dt className="text-muted">{m.short}</dt>
+                    <dd className={cn("font-medium", c === "red" ? "text-red-800" : "text-ink")}>
+                      {formatMetric(m.key, s.values[m.key])}
+                    </dd>
+                  </div>
+                );
+              })}
+            </dl>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 

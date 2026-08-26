@@ -21,6 +21,8 @@ export type MetricRecord = {
   values: MetricValues;
   note: string | null;
   updatedAt: string | null;
+  source: "manual" | "tableau" | "sheet";
+  syncedAt: string | null;
 };
 
 /** Column order = display order. thresholds are [green≥, blue≥, orange≥]; below = red. */
@@ -263,7 +265,14 @@ type MetricRow = {
   demo_ticket: number | null;
   note: string | null;
   updated_at: unknown;
+  source: string | null;
+  synced_at: unknown;
 };
+
+function asSource(v: string | null | undefined): MetricRecord["source"] {
+  if (v === "tableau" || v === "sheet") return v;
+  return "manual";
+}
 
 function toRecord(row: MetricRow | undefined, year: number, period: number): MetricRecord {
   return {
@@ -284,6 +293,13 @@ function toRecord(row: MetricRow | undefined, year: number, period: number): Met
         : row?.updated_at
           ? String(row.updated_at)
           : null,
+    source: asSource(row?.source),
+    syncedAt:
+      row?.synced_at instanceof Date
+        ? row.synced_at.toISOString()
+        : row?.synced_at
+          ? String(row.synced_at)
+          : null,
   };
 }
 
@@ -295,7 +311,7 @@ async function readOne(
 ): Promise<MetricRecord> {
   const sql = await getSql();
   const rows = await sql<MetricRow>`
-    select nsnu, conversion, demo_rate, demo_close, arch_supports, demo_ticket, note, updated_at
+    select nsnu, conversion, demo_rate, demo_close, arch_supports, demo_ticket, note, updated_at, source, synced_at
     from performance_metrics
     where subject_type = ${subjectType} and subject_id = ${subjectId}
       and fiscal_year = ${year} and period_number = ${period}
@@ -318,12 +334,12 @@ async function writeOne(
     insert into performance_metrics (
       id, subject_type, subject_id, fiscal_year, period_number,
       nsnu, conversion, demo_rate, demo_close, arch_supports, demo_ticket,
-      note, updated_by, updated_at, created_at
+      note, updated_by, updated_at, created_at, source, synced_at
     ) values (
       ${id}, ${subjectType}, ${subjectId}, ${period.year}, ${period.period},
       ${values.nsnu}, ${values.conversion}, ${values.demoRate}, ${values.demoClose},
       ${values.archSupports}, ${values.demoTicket},
-      ${note}, ${updatedBy}, now(), now()
+      ${note}, ${updatedBy}, now(), now(), 'manual', null
     )
     on conflict (subject_type, subject_id, fiscal_year, period_number) do update set
       nsnu = excluded.nsnu,
@@ -334,7 +350,8 @@ async function writeOne(
       demo_ticket = excluded.demo_ticket,
       note = coalesce(excluded.note, performance_metrics.note),
       updated_by = excluded.updated_by,
-      updated_at = now()
+      updated_at = now(),
+      source = 'manual'
   `;
 }
 

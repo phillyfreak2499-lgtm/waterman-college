@@ -89,9 +89,11 @@ export function MetricsPanel() {
   const [period, setPeriod] = useState<MetricPeriod>(() => currentPeriod());
   const [myDraft, setMyDraft] = useState<Draft>(EMPTY_DRAFT);
   const [myUpdatedAt, setMyUpdatedAt] = useState<string | null>(null);
+  const [mySource, setMySource] = useState<"manual" | "tableau" | "sheet">("manual");
   const [store, setStore] = useState<{ id: string; name: string } | null>(null);
   const [storeDraft, setStoreDraft] = useState<Draft>(EMPTY_DRAFT);
   const [storeUpdatedAt, setStoreUpdatedAt] = useState<string | null>(null);
+  const [storeSource, setStoreSource] = useState<"manual" | "tableau" | "sheet">("manual");
   const [loading, setLoading] = useState(true);
   const [savingMine, setSavingMine] = useState(false);
   const [savingStore, setSavingStore] = useState(false);
@@ -105,14 +107,17 @@ export function MetricsPanel() {
       ]);
       setMyDraft(toDraft(mine.record.values));
       setMyUpdatedAt(mine.record.updatedAt);
+      setMySource(mine.record.source ?? "manual");
       if (storeRes?.store) {
         setStore(storeRes.store);
         setStoreDraft(toDraft(storeRes.record?.values));
         setStoreUpdatedAt(storeRes.record?.updatedAt ?? null);
+        setStoreSource(storeRes.record?.source ?? "manual");
       } else {
         setStore(null);
         setStoreDraft(EMPTY_DRAFT);
         setStoreUpdatedAt(null);
+        setStoreSource("manual");
       }
     } catch (err) {
       toast.error(errorMessage(err) || "Could not load metrics");
@@ -161,6 +166,9 @@ export function MetricsPanel() {
       <p className="mt-3 max-w-xl text-sm text-muted">
         Your six numbers for the period. Colors grade each one automatically against the
         performance thresholds as you type.
+        {mySource === "tableau" && myUpdatedAt
+          ? " Tableau wrote these — save only if you need to override."
+          : ""}
       </p>
 
       <div className="mt-4 flex flex-wrap items-center gap-2.5">
@@ -193,7 +201,12 @@ export function MetricsPanel() {
             <Button size="sm" variant="brass" onClick={() => void handleSaveMine()} disabled={savingMine}>
               {savingMine ? "Saving…" : "Save my metrics"}
             </Button>
-            {myUpdatedAt && <span className="text-xs text-muted">Updated {fmtWhen(myUpdatedAt)}</span>}
+            {myUpdatedAt && (
+              <span className="text-xs text-muted">
+                {mySource === "tableau" ? "Tableau · " : ""}
+                Updated {fmtWhen(myUpdatedAt)}
+              </span>
+            )}
           </div>
 
           <MetricSuggestions values={draftToValues(myDraft)} />
@@ -216,7 +229,10 @@ export function MetricsPanel() {
                   {savingStore ? "Saving…" : "Save store metrics"}
                 </Button>
                 {storeUpdatedAt && (
-                  <span className="text-xs text-muted">Updated {fmtWhen(storeUpdatedAt)}</span>
+                  <span className="text-xs text-muted">
+                    {storeSource === "tableau" ? "Tableau · " : ""}
+                    Updated {fmtWhen(storeUpdatedAt)}
+                  </span>
                 )}
               </div>
             </div>
