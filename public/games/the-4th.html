@@ -2729,7 +2729,7 @@ var THE4TH = (() => {
           : "Gold uses PLACE: their words, leftover shoe, named 4th, their outcome. A miss sounds like a register.") +
         '</p><div class="stack">' +
         mentions
-          .map(function (m) {
+          .map(function (m, mi) {
             var on = state.mentionPick === m.id;
             return (
               '<button type="button" class="mention' +
@@ -2737,7 +2737,7 @@ var THE4TH = (() => {
               '" data-act="mention" data-id="' +
               m.id +
               '"><span class="kicker">' +
-              esc(m.label) +
+              esc(exam ? "Mention " + String.fromCharCode(65 + mi) : m.label) +
               "</span><span class=\"body\">" +
               esc(m.text) +
               "</span></button>"
@@ -2792,7 +2792,7 @@ var THE4TH = (() => {
         ? scenario.why
         : supportTone === "okay"
           ? "Soft yes. Textbook 4th is " + gold.name + ". " + scenario.why
-          : "Textbook 4th is " + gold.name + ". " + scenario.trapWhy;
+          : "Textbook 4th is " + gold.name + ". " + (result.supportPick === scenario.trap ? scenario.trapWhy : scenario.why);
     var mentionTitle =
       result.mentionQuality === "gold"
         ? "PLACE — you used their words"
@@ -2804,7 +2804,7 @@ var THE4TH = (() => {
         ? scenario.coach
         : result.mentionQuality === "okay"
           ? "You got the pair in the right shoe, but you didn't playback the quote. Gold repeats the leftover life, then eases."
-          : scenario.trapWhy;
+          : "That sounded like a register. Gold uses their words, names the leftover shoe, and eases. Don't price it, don't 4-pack it, don't skip the leftover.";
     var goldText = scenario.mentions.find(function (m) { return m.quality === "gold"; }).text;
     return (
       '<div class="grade-grid">' +
