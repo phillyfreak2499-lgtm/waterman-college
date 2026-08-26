@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<meta name="theme-color" content="#07182b"/>
+<title>Wheel of the Floor — Waterman College</title>
+<script src="/games/quad-bridge.js"></script>
+<style>
+:root{
+  --navy:#07182b; --ink:#0B2A4A; --navy-2:#0f2740;
+  --gold:#C9A227; --gold-2:#e7c964; --cream:#f7f4ec; --paper:#fbf9f3;
+  --muted:#8fa8bd; --miss:#98291f; --ok:#186241;
+  --display:Georgia,"Times New Roman",serif;
+  --sans:system-ui,-apple-system,"Segoe UI",sans-serif;
+  --r-sm:8px; --r-md:12px; --r-lg:16px; --r-xl:22px;
+  --ease:cubic-bezier(.22,1,.36,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%;background:var(--navy);color:var(--cream);
+  font-family:var(--sans);-webkit-font-smoothing:antialiased}
+button,input{font:inherit}
+button{cursor:pointer;border:none;color:inherit;background:none}
+button:disabled{opacity:.45;cursor:default}
+input{user-select:text;-webkit-user-select:text}
+body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+.page{max-width:1120px;margin:0 auto;padding:16px 16px 28px}
+.kicker{font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--gold-2)}
+h1,h2{font-family:var(--display);font-weight:600;letter-spacing:-.02em;color:var(--cream)}
+h1{font-size:clamp(28px,5vw,44px);line-height:1.12;margin:4px 0 8px}
+h2{font-size:22px;color:var(--ink)}
+.lead{color:var(--muted);font-size:15px;line-height:1.5;max-width:38rem}
+.hud{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 14px}
+.chip{display:flex;align-items:center;gap:6px;background:rgba(7,24,43,.72);
+  border:1px solid rgba(201,162,39,.34);border-radius:999px;padding:6px 12px;
+  font-size:13px;font-weight:750}
+.chip .k{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.chip b{font-variant-numeric:tabular-nums;color:var(--gold-2)}
+.chip.on{border-color:var(--gold);box-shadow:0 0 0 1px rgba(201,162,39,.35)}
+.layout{display:grid;gap:18px}
+@media(min-width:900px){.layout{grid-template-columns:1.15fr .85fr;align-items:start}}
+.board-card{background:linear-gradient(180deg,#0b2743,#07182b);border:1px solid rgba(201,162,39,.28);
+  border-radius:var(--r-xl);padding:16px 14px 18px;box-shadow:0 18px 50px rgba(0,0,0,.35)}
+.cat{display:inline-block;background:var(--ink);color:var(--gold-2);font-size:10px;font-weight:850;
+  letter-spacing:.14em;text-transform:uppercase;padding:4px 10px;border-radius:999px;margin-bottom:10px}
+.rows{display:flex;flex-direction:column;gap:6px;min-height:132px;justify-content:center}
+.row{display:flex;justify-content:center;gap:4px}
+.tile{width:28px;height:38px;border-radius:6px;background:#0a2036;border:1px solid rgba(201,162,39,.22);
+  display:grid;place-items:center;font-family:var(--display);font-weight:700;font-size:18px;color:transparent;
+  transition:background .2s var(--ease),color .2s var(--ease),transform .2s var(--ease)}
+@media(min-width:640px){.tile{width:36px;height:48px;font-size:22px;border-radius:8px}}
+.tile.space{background:transparent;border-color:transparent}
+.tile.punct{background:#13283c;color:var(--gold-2);border-color:rgba(201,162,39,.4)}
+.tile.on{background:var(--cream);color:var(--ink);border-color:var(--gold);transform:scale(1.04)}
+.why{margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(24,98,65,.16);
+  border:1px solid rgba(24,98,65,.35);color:#b6e0c9;font-size:13.5px;line-height:1.45;display:none}
+.why.show{display:block}
+.why b{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px;color:#7dcca0}
+.wheel-wrap{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px}
+#wheel{width:min(360px,92vw);height:min(360px,92vw);display:block;border-radius:50%;
+  box-shadow:0 0 0 6px rgba(201,162,39,.35),0 18px 40px rgba(0,0,0,.45);touch-action:none;cursor:pointer}
+.pointer{position:absolute;top:-2px;left:50%;transform:translateX(-50%);width:0;height:0;z-index:2;
+  border-left:12px solid transparent;border-right:12px solid transparent;border-top:22px solid var(--gold);
+  filter:drop-shadow(0 4px 0 #9c7c19)}
+.land{min-height:22px;font-size:13px;font-weight:750;color:var(--gold-2);letter-spacing:.04em;text-align:center}
+.keys{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px;margin-top:12px}
+.kbtn{min-height:44px;border-radius:10px;background:#12304c;border:1px solid rgba(201,162,39,.22);
+  color:var(--cream);font-weight:800;font-size:15px;transition:filter .15s var(--ease),transform .1s ease}
+.kbtn:hover:not(:disabled){filter:brightness(1.12)}
+.kbtn:active:not(:disabled){transform:translateY(1px)}
+.kbtn.vowel{background:#1a3d2a;border-color:rgba(24,98,65,.45)}
+.kbtn.used{opacity:.28}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:50px;padding:0 18px;
+  border-radius:13px;font-weight:800;font-size:15px;transition:filter .15s var(--ease),transform .1s ease}
+.btn.gold{background:linear-gradient(180deg,#dfb63a,#C9A227);color:var(--ink);box-shadow:0 4px 0 #9c7c19;flex:1}
+.btn.gold:active{box-shadow:0 2px 0 #9c7c19;transform:translateY(1px)}
+.btn.navy{background:var(--ink);color:#fff;border:1px solid rgba(201,162,39,.35);flex:1}
+.btn.ghost{background:transparent;color:var(--cream);border:1.5px solid rgba(201,162,39,.35);min-height:44px}
+.solve{display:flex;gap:8px;margin-top:10px}
+.solve input{flex:1;min-height:48px;border-radius:12px;border:1.5px solid rgba(201,162,39,.35);
+  background:#0a2036;color:var(--cream);padding:0 12px;font-weight:700}
+.solve input:focus{outline:none;border-color:var(--gold)}
+.toast{min-height:20px;margin-top:10px;font-size:13.5px;color:var(--gold-2);line-height:1.4}
+.toast.bad{color:#f3c8c3}
+.toast.ok{color:#b6e0c9}
+#ov{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:18px;z-index:20;
+  background:radial-gradient(120% 90% at 50% 40%,rgba(9,30,54,.78),rgba(4,12,22,.94))}
+#ov.hid{display:none}
+.card{background:linear-gradient(180deg,#fbf9f3,#f2ede1);color:#0f1c24;border-radius:18px;padding:24px 22px;
+  max-width:460px;width:100%;text-align:center;box-shadow:0 18px 50px rgba(0,0,0,.5);
+  animation:pop .22s cubic-bezier(.2,1.3,.4,1);max-height:100%;overflow:auto}
+@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
+.card h1{color:var(--ink);font-size:34px}
+.card h2{margin:4px 0}
+.card p{font-size:14.5px;color:#54646f;margin:9px 0;line-height:1.45}
+.card p.lead{color:#22333f}
+.tag{font-size:10px;font-weight:850;letter-spacing:.16em;text-transform:uppercase;color:#a8861a}
+.rule{height:1px;background:linear-gradient(90deg,transparent,#d9d1bd,transparent);margin:14px 0}
+.stats{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:12px 0 2px}
+.stat{background:#fff;border:1px solid #e2dbca;border-radius:11px;padding:8px 13px;min-width:78px}
+.stat b{display:block;font-size:19px;font-family:var(--display);color:var(--ink)}
+.stat span{display:block;font-size:9.5px;letter-spacing:.11em;text-transform:uppercase;color:#8d9aa3;font-weight:800}
+.card .btn.gold{width:100%;margin-top:10px}
+.card .btn.ghost{width:100%;margin-top:8px;color:var(--ink);border-color:#c9d2d9}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}
+.mode{border:1.5px solid #d7cfbc;background:#fff;border-radius:12px;padding:10px;min-height:64px;font-weight:800;color:#5d6b74}
+.mode.on{background:var(--ink);color:var(--cream);border-color:var(--ink)}
+.named{display:flex;gap:8px;margin:8px 0}
+.named input{flex:1;min-height:42px;border:1.5px solid #d7cfbc;border-radius:10px;padding:0 12px;font-weight:700;color:var(--ink);background:#fff}
+.hint{font-size:12px;color:#8a9ba6;margin-top:10px;line-height:1.4}
+.keys-legend{display:inline-block;background:#eae4d6;border:1px solid #d7cfbc;border-radius:6px;padding:1px 6px;font-size:11px;font-weight:800;color:#5d6b74}
+.board-list{margin:10px 0 0;text-align:left;background:#fff;border:1px solid #e2dbca;border-radius:12px;padding:10px 12px}
+.board-list b{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#8d9aa3;margin-bottom:6px}
+.board-list li{display:flex;justify-content:space-between;list-style:none;padding:3px 0;border-top:1px solid #f0eadc;font-size:13px}
+.board-list li:first-of-type{border-top:none}
+.seats{display:flex;gap:8px;flex-wrap:wrap}
+@media (prefers-reduced-motion:reduce){
+  .tile{transition:none}.card{animation:none}
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <p class="kicker">Waterman College · The Quad</p>
+  <h1>Wheel of the Floor</h1>
+  <p class="lead">Spin. Call a consonant. Bank it every time it hits the board. Buy vowels. Solve the Good Feet phrase before you dump the cart.</p>
+  <div class="hud" id="hud"></div>
+  <div class="layout">
+    <section class="board-card">
+      <span class="cat" id="cat">Category</span>
+      <div class="rows" id="board"></div>
+      <div class="why" id="why"></div>
+      <p class="toast" id="toast"></p>
+      <div class="keys" id="keys"></div>
+      <div class="acts">
+        <button class="btn gold" id="spinBtn">Spin the floor</button>
+        <button class="btn navy" id="vowelBtn">Buy a vowel · 250</button>
+      </div>
+      <div class="solve">
+        <input id="solveIn" maxlength="64" placeholder="Solve the phrase" autocomplete="off" spellcheck="false"/>
+        <button class="btn navy" id="solveBtn">Solve</button>
+      </div>
+    </section>
+    <section class="wheel-wrap">
+      <div class="pointer" aria-hidden="true"></div>
+      <canvas id="wheel" width="360" height="360"></canvas>
+      <p class="land" id="land">Click the wheel or hit Space to spin</p>
+    </section>
+  </div>
+</div>
+<div id="ov"><div class="card" id="card"></div></div>
+<script>
+(function(){
+"use strict";
+const TAU = Math.PI * 2;
+const REDUCE = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+const VOWELS = "AEIOU";
+const CONS = "BCDFGHJKLMNPQRSTVWXYZ";
+const FREE = ["R","S","T","L","N","E"];
+const VOWEL_COST = 250;
+const PUZZLES = [
+  { cat:"W.R.A.P.", text:"EDUCATED NOT SOLD", why:"People want to be educated, not sold." },
+  { cat:"W.R.A.P.", text:"WHY READY ASK PROVE", why:"W.R.A.P. is the floor, in that order." },
+  { cat:"W.R.A.P.", text:"HELP THEM UNDERSTAND THE NEED", why:"W is Why: educate before you pitch." },
+  { cat:"W.R.A.P.", text:"BUILD ENTHUSIASM THEY FEEL THE LIFT", why:"Ready taps emotion. Money first kills Ready." },
+  { cat:"WOW Moments", text:"STAY QUIET WHEN THEY GIVE GOLD", why:"When a Client gives gold, do not jump in." },
+  { cat:"WOW Moments", text:"EMPATHY EXPERTISE EXPERIENCE", why:"A WOW is Empathy + Expertise + Experience." },
+  { cat:"Complete Solution", text:"THREE PAIRS AS A SYSTEM", why:"Strengthener, Maintainer, Relaxer worn together." },
+  { cat:"Complete Solution", text:"PARTIAL IS INCOMPLETE", why:"Support in one pair and unsupported sixteen hours has not solved it." },
+  { cat:"Complete Solution", text:"RECONNECT TO THE GOAL", why:"Never step down first. Reconnect before you change the Solution." },
+  { cat:"Complete Solution", text:"WORN TOGETHER AS A SYSTEM", why:"A single pair is a partial Solution." },
+  { cat:"Reviews", text:"NEVER ASK FOR A YELP REVIEW", why:"Yelp prohibits soliciting reviews." },
+  { cat:"Reviews", text:"NEVER INCENTIVIZE A REVIEW", why:"No gift for a review, on any platform." },
+  { cat:"Product Knowledge", text:"STRENGTHENER MAINTAINER RELAXER", why:"The 3-Step System." },
+  { cat:"Product Knowledge", text:"CLASSIC IS THE MOST POPULAR", why:"Classic Strengthener — metatarsal support, heel-pain relief." },
+  { cat:"Product Knowledge", text:"MAX IS THE FIRMEST SUPPORT", why:"Max is firmest, not thinnest." },
+  { cat:"Product Knowledge", text:"FOUR ARCHES OF THE FOOT", why:"Strengtheners reposition all four arches." },
+  { cat:"Inquiries", text:"DONT SAY NO ASK A QUESTION", why:"Don't say no. Ask, seat, imprint." },
+  { cat:"Inquiries", text:"SEAT THEM AND TAKE AN IMPRINT", why:"Don't guess. Seat, imprint, then recommend." },
+  { cat:"The 4th", text:"AGE JOB PLAY MENTION", why:"The leftover SKU comes from PLACE." },
+  { cat:"The 4th", text:"BUILD PLACE ON THE FLOOR", why:"PLACE is how you name the 4th." },
+  { cat:"Non-Tangible Value", text:"ROLEX LEVEL CARE", why:"Handle every piece like it is a Rolex." },
+  { cat:"Non-Tangible Value", text:"MESSY CART FEELS LIKE A DISCOUNT", why:"Careless handling makes $525 feel like $20." },
+  { cat:"Solution Component", text:"SOCKS PROTECT COMFORT EVERY HOUR", why:"Socks are a Solution Component, not an add-on." },
+  { cat:"3-Step System", text:"SHOES SOCKS AND THE MASSAGER", why:"Present every piece deliberately." }
+];
+const WEDGES = [
+  { id:"250", label:"$250", kind:"cash", n:250, fill:"#0B2A4A", ink:"#f7f4ec" },
+  { id:"500", label:"$500", kind:"cash", n:500, fill:"#C9A227", ink:"#0B2A4A" },
+  { id:"750", label:"$750", kind:"cash", n:750, fill:"#15476f", ink:"#f7f4ec" },
+  { id:"dump", label:"DUMP CART", kind:"bust", n:0, fill:"#7a3344", ink:"#f7f4ec" },
+  { id:"1000", label:"$1,000", kind:"cash", n:1000, fill:"#C9A227", ink:"#0B2A4A" },
+  { id:"400", label:"$400", kind:"cash", n:400, fill:"#2c6ea0", ink:"#f7f4ec" },
+  { id:"walk", label:"WALK-IN", kind:"skip", n:0, fill:"#121820", ink:"#f7f4ec" },
+  { id:"900", label:"$900", kind:"cash", n:900, fill:"#0B2A4A", ink:"#e7c964" },
+  { id:"free", label:"FREE SPIN", kind:"free", n:500, fill:"#186241", ink:"#f7f4ec" },
+  { id:"600", label:"$600", kind:"cash", n:600, fill:"#C9A227", ink:"#0B2A4A" },
+  { id:"wow", label:"WOW", kind:"cash", n:2000, fill:"#e8c547", ink:"#0B2A4A" },
+  { id:"300", label:"$300", kind:"cash", n:300, fill:"#3d6f94", ink:"#f7f4ec" },
+  { id:"fourth", label:"THE 4th", kind:"fourth", n:400, fill:"#8b3a4a", ink:"#f7f4ec" },
+  { id:"800", label:"$800", kind:"cash", n:800, fill:"#0B2A4A", ink:"#f7f4ec" }
+];
+const SLICE = TAU / WEDGES.length;
+
+const $ = (id) => document.getElementById(id);
+const cv = $("wheel"), ctx = cv.getContext("2d");
+const ov = $("ov"), card = $("card");
+
+const SAVE_KEY = "wheel-of-the-floor";
+const SAVE_VERSION = 1;
+function defaultSave(){ return { version: SAVE_VERSION, best: 0, scores: [] }; }
+function loadSave(){
+  try {
+    const s = JSON.parse(localStorage.getItem(SAVE_KEY) || "null");
+    if (!s) return defaultSave();
+    return {
+      version: SAVE_VERSION,
+      best: Math.max(0, +s.best || 0),
+      scores: Array.isArray(s.scores) ? s.scores : []
+    };
+  } catch (e) { return defaultSave(); }
+}
+function saveSave(){ try { localStorage.setItem(SAVE_KEY, JSON.stringify(save)); } catch (e) {} }
+let save = loadSave();
+
+function esc(s){
+  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+function shuffle(a){
+  const b = a.slice();
+  for (let i = b.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = b[i]; b[i] = b[j]; b[j] = t;
+  }
+  return b;
+}
+function money(n){ return "$" + Math.max(0, Math.round(n)).toLocaleString("en-US"); }
+
+/* audio */
+let AC = null;
+function unlock(){
+  try {
+    if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state === "suspended") AC.resume();
+  } catch (e) {}
+}
+function beep(freq, dur, type, vol){
+  try {
+    unlock();
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.type = type || "square";
+    o.frequency.value = freq * (0.97 + Math.random() * 0.06);
+    g.gain.setValueAtTime(vol || 0.06, AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime + dur);
+    o.connect(g); g.connect(AC.destination);
+    o.start(); o.stop(AC.currentTime + dur);
+  } catch (e) {}
+}
+function tune(notes){
+  try {
+    unlock();
+    let t = AC.currentTime;
+    for (const n of notes) {
+      const o = AC.createOscillator(), g = AC.createGain();
+      o.type = n.type || "triangle"; o.frequency.value = n.f;
+      g.gain.setValueAtTime(n.vol || 0.05, t);
+      g.gain.exponentialRampToValueAtTime(0.001, t + n.d);
+      o.connect(g); g.connect(AC.destination);
+      o.start(t); o.stop(t + n.d + 0.02);
+      t += n.gap || 0.08;
+    }
+  } catch (e) {}
+}
+
+/* state */
+let mode = "title"; /* title | spin | spinning | guess | choice | over */
+let seats = 1, seat = 0, names = ["Specialist", "Partner"];
+let banks = [0, 0], totals = [0, 0], tokens = [0, 0];
+let round = 0, deck = [], puzzle = null;
+let guessed = {}, pending = null, extra = 0;
+let rot = 0, vel = 0, spinning = false, lastPeg = -1;
+let toastT = 0, lastLand = "";
+let dpr = 1;
+
+function layout(text){
+  const words = String(text).split(/\s+/);
+  const rows = [];
+  let row = [];
+  const MAX = 14;
+  for (const w of words) {
+    if (row.length && row.length + 1 + w.length > MAX) { rows.push(row); row = []; }
+    if (row.length) row.push(" ");
+    for (const ch of w) row.push(ch);
+  }
+  if (row.length) rows.push(row);
+  return rows;
+}
+function lettersIn(text){
+  return String(text).toUpperCase().replace(/[^A-Z]/g,"");
+}
+function hiddenCons(text){
+  const need = {};
+  for (const ch of lettersIn(text)) if (VOWELS.indexOf(ch) < 0) need[ch] = 1;
+  return Object.keys(need).filter(ch => !guessed[ch]);
+}
+function isSolved(){
+  for (const ch of lettersIn(puzzle.text)) if (!guessed[ch]) return false;
+  return true;
+}
+function countIn(ch){
+  let n = 0;
+  for (const c of puzzle.text) if (c === ch) n++;
+  return n;
+}
+
+function setToast(msg, kind){
+  const el = $("toast");
+  el.textContent = msg || "";
+  el.className = "toast" + (kind ? " " + kind : "");
+  toastT = 180;
+}
+
+function hud(){
+  const bits = [];
+  bits.push('<span class="chip"><span class="k">Puzzle</span><b>' + (round + 1) + ' / 3</b></span>');
+  for (let i = 0; i < seats; i++) {
+    bits.push('<span class="chip' + (i === seat ? " on" : "") + '"><span class="k">' +
+      esc(names[i]) + '</span><b>' + money(banks[i]) + '</b></span>');
+  }
+  bits.push('<span class="chip"><span class="k">Banked</span><b>' + money(totals[0] + (seats > 1 ? totals[1] : 0)) + '</b></span>');
+  if (tokens[seat]) bits.push('<span class="chip"><span class="k">Free</span><b>' + tokens[seat] + '</b></span>');
+  bits.push('<span class="chip"><span class="k">Best</span><b>' + money(save.best) + '</b></span>');
+  $("hud").innerHTML = bits.join("");
+}
+
+function drawBoard(){
+  if (!puzzle) { $("board").innerHTML = ""; return; }
+  $("cat").textContent = puzzle.cat + (round === 2 ? " · Final floor" : "");
+  const rows = layout(puzzle.text);
+  $("board").innerHTML = rows.map(row => {
+    return '<div class="row">' + row.map(ch => {
+      if (ch === " ") return '<span class="tile space"></span>';
+      if (/[^A-Z]/.test(ch)) return '<span class="tile punct">' + esc(ch) + "</span>";
+      const on = !!guessed[ch];
+      return '<span class="tile' + (on ? " on" : "") + '">' + (on ? esc(ch) : "") + "</span>";
+    }).join("") + "</div>";
+  }).join("");
+  const why = $("why");
+  if (mode === "over" || (puzzle._solved && puzzle.why)) {
+    why.className = "why show";
+    why.innerHTML = "<b>Why that phrase</b>" + esc(puzzle.why);
+  } else { why.className = "why"; why.textContent = ""; }
+}
+
+function renderKeys(){
+  const letters = (CONS + VOWELS).split("");
+  $("keys").innerHTML = letters.map(ch => {
+    const v = VOWELS.indexOf(ch) >= 0;
+    return '<button class="kbtn' + (v ? " vowel" : "") + (guessed[ch] ? " used" : "") +
+      '" data-ch="' + ch + '"' + (guessed[ch] ? " disabled" : "") + ">" + ch + "</button>";
+  }).join("");
+  $("keys").querySelectorAll(".kbtn").forEach(btn => {
+    btn.onclick = () => guess(btn.getAttribute("data-ch"));
+  });
+  const canSpin = mode === "spin" || mode === "choice";
+  $("spinBtn").disabled = !(canSpin && !spinning);
+  $("vowelBtn").disabled = !(mode === "choice" && banks[seat] >= VOWEL_COST);
+  $("solveBtn").disabled = !(mode === "guess" || mode === "choice" || mode === "spin");
+}
+
+function scoreNow(){
+  if (seats === 1) return totals[0] + banks[0];
+  return Math.max(totals[0] + banks[0], totals[1] + banks[1]);
+}
+function report(n){
+  try { if (window.QuadScore) window.QuadScore.report(Math.max(0, Math.round(n))); } catch (e) {}
+}
+
+function recordRun(){
+  const n = Math.max(0, Math.round(scoreNow()));
+  if (n <= 0) return false;
+  const prev = save.best || 0;
+  save.best = Math.max(prev, n);
+  save.scores = (save.scores || []).concat([{ n, name: names[0], at: Date.now() }]);
+  save.scores.sort((a,b) => b.n - a.n || b.at - a.at);
+  save.scores = save.scores.slice(0, 8);
+  saveSave();
+  report(n);
+  return n > prev;
+}
+
+function boardHtml(){
+  const rows = (save.scores || []).slice(0, 5);
+  if (!rows.length) return "";
+  return '<div class="board-list"><b>Best runs</b><ul>' +
+    rows.map((r,i) => "<li><span>" + (i+1) + ". " + esc(r.name || "Specialist") +
+      '</span><span>' + money(r.n) + "</span></li>").join("") + "</ul></div>";
+}
+
+function nextSeat(){
+  if (seats > 1) seat = 1 - seat;
+  extra = 0; pending = null; mode = "spin";
+  setToast((seats > 1 ? names[seat] + "'s spin." : "Spin again."), "");
+  hud(); renderKeys();
+}
+
+function bankRound(){
+  totals[seat] += banks[seat];
+  banks[seat] = 0;
+}
+
+function loadPuzzle(i){
+  round = i; puzzle = deck[i]; guessed = {}; pending = null; extra = 0;
+  puzzle._solved = false;
+  if (round === 2) FREE.forEach(ch => { guessed[ch] = 1; });
+  mode = "spin";
+  lastLand = round === 2 ? "Final floor. R S T L N E are up." : "Spin for puzzle " + (i + 1) + ".";
+  setToast(lastLand, "");
+  $("land").textContent = lastLand;
+  $("solveIn").value = "";
+  drawBoard(); renderKeys(); hud();
+  if (round === 2) tune([{ f: 392, d: 0.08 }, { f: 523, d: 0.1 }, { f: 659, d: 0.14, vol: 0.055 }]);
+}
+
+function startGame(nSeats, n0, n1){
+  unlock();
+  seats = nSeats === 2 ? 2 : 1;
+  names = [(n0 || "Specialist").replace(/[<>]/g,"").slice(0,16) || "Specialist",
+           (n1 || "Partner").replace(/[<>]/g,"").slice(0,16) || "Partner"];
+  banks = [0, 0]; totals = [0, 0]; tokens = [0, 0]; seat = 0;
+  deck = shuffle(PUZZLES).slice(0, 3);
+  ov.classList.add("hid");
+  loadPuzzle(0);
+  report(0);
+  tune([{ f: 392, d: 0.08 }, { f: 523, d: 0.1 }, { f: 659, d: 0.16, vol: 0.05 }]);
+}
+
+function endGame(){
+  bankRound();
+  if (seats > 1) { seat = 1 - seat; bankRound(); seat = 1 - seat; }
+  mode = "over";
+  const neu = recordRun();
+  drawBoard(); hud(); renderKeys();
+  const winName = seats === 1 ? names[0] : (totals[0] >= totals[1] ? names[0] : names[1]);
+  const winAmt = seats === 1 ? totals[0] : Math.max(totals[0], totals[1]);
+  const solvedN = deck.filter(p => p._solved).length;
+  ov.classList.remove("hid");
+  card.innerHTML =
+    '<p class="tag">Campus clear</p>' +
+    "<h2>" + esc(winName) + " takes the floor</h2>" +
+    '<div class="stats">' +
+      '<div class="stat"><b>' + money(winAmt) + "</b><span>score</span></div>" +
+      '<div class="stat"><b>' + solvedN + "/3</b><span>puzzles</span></div>" +
+      '<div class="stat"><b>' + money(save.best) + "</b><span>best</span></div>" +
+    "</div>" +
+    (neu ? '<p class="lead">New personal best.</p>' : "") +
+    boardHtml() +
+    '<button class="btn gold" id="go">Spin again</button>' +
+    '<button class="btn ghost" id="hub">Back to the title</button>';
+  $("go").onclick = () => startGame(seats, names[0], names[1]);
+  $("hub").onclick = title;
+}
+
+function solveCurrent(){
+  for (const ch of lettersIn(puzzle.text)) guessed[ch] = 1;
+  puzzle._solved = true;
+  bankRound();
+  drawBoard(); hud();
+  setToast("Solved. " + puzzle.why, "ok");
+  tune([{ f: 523, d: 0.08 }, { f: 659, d: 0.08 }, { f: 784, d: 0.08 }, { f: 1046, d: 0.16, vol: 0.06 }]);
+  if (round + 1 >= 3) setTimeout(endGame, 900);
+  else setTimeout(() => loadPuzzle(round + 1), 900);
+}
+
+function useTokenOrMiss(){
+  if (tokens[seat] > 0) {
+    tokens[seat]--;
+    setToast("Free spin covers the miss. Guess or spin.", "ok");
+    mode = "choice"; pending = null; extra = 1;
+    hud(); renderKeys();
+    return;
+  }
+  beep(160, 0.16, "sawtooth", 0.06);
+  nextSeat();
+}
+
+function landWedge(w){
+  lastLand = w.label;
+  $("land").textContent = w.label;
+  pending = w;
+  if (w.kind === "bust") {
+    banks[seat] = 0; hud();
+    setToast("Dump the cart. Round bank is gone.", "bad");
+    beep(140, 0.2, "sawtooth", 0.07);
+    nextSeat(); return;
+  }
+  if (w.kind === "skip") {
+    setToast("Walk-in left. Turn passes.", "bad");
+    beep(220, 0.12, "triangle", 0.05);
+    nextSeat(); return;
+  }
+  if (w.kind === "free") {
+    tokens[seat]++; hud();
+    setToast("Free spin in the pocket. Call a consonant for " + money(w.n) + ".", "ok");
+  } else if (w.kind === "fourth") {
+    extra = 1;
+    setToast("The 4th. Call a consonant for " + money(w.n) + ", then go again.", "ok");
+  } else {
+    setToast("Call a consonant · " + money(w.n) + " each.", "");
+  }
+  mode = "guess";
+  renderKeys(); hud();
+  beep(660, 0.1, "triangle", 0.05);
+}
+
+function guess(ch){
+  ch = String(ch || "").toUpperCase();
+  if (!/^[A-Z]$/.test(ch) || guessed[ch]) return;
+  if (mode !== "guess" && mode !== "choice") return;
+  const isVowel = VOWELS.indexOf(ch) >= 0;
+  if (mode === "guess" && isVowel) { setToast("Consonants only after a spin. Buy a vowel from the bank.", "bad"); return; }
+  if (mode === "choice" && isVowel) {
+    if (banks[seat] < VOWEL_COST) { setToast("Need 250 in the round bank.", "bad"); return; }
+    banks[seat] -= VOWEL_COST;
+  }
+  if (mode === "choice" && !isVowel) {
+    setToast("Spin first, then call a consonant — or buy a vowel / solve.", "bad"); return;
+  }
+  guessed[ch] = 1;
+  const n = countIn(ch);
+  if (!n) {
+    drawBoard(); renderKeys(); hud();
+    setToast(ch + " is not on the board.", "bad");
+    useTokenOrMiss();
+    return;
+  }
+  const unit = isVowel ? 0 : ((pending && pending.n) || 0);
+  const gained = unit * n;
+  banks[seat] += gained;
+  drawBoard(); hud(); renderKeys();
+  setToast(n + " " + ch + (n > 1 ? "'s" : "") + (gained ? " · " + money(gained) : ""), "ok");
+  beep(520 + n * 80, 0.09, "square", 0.06);
+  if (isSolved()) { solveCurrent(); return; }
+  if (extra && !isVowel) {
+    extra = 0; mode = "guess"; pending = pending || { n: 400, kind: "cash" };
+    setToast("The 4th still has you. Call another consonant.", "ok");
+    renderKeys(); return;
+  }
+  mode = "choice"; pending = null; extra = 0;
+  renderKeys();
+}
+
+function buyVowelPrompt(){
+  if (mode !== "choice") return;
+  if (banks[seat] < VOWEL_COST) { setToast("Need 250 in the round bank.", "bad"); return; }
+  setToast("Tap a green vowel.", "");
+}
+
+function trySolve(){
+  if (!(mode === "guess" || mode === "choice" || mode === "spin")) return;
+  const raw = $("solveIn").value || "";
+  const got = lettersIn(raw);
+  const want = lettersIn(puzzle.text);
+  if (!got) { setToast("Type the phrase.", "bad"); return; }
+  if (got === want) solveCurrent();
+  else {
+    setToast("Not the phrase.", "bad");
+    $("solveIn").value = "";
+    useTokenOrMiss();
+  }
+}
+
+/* wheel */
+function wedgeAt(r){
+  let a = ((-r) % TAU + TAU) % TAU;
+  return Math.floor(a / SLICE) % WEDGES.length;
+}
+function sizeWheel(){
+  const css = Math.round(Math.min(360, Math.max(240, cv.getBoundingClientRect().width)));
+  dpr = Math.min(2, window.devicePixelRatio || 1);
+  cv.width = Math.round(css * dpr);
+  cv.height = Math.round(css * dpr);
+  cv.style.width = css + "px";
+  cv.style.height = css + "px";
+}
+function drawWheel(){
+  const w = cv.width, h = cv.height, cx = w / 2, cy = h / 2, rad = w * 0.46;
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.clearRect(0,0,w,h);
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(rot);
+  for (let i = 0; i < WEDGES.length; i++) {
+    const wg = WEDGES[i];
+    const a0 = -Math.PI / 2 + i * SLICE;
+    const a1 = a0 + SLICE;
+    ctx.beginPath(); ctx.moveTo(0,0); ctx.arc(0,0,rad,a0,a1); ctx.closePath();
+    ctx.fillStyle = wg.fill; ctx.fill();
+    ctx.strokeStyle = "rgba(247,244,236,.18)"; ctx.lineWidth = 2 * dpr; ctx.stroke();
+    ctx.save();
+    ctx.rotate(a0 + SLICE / 2);
+    ctx.fillStyle = wg.ink;
+    ctx.font = "700 " + Math.round(11 * dpr) + "px system-ui,sans-serif";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.translate(rad * 0.62, 0);
+    ctx.rotate(Math.PI / 2);
+    ctx.fillText(wg.label, 0, 0);
+    ctx.restore();
+    /* peg */
+    ctx.save();
+    ctx.rotate(a1);
+    ctx.fillStyle = "#e7c964";
+    ctx.beginPath(); ctx.arc(rad - 4 * dpr, 0, 3.2 * dpr, 0, TAU); ctx.fill();
+    ctx.restore();
+  }
+  ctx.beginPath(); ctx.arc(0,0, rad * 0.18, 0, TAU);
+  ctx.fillStyle = "#07182b"; ctx.fill();
+  ctx.strokeStyle = "#C9A227"; ctx.lineWidth = 4 * dpr; ctx.stroke();
+  ctx.fillStyle = "#e7c964";
+  ctx.font = "800 " + Math.round(13 * dpr) + "px Georgia,serif";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.rotate(-rot);
+  ctx.fillText("GF", 0, 1 * dpr);
+  ctx.restore();
+}
+
+function startSpin(){
+  if (spinning) return;
+  if (!(mode === "spin" || mode === "choice")) return;
+  unlock();
+  mode = "spinning";
+  spinning = true;
+  vel = REDUCE ? 8 : (12 + Math.random() * 10);
+  lastPeg = wedgeAt(rot);
+  pending = null; extra = 0;
+  renderKeys();
+  beep(392, 0.06, "square", 0.04);
+}
+
+function stepWheel(dt){
+  if (!spinning) return;
+  rot += vel * dt;
+  vel *= Math.exp(-1.35 * dt);
+  const peg = wedgeAt(rot);
+  if (peg !== lastPeg) { lastPeg = peg; beep(880, 0.03, "square", 0.025); }
+  if (vel < (REDUCE ? 1.2 : 0.55)) {
+    const idx = wedgeAt(rot);
+    const target = -idx * SLICE - SLICE / 2;
+    let diff = ((target - rot) % TAU + TAU) % TAU;
+    if (diff > Math.PI) diff -= TAU;
+    rot += diff;
+    spinning = false; vel = 0;
+    mode = "guess";
+    landWedge(WEDGES[idx]);
+  }
+}
+
+function title(){
+  mode = "title"; spinning = false; vel = 0.35;
+  ov.classList.remove("hid");
+  const named = "";
+  card.innerHTML =
+    '<p class="tag">Waterman College · The Quad</p>' +
+    "<h1>Wheel of the Floor</h1>" +
+    '<p class="lead">A parlor spin with Good Feet words. Dump the cart and the round bank is gone. Three puzzles. Final floor starts with R S T L N E.</p>' +
+    '<div class="rule"></div>' +
+    '<div class="modes">' +
+      '<button class="mode on" data-seats="1">Solo floor</button>' +
+      '<button class="mode" data-seats="2">Two specialists</button>' +
+    "</div>" +
+    '<div class="named"><input id="n0" maxlength="16" placeholder="Your name" value="' + esc(names[0] === "Specialist" ? "" : names[0]) + '"/>' +
+    '<input id="n1" maxlength="16" placeholder="Partner (hot seat)" style="display:none"/></div>' +
+    (save.best ? '<p class="hint">Personal best <strong>' + money(save.best) + "</strong></p>" : "") +
+    boardHtml() +
+    '<button class="btn gold" id="go">Spin the first puzzle</button>' +
+    '<p class="hint"><span class="keys-legend">Space</span> spins · tap letters on the pad · vowels cost 250 from the round bank</p>';
+  let want = 1;
+  card.querySelectorAll(".mode").forEach(btn => {
+    btn.onclick = () => {
+      want = +btn.getAttribute("data-seats");
+      card.querySelectorAll(".mode").forEach(b => b.classList.toggle("on", b === btn));
+      $("n1").style.display = want === 2 ? "block" : "none";
+    };
+  });
+  $("go").onclick = () => startGame(want, $("n0").value, $("n1").value);
+  ["n0","n1"].forEach(id => {
+    const el = $(id); if (!el) return;
+    el.addEventListener("keydown", e => e.stopPropagation());
+  });
+}
+
+$("spinBtn").onclick = startSpin;
+cv.addEventListener("pointerdown", () => { if (mode === "spin" || mode === "choice") startSpin(); });
+$("vowelBtn").onclick = buyVowelPrompt;
+$("solveBtn").onclick = trySolve;
+$("solveIn").addEventListener("keydown", e => {
+  e.stopPropagation();
+  if (e.key === "Enter") { e.preventDefault(); trySolve(); }
+});
+
+window.addEventListener("keydown", e => {
+  const tag = (e.target && e.target.tagName || "").toUpperCase();
+  if (tag === "INPUT" || tag === "TEXTAREA") return;
+  if (e.key === " " || e.code === "Space") {
+    e.preventDefault();
+    if (mode === "title") { const go = $("go"); if (go) go.click(); }
+    else if (mode === "over") { const go = $("go"); if (go) go.click(); }
+    else startSpin();
+  } else if (/^[a-zA-Z]$/.test(e.key) && (mode === "guess" || mode === "choice")) {
+    guess(e.key);
+  }
+});
+
+window.addEventListener("resize", () => { sizeWheel(); drawWheel(); });
+
+let last = performance.now();
+function frame(now){
+  const dt = Math.min(0.05, (now - last) / 1000); last = now;
+  if (mode === "title" && !spinning) rot += 0.25 * dt;
+  stepWheel(dt);
+  if (toastT > 0) toastT--;
+  drawWheel();
+  requestAnimationFrame(frame);
+}
+
+window.__WF = {
+  get state(){
+    return {
+      mode, seat, seats, round, bank: banks[seat], total: totals[0] + totals[1],
+      puzzle: puzzle && puzzle.text, cat: puzzle && puzzle.cat,
+      guessed: Object.keys(guessed).filter(k => guessed[k]).join(""),
+      pending: pending && pending.id, spinning, wedge: WEDGES[wedgeAt(rot)].id
+    };
+  },
+  puzzles: PUZZLES, wedges: WEDGES,
+  start: startGame, title: title,
+  spin: startSpin,
+  land(id){
+    const w = WEDGES.find(x => x.id === id) || WEDGES[0];
+    spinning = false; vel = 0; mode = "guess"; landWedge(w);
+  },
+  guess, solve(t){ $("solveIn").value = t; trySolve(); },
+  reveal(){ solveCurrent(); }
+};
+
+sizeWheel();
+title();
+requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>

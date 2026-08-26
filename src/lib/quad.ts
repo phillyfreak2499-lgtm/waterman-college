@@ -36,6 +36,12 @@ export const QUAD_GAMES = [
     blurb: "Ladders build value. Shouts dump it. Catch the diagnose, the discount, the gym Strengthener — or slide.",
   },
   {
+    slug: "wheel-of-the-floor",
+    title: "Wheel of the Floor",
+    file: "/games/wheel-of-the-floor.html",
+    blurb: "Spin the floor. Call a consonant. Bank it every time it hits the board. Dump the cart and the round is gone.",
+  },
+  {
     slug: "the-4th",
     title: "The 4th",
     file: "/games/the-4th.html",
