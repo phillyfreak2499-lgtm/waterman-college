@@ -177,6 +177,13 @@ ol.seats{list-style:none;padding:0;margin:0 0 .75rem;display:grid;gap:.5rem}
 .chip-btn.on{border-color:var(--teal);background:rgba(42,155,143,.2);color:var(--cream)}
 .chip-btn.cream{border-color:var(--cream);background:var(--cream);color:var(--ink)}
 .pill{min-height:40px;border-radius:999px;border:1px solid var(--border);padding:0 1rem;color:var(--muted);font-size:.875rem}
+.pill.on{border-color:var(--teal);background:rgba(42,155,143,.2);color:var(--cream)}
+.warn-banner{border-radius:20px;border:1px solid rgba(180,83,42,.4);background:rgba(180,83,42,.12);padding:1rem;color:var(--cream);font-size:.875rem;line-height:1.5;margin:0 0 1rem}
+.wwkd-picks{display:flex;flex-direction:column;gap:.75rem;margin:1rem 0}
+.wwkd-sku{display:grid;grid-template-columns:5.5rem 1fr;overflow:hidden;border-radius:20px;background:var(--navy);border:1px solid var(--border)}
+.wwkd-sku img{width:5.5rem;height:100%;object-fit:cover}
+.wwkd-sku div{padding:.75rem}
+.chip-row{display:flex;flex-wrap:wrap;gap:.4rem;margin:.6rem 0 1.1rem}
 .chart-wrap{overflow:auto;border-radius:20px;background:var(--paper);max-height:16rem}
 .chart-wrap.open{max-height:80vh}
 .chart-wrap img{min-width:720px;width:100%;max-width:none}
@@ -230,6 +237,7 @@ section{margin-top:1.6rem}
 <div id="app"></div>
 <script>
 "use strict";
+"use strict";
 var T4 = (() => {
   var __defProp = Object.defineProperty;
   var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -252,17 +260,26 @@ var T4 = (() => {
   // src/lib/quad-api.ts
   var quad_api_exports = {};
   __export(quad_api_exports, {
+    ARCHES: () => ARCHES,
+    FEELS: () => FEELS,
+    KAREN_BELIEFS: () => KAREN_BELIEFS,
+    LIFESTYLES: () => LIFESTYLES,
     NEVER_SECONDS: () => NEVER_SECONDS,
+    PAINS: () => PAINS,
     PLACE_LABELS: () => PLACE_LABELS,
     ROUND_MAX: () => ROUND_MAX,
     SCENARIOS: () => SCENARIOS,
+    SHOES: () => SHOES,
     SKUS: () => SKUS,
     SUPPORTS: () => SUPPORTS,
     SUPPORT_ORDER: () => SUPPORT_ORDER,
     TRAP_CARDS: () => TRAP_CARDS,
+    VOLUMES: () => VOLUMES,
+    WWKD_DISCLAIMER: () => WWKD_DISCLAIMER,
     dealRounds: () => dealRounds,
     gradePlace: () => gradePlace,
     placeChips: () => placeChips,
+    recommendWwkd: () => recommendWwkd,
     resolveRound: () => resolveRound,
     shuffleCopy: () => shuffleCopy,
     skuMarked: () => skuMarked,
@@ -1327,8 +1344,541 @@ var T4 = (() => {
     }
   ];
   var NEVER_SECONDS = 90;
+
+  // src/lib/wwkd.ts
+  var WWKD_DISCLAIMER = "We do not diagnose medical conditions. We do not prescribe. Listen to what they said, explain how the support is designed to help, and leave the name of the condition to a licensed provider.";
+  var PAINS = [
+    { id: "heel-morning", label: "Heel first thing", they: "the heel is barking first thing and after long standing" },
+    { id: "heel-stab", label: "Stabbing under the heel", they: "a stabbing under the heel" },
+    { id: "ball", label: "Ball of the foot", they: "the ball of the foot is burning" },
+    { id: "big-toe", label: "Big-toe joint", they: "the big-toe joint is angry in the shoe" },
+    { id: "pebble", label: "Pebble between the toes", they: "it feels like a pebble between the toes" },
+    { id: "fallen", label: "Arches feel collapsed", they: "the arches feel like they collapsed" },
+    { id: "high", label: "High, tight arch", they: "the arch is high and tight" },
+    { id: "achilles", label: "Back of the heel", they: "the back of the heel is stiff after they move" },
+    { id: "roll", label: "Foot rolling in", they: "the foot is rolling in" },
+    { id: "claw", label: "Toes curling", they: "the toes are curling in the shoe" },
+    { id: "shin", label: "Shin after a run", they: "the shin lights up after they run" },
+    { id: "tingle", label: "Tingling / numbness", they: "there's tingling or a 'are my feet still there' feeling" },
+    { id: "chain", label: "Pain up the chain", they: "it travels from the low back down the leg" },
+    { id: "knee", label: "Knees on stairs", they: "the knees bark on stairs" },
+    { id: "stiff", label: "Stiff, swollen joints", they: "the joints in the feet feel stiff and swollen" },
+    { id: "ankle", label: "Ankle feels loose", they: "the ankle feels loose or tender" }
+  ];
+  var LIFESTYLES = [
+    { id: "gym", label: "Gym / box / cardio", they: "the leftover hour is the gym" },
+    { id: "run", label: "Running", they: "the leftover shoe is the run" },
+    { id: "court", label: "Court / pickleball", they: "two days a week they're on a court" },
+    { id: "golf", label: "Golf", they: "Saturday is 18 holes" },
+    { id: "hunt", label: "Hunting", they: "the hunting boots are the leftover" },
+    { id: "hike", label: "Hiking", they: "the trail shoes are empty" },
+    { id: "stand", label: "Standing all day", they: "the job is standing on hard ground" },
+    { id: "dress", label: "Dress / church / dance", they: "then they're in dress shoes for hours" },
+    { id: "house", label: "House / slippers", they: "the house pair never sees the 3-system" },
+    { id: "travel", label: "Travel bag", they: "the bag cannot swap at 5 a.m." }
+  ];
+  var SHOES = [
+    { id: "athletic", label: "Athletic", they: "athletic shoes" },
+    { id: "dress", label: "Dress", they: "dress shoes" },
+    { id: "heels", label: "Heels", they: "heels" },
+    { id: "flats", label: "Flats", they: "flats" },
+    { id: "work", label: "Work boots", they: "work boots" },
+    { id: "boots", label: "Boots", they: "boots" },
+    { id: "slippers", label: "Slippers", they: "slippers" },
+    { id: "sandals", label: "Sandals / slides", they: "sandals or slides" }
+  ];
+  var ARCHES = [
+    { id: "high", label: "High arch", they: "a high arch" },
+    { id: "average", label: "Average arch", they: "an average arch" },
+    { id: "flat", label: "Flatter foot", they: "a flatter foot" }
+  ];
+  var FEELS = [
+    { id: "firm", label: "Can take firm", they: "they can take a firmer pair" },
+    { id: "sensitive", label: "Sensitive", they: "the foot is sensitive" }
+  ];
+  var VOLUMES = [
+    { id: "tight", label: "Tight shoe", they: "the leftover shoe is tight" },
+    { id: "regular", label: "Regular volume", they: "regular volume" },
+    { id: "wide", label: "Wider foot", they: "a wider foot" },
+    { id: "slender", label: "Slender foot", they: "a slender foot" }
+  ];
+  var PAIN_HELP = {
+    "heel-morning": {
+      title: "Heel first thing",
+      familyLead: "strengthener",
+      helps: "The Strengthener lifts and supports the plantar fascia so the tissue is not taking the whole load. The Maintainer spreads weight so the heel is not overloaded. The Relaxer cushions the arch when they rest.",
+      never: "Never tell them they have plantar fasciitis. They said the heel is barking. That's the talk."
+    },
+    "heel-stab": {
+      title: "Stabbing under the heel",
+      familyLead: "strengthener",
+      helps: "The Strengthener holds the arch so the foot does not over-pronate and keep irritating the heel. The Relaxer cushions shock. The Maintainer balances weight so that spot is not constantly loaded.",
+      never: "Never name a heel spur. Reduce the impact on the heel they already named."
+    },
+    ball: {
+      title: "Ball of the foot",
+      familyLead: "strengthener",
+      helps: "Classic is the named pair for this talk \u2014 metatarsal rise sits behind the ball and spreads the pressure. The Maintainer and Relaxer keep the foot from overcompensating.",
+      never: "Never diagnose metatarsalgia. They said the ball is burning."
+    },
+    "big-toe": {
+      title: "Big-toe joint",
+      familyLead: "strengthener",
+      helps: "Supporting all four arches lines the foot up so the big-toe joint is not taking the whole shove. The Maintainer specifically cuts forefoot pressure. It will not reverse a bunion.",
+      never: "Never promise to reverse a bunion. Slow the aggravation. Ease the shoe."
+    },
+    pebble: {
+      title: "Pebble between the toes",
+      familyLead: "strengthener",
+      helps: "The metatarsal rise lifts the ball and opens space between the toes so the nerve is not pinched. Classic is the named Strengthener. Tight leftover shoes want Slimline volume.",
+      never: "Never tell them they have a neuroma. They said it feels like a pebble."
+    },
+    fallen: {
+      title: "Arches feel collapsed",
+      familyLead: "strengthener",
+      helps: "The Strengthener recreates the missing structure. Diamond or Hug when Classic is too aggressive. Flex or Deluxe on a flatter, more sensitive foot. Max is usually too much.",
+      never: "Never diagnose fallen arches. They said the arch feels gone \u2014 give it structure."
+    },
+    high: {
+      title: "High, tight arch",
+      familyLead: "strengthener",
+      helps: "Max and Honeycomb are built for a high arch and pronounced pressure. Miracle Flex is the high-arch sports 4th. The Maintainer spreads the load; the Relaxer cushions the midfoot.",
+      never: "Never diagnose a cavus foot. Match the height they showed you."
+    },
+    achilles: {
+      title: "Back of the heel",
+      familyLead: "strengthener",
+      helps: "A Strengthener keeps the heel more neutral so the tendon is not being yanked. Heel-counter leftover (golf, standing) wants the cup. A run leftover still wants a Maintainer \u2014 heel cups don't run.",
+      never: "Never diagnose Achilles tendonitis. They said the back of the heel is stiff."
+    },
+    roll: {
+      title: "Foot rolling in",
+      familyLead: "strengthener",
+      helps: "The Strengthener is the star \u2014 it holds the inner longitudinal so the foot does not collapse inward. The Maintainer keeps weight centered. Ultra if they want that hold near the middle of the arch.",
+      never: "Never diagnose overpronation as a condition you named. They said the foot rolls in."
+    },
+    claw: {
+      title: "Toes curling",
+      familyLead: "strengthener",
+      helps: "Classic is the named pair. Better arch posture eases toe strain. The Maintainer cuts forefoot pressure. It slows progression \u2014 it does not straighten a toe.",
+      never: "Never diagnose hammertoes. They said the toes are curling."
+    },
+    shin: {
+      title: "Shin after a run",
+      familyLead: "maintainer",
+      helps: "If the leftover is the run, that 4th is a Sports Maintainer \u2014 Miracle Flex is the pair the deck names out loud. The Strengthener still does the alignment work in the 3-system. You do not run in a Strengthener.",
+      never: "Never diagnose shin splints. They said the shin lights up after they run."
+    },
+    tingle: {
+      title: "Tingling / numbness",
+      familyLead: "strengthener",
+      helps: "Steady support, even pressure, a pair the foot can actually tolerate. Diamond, Hug, Flex \u2014 not Max. The Maintainer spreads load so no one spot is screaming.",
+      never: "Never diagnose neuropathy or diabetes. Comfort and even pressure. That's the talk."
+    },
+    chain: {
+      title: "Pain up the chain",
+      familyLead: "strengthener",
+      helps: "Heel cup lines up ankle \u2192 knee \u2192 hip \u2192 back. The Strengthener is the alignment pair. The Maintainer keeps weight honest. We do not claim to treat sciatica.",
+      never: "Never say these will fix the back. Alignment is the story."
+    },
+    knee: {
+      title: "Knees on stairs",
+      familyLead: "strengthener",
+      helps: "Foot posture that is off dumps into the knee. The Strengthener is the alignment pair. The Maintainer balances the step. The Relaxer cushions when they don't need the workout.",
+      never: "Never diagnose the knee. They said stairs. Start at the foot."
+    },
+    stiff: {
+      title: "Stiff, swollen joints",
+      familyLead: "maintainer",
+      helps: "Flexible pairs \u2014 Diamond, Hug, Flex, TSS. They will not cure arthritis. They make moving less of a chore. Max is usually too much on a sensitive joint.",
+      never: "Never diagnose arthritis. They said stiff and swollen. Soften the pair."
+    },
+    ankle: {
+      title: "Ankle feels loose",
+      familyLead: "maintainer",
+      helps: "Deluxe is the named pair \u2014 deep heel cup, no metatarsal, customers feel it quickly. Hug or Miracle Flex when they still need give. Golf leftover can stay in Deluxe. Court leftover cannot.",
+      never: "Never diagnose ankle instability. They said it feels loose. Give it a cup or a hold."
+    }
+  };
+  var LIFESTYLE_META = {
+    gym: {
+      activityId: "p-gym",
+      family: "sports-maintainer",
+      coach: "You work out in a Maintainer. Never a Strengthener in the gym shoes."
+    },
+    run: {
+      activityId: "p-run",
+      family: "sports-maintainer",
+      coach: "Running is a Maintainer. Heel cups don't run. Miracle Flex is the pair the deck names out loud."
+    },
+    court: {
+      activityId: "p-sport",
+      family: "sports-maintainer",
+      coach: "Court wants side-to-side. Flat heel platform. Not Deluxe. Not a Strengthener."
+    },
+    golf: {
+      activityId: "p-golf",
+      family: "second-strengthener",
+      coach: "Golf wants a heel counter \u2014 Strengthener, Deluxe, Deluxe Plus, Skinny. A flex Sports pair is blank."
+    },
+    hunt: {
+      activityId: "p-hunt",
+      family: "sports-maintainer",
+      coach: "Hunting is a Sports leftover. Deluxe yes. Deluxe Plus no \u2014 tighter than Deluxe."
+    },
+    hike: {
+      activityId: "p-hike",
+      family: "sports-maintainer",
+      coach: "Trail leftover is a Maintainer. Mid-Flex is blank on hiking. Deluxe Plus is blank."
+    },
+    stand: {
+      activityId: "w-hard",
+      family: "second-strengthener",
+      coach: "Standing on hard ground wants the workhorse. If the leftover is a second standing boot, that's a 2nd Strengthener."
+    },
+    dress: {
+      activityId: "s-dress",
+      family: "dress-maintainer",
+      coach: "SLS is the only Strengthener that fits dress. Heels and loafers usually take Slimline Maintainers or Skinny."
+    },
+    house: {
+      activityId: "s-slip",
+      family: "second-relaxer",
+      coach: "The house pair is the no-excuse pair. Flex Relaxer, Skinny, SLR. Little to no adjustment."
+    },
+    travel: {
+      activityId: "s-ath",
+      family: "second-everyday",
+      coach: "The bag cannot swap at 5 a.m. 2nd Everyday \u2014 Flex, Ultra, Mid-Flex, TSS."
+    }
+  };
+  var SHOE_ACTIVITY = {
+    athletic: "s-ath",
+    dress: "s-dress",
+    heels: "s-heel",
+    flats: "s-flat",
+    work: "s-work",
+    boots: "s-boot",
+    slippers: "s-slip",
+    sandals: "s-sand"
+  };
+  var MET = [
+    "max",
+    "honeycomb",
+    "classic",
+    "sls",
+    "diamond",
+    "hug",
+    "miracle-flex",
+    "slr"
+  ];
+  var CUP = [
+    "max",
+    "honeycomb",
+    "classic",
+    "sls",
+    "diamond",
+    "hug",
+    "deluxe",
+    "deluxe-plus",
+    "skinny"
+  ];
+  var FLEXIBLE = [
+    "diamond",
+    "hug",
+    "flex",
+    "tss",
+    "flex-relaxer",
+    "slr"
+  ];
+  var FIRM = ["max", "honeycomb", "ultra", "classic", "miracle-flex"];
+  var SLIM = ["sls", "slm", "slr", "skinny", "flex", "tss"];
+  var WIDE = ["slm", "slr", "deluxe", "hug"];
+  var HIGH_ARCH = ["max", "honeycomb", "miracle-flex", "classic"];
+  var FLAT_FOOT = ["diamond", "hug", "flex", "deluxe", "slm"];
+  var FLAT_HEEL = [
+    "ultra",
+    "miracle-flex",
+    "slm",
+    "mid-flex",
+    "flex",
+    "tss",
+    "flex-relaxer",
+    "slr"
+  ];
+  var SPORT_LIFE = /* @__PURE__ */ new Set(["gym", "run", "court"]);
+  function has(list, id) {
+    return list.includes(id);
+  }
+  var EMPTY = {
+    ready: false,
+    family: null,
+    familyWhy: "",
+    picks: [],
+    flags: [],
+    help: null,
+    talk: "Tap what they said. Karen starts talking when you name a leftover or a pain.",
+    sizing: [],
+    wear: null
+  };
+  function painWhy(id, input) {
+    const bits = [];
+    const leftover = input.leftover;
+    for (const p of input.pains) {
+      if (p === "ball" || p === "pebble" || p === "claw" || p === "big-toe") {
+        if (id === "classic") bits.push("Classic is the named pair when the ball, the toes, or the big-toe joint is talking.");
+        else if (has(MET, id)) bits.push("Metatarsal rise sits behind the ball and spreads that pressure.");
+        else if (id === "deluxe" || id === "deluxe-plus")
+          bits.push("Deluxe has no metatarsal rise \u2014 not the first pull when the ball is the story.");
+      }
+      if ((p === "heel-morning" || p === "heel-stab") && leftover && !SPORT_LIFE.has(leftover) && has(CUP, id)) {
+        bits.push("Heel and fascia want lift and a cup \u2014 not a blank flex Sports pair.");
+      }
+      if ((p === "heel-morning" || p === "heel-stab") && leftover && SPORT_LIFE.has(leftover) && has(FLAT_HEEL, id)) {
+        bits.push("The leftover is the workout. Sports Maintainer holds the fascia story in a flat-heel pair.");
+      }
+      if (p === "fallen" && has(FLAT_FOOT, id)) bits.push("Flatter foot: give it structure it can actually tolerate.");
+      if (p === "high" && has(HIGH_ARCH, id)) bits.push("High arch and pronounced pressure \u2014 this is the firm end.");
+      if (p === "roll" && SKUS[id].family === "strengthener")
+        bits.push("Strengthener holds the inner longitudinal so the foot does not keep rolling in.");
+      if (p === "ankle" && (id === "deluxe" || id === "deluxe-plus"))
+        bits.push("Deluxe is the named pair for a loose ankle \u2014 deep cup, customers feel it quickly.");
+      if (p === "tingle" || p === "stiff") {
+        if (has(FLEXIBLE, id)) bits.push("Sensitive or stiff joints want give, not Max.");
+      }
+      if (p === "shin" && (id === "miracle-flex" || id === "ultra" || id === "flex"))
+        bits.push("If the leftover is the run, this is the Sports Maintainer \u2014 not a Strengthener.");
+      if ((p === "chain" || p === "knee" || p === "achilles") && has(CUP, id))
+        bits.push("Heel cup is the alignment story up the chain.");
+    }
+    return bits;
+  }
+  function scoreSku(id, input) {
+    let score = 4;
+    const sku = SKUS[id];
+    if (input.leftover) {
+      const act = LIFESTYLE_META[input.leftover].activityId;
+      if (!skuMarked(act, id)) return { score: -1e3, veto: `${sku.short} is blank on ${LIFESTYLES.find((l) => l.id === input.leftover).label}.` };
+      score += 36;
+    }
+    if (input.shoe) {
+      const act = SHOE_ACTIVITY[input.shoe];
+      if (!skuMarked(act, id)) return { score: -1e3, veto: `${sku.short} is blank in ${SHOES.find((s) => s.id === input.shoe).label}.` };
+      score += 14;
+    }
+    for (const p of input.pains) {
+      if (p === "ball" || p === "pebble" || p === "claw" || p === "big-toe") {
+        if (id === "classic") score += 24;
+        else if (has(MET, id)) score += 12;
+        if (id === "deluxe" || id === "deluxe-plus") score -= 16;
+      }
+      if (p === "heel-morning" || p === "heel-stab") {
+        if (sku.family === "strengthener") score += 14;
+        if (has(CUP, id)) score += 8;
+        if (id === "classic") score += 6;
+      }
+      if (p === "fallen") {
+        if (has(FLAT_FOOT, id)) score += 16;
+        if (id === "max") score -= 22;
+        if (id === "honeycomb") score -= 12;
+      }
+      if (p === "high") {
+        if (has(HIGH_ARCH, id)) score += 18;
+        if (id === "flex" || id === "diamond") score -= 8;
+      }
+      if (p === "roll" && sku.family === "strengthener") score += 16;
+      if (p === "roll" && id === "ultra") score += 8;
+      if (p === "achilles" && has(CUP, id)) score += 12;
+      if (p === "shin") {
+        if (id === "miracle-flex") score += 16;
+        if (sku.family === "maintainer") score += 8;
+      }
+      if (p === "tingle" || p === "stiff") {
+        if (has(FLEXIBLE, id)) score += 16;
+        if (id === "max" || id === "honeycomb") score -= 14;
+      }
+      if (p === "ankle") {
+        if (id === "deluxe" || id === "deluxe-plus") score += 22;
+        if (id === "hug" || id === "miracle-flex") score += 8;
+      }
+      if (p === "chain" || p === "knee") {
+        if (has(CUP, id)) score += 12;
+        if (sku.family === "strengthener") score += 6;
+      }
+    }
+    if (input.arch === "high") {
+      if (has(HIGH_ARCH, id)) score += 16;
+      if (id === "flex" || id === "diamond" || id === "deluxe") score -= 8;
+    }
+    if (input.arch === "average") {
+      if (id === "classic" || id === "hug" || id === "mid-flex") score += 12;
+    }
+    if (input.arch === "flat") {
+      if (has(FLAT_FOOT, id)) score += 16;
+      if (id === "max") score -= 20;
+      if (id === "honeycomb") score -= 10;
+    }
+    if (input.feel === "sensitive") {
+      if (has(FLEXIBLE, id)) score += 14;
+      if (id === "max" || id === "honeycomb") score -= 16;
+    }
+    if (input.feel === "firm" && has(FIRM, id)) score += 10;
+    if (input.volume === "tight") {
+      if (has(SLIM, id)) score += 16;
+      if (id === "max" || id === "classic" || id === "honeycomb" || id === "deluxe") score -= 12;
+    }
+    if (input.volume === "wide" && has(WIDE, id)) score += 14;
+    if (input.volume === "slender") {
+      if (id === "skinny") score += 20;
+      if (id === "sls") score += 8;
+    }
+    if (input.narrow && sku.narrow) score += 10;
+    if (input.leftover === "golf" && has(CUP, id)) score += 8;
+    if (input.leftover && SPORT_LIFE.has(input.leftover)) {
+      if (has(FLAT_HEEL, id)) score += 14;
+      if (id === "deluxe" || id === "deluxe-plus" || id === "skinny") score -= 28;
+    }
+    if ((input.leftover === "gym" || input.leftover === "run" || input.leftover === "court") && sku.family === "maintainer")
+      score += 8;
+    if (input.leftover === "run" && id === "miracle-flex") score += 10;
+    if (input.leftover === "dress" && (id === "sls" || id === "slm" || id === "skinny")) score += 10;
+    if (input.shoe === "sandals" && (id === "miracle-flex" || id === "flex-relaxer" || id === "flex")) score += 8;
+    if (input.shoe === "slippers" && id === "flex-relaxer") score += 12;
+    if ((input.shoe === "work" || input.leftover === "stand") && (id === "max" || id === "honeycomb" || id === "classic" || id === "hug"))
+      score += 8;
+    return { score, veto: null };
+  }
+  function pickWhy(id, input) {
+    const sku = SKUS[id];
+    const parts = painWhy(id, input);
+    if (input.leftover) {
+      const meta = LIFESTYLE_META[input.leftover];
+      if (skuMarked(meta.activityId, id)) parts.unshift(meta.coach);
+    }
+    if (input.arch === "high" && has(HIGH_ARCH, id)) parts.push("Built for a high arch.");
+    if (input.arch === "flat" && has(FLAT_FOOT, id)) parts.push("Tolerable on a flatter foot.");
+    if (input.volume === "tight" && has(SLIM, id)) parts.push("The leftover shoe is tight \u2014 Slimline volume.");
+    if (input.volume === "wide" && has(WIDE, id)) parts.push("Wider platform.");
+    if (input.volume === "slender" && id === "skinny") parts.push("Skinny is the slender-foot / golf Relaxer.");
+    if (input.feel === "sensitive" && has(FLEXIBLE, id)) parts.push("Flexible polymer for a sensitive foot.");
+    parts.push(sku.bestFor + ".");
+    const uniq = [];
+    for (const p of parts) if (!uniq.includes(p)) uniq.push(p);
+    return uniq.slice(0, 3).join(" ");
+  }
+  function buildTalk(input, family, top) {
+    const they = [];
+    for (const p of input.pains) they.push(PAINS.find((x) => x.id === p).they);
+    if (input.leftover) they.push(LIFESTYLES.find((x) => x.id === input.leftover).they);
+    if (input.shoe) they.push(`the leftover shoe is ${SHOES.find((x) => x.id === input.shoe).they}`);
+    if (input.arch) they.push(ARCHES.find((x) => x.id === input.arch).they);
+    const heard = they.slice(0, 3).join(", ");
+    if (!top || !family) {
+      return heard ? `They said ${heard}. Find the empty shoe before you lock the SKU.` : EMPTY.talk;
+    }
+    const fam = SUPPORTS[family];
+    const sku = SKUS[top.id];
+    if (sku.family === "strengthener" && family !== "second-strengthener") {
+      return `They said ${heard}. First pull: ${sku.name} \u2014 the Strengthener that still fits that leftover shoe. If the 3-system already owns the Strengthener, the 4th is a ${fam.name}.`;
+    }
+    return `They said ${heard}. That's a ${fam.name}. First pull: ${sku.name}. ${fam.blurb.split(". ").slice(0, 2).join(". ")}.`;
+  }
+  function sizingNotes(input) {
+    const notes = [
+      "Size to arch length on the Brannock, not shoe size. Use the chart. Match Maintainers and Relaxers to the Strengthener size.",
+      "There is a right size. There is no perfect rigidity \u2014 no Honeycomb clients or Diamond clients."
+    ];
+    if (input.arch === "flat")
+      notes.push("If you're between sizes, start shorter. Flat feet can shorten as the arch is raised.");
+    if (input.arch === "high")
+      notes.push("If you're between sizes, start longer. High arches can lengthen as they relax.");
+    if (input.volume === "tight" || input.leftover === "dress" || input.shoe === "dress")
+      notes.push("SLS runs one size longer than it is labeled. Don't assume the number matches Classic.");
+    if (input.narrow) notes.push("Narrows run shorter than the same number in wide. Use the chart, not the stamp.");
+    notes.push("Fit the right size from day one. Wrong size is why 'other inserts never worked.'");
+    return notes;
+  }
+  function wearNote(picks) {
+    const top = picks[0];
+    if (!top) return null;
+    const fam = SKUS[top.id].family;
+    if (fam === "strengthener")
+      return "Strengthener wear: start up to 30 minutes. Build from there. Listen to the body. Mild pressure is the workout talking.";
+    if (fam === "maintainer")
+      return "Maintainer wear: a few hours, then all day after they settle. This is the leftover-shoe pair, not another Strengthener workout.";
+    return "Relaxer wear: anytime. Little to no adjustment. The no-excuse pair so they never go bare.";
+  }
+  function recommendWwkd(input) {
+    const hasSignal = input.pains.length > 0 || input.leftover || input.shoe || input.arch;
+    if (!hasSignal) return EMPTY;
+    const flags = [WWKD_DISCLAIMER];
+    if (input.leftover === "gym" || input.leftover === "run" || input.leftover === "court")
+      flags.push("You do not work out in a Strengthener. Heel cups don't do impact sports.");
+    if (input.leftover === "golf") flags.push("Golf is not court. A flex Sports Maintainer is blank.");
+    if (input.leftover === "dress" || input.shoe === "dress" || input.shoe === "heels")
+      flags.push("SLS is the only Strengthener in dress. Heels take slim Maintainers and Relaxers.");
+    if (input.pains.length) flags.push("Use their words. Never put a condition name in their mouth.");
+    const scored = SKU_ORDER.map((id) => {
+      const { score, veto } = scoreSku(id, input);
+      return { id, score, veto };
+    }).filter((s) => s.score > 0 && !s.veto);
+    scored.sort((a, b) => b.score - a.score);
+    const picks = scored.slice(0, 3).map((s) => ({
+      id: s.id,
+      score: s.score,
+      why: pickWhy(s.id, input),
+      caution: SKUS[s.id].caution
+    }));
+    const family = input.leftover ? LIFESTYLE_META[input.leftover].family : null;
+    const familyWhy = input.leftover ? LIFESTYLE_META[input.leftover].coach : "Find the empty shoe. The leftover is the 4th \u2014 not a 4-pack.";
+    const pain0 = input.pains[0];
+    const help = pain0 ? {
+      title: PAIN_HELP[pain0].title,
+      theySaid: PAINS.find((p) => p.id === pain0).they,
+      helps: PAIN_HELP[pain0].helps,
+      never: PAIN_HELP[pain0].never
+    } : null;
+    return {
+      ready: true,
+      family,
+      familyWhy,
+      picks,
+      flags,
+      help,
+      talk: buildTalk(input, family, picks[0]),
+      sizing: sizingNotes(input),
+      wear: wearNote(picks)
+    };
+  }
+  var KAREN_BELIEFS = [
+    {
+      title: "We do not diagnose or prescribe",
+      body: "Diagnosing is naming a condition. Prescribing is saying these will correct it. We are retail Arch Support Specialists. We fit. We explain what the support is designed to do."
+    },
+    {
+      title: "Right size. Not a favorite SKU.",
+      body: "There is a correct size. There is no perfect rigidity. Individuals may have a comfort preference. There are no Honeycomb clients or Diamond clients."
+    },
+    {
+      title: "Between sizes",
+      body: "Flatter foot \u2192 the shorter size. Higher arch \u2192 the longer size. You may go one up or one down \u2014 never both. That's a red flag."
+    },
+    {
+      title: "Chart, then eyes, then balance",
+      body: "Measure the arch. Use the sizing chart. Confirm visually \u2014 on a Strengthener it's the mound, not the lip. Then the balance technique."
+    },
+    {
+      title: "SLS and Narrows lie about their number",
+      body: "SLS runs one size longer than labeled. Narrows run shorter. Don't assume a 458 is a 458. Use the chart."
+    },
+    {
+      title: "Match the system",
+      body: "Size the Strengthener first. Match Maintainer and Relaxer to it. Mismatched families leaving the store is a red flag."
+    }
+  ];
   return __toCommonJS(quad_api_exports);
 })();
+
 
 var THE4TH = (() => {
   var __defProp = Object.defineProperty;
@@ -3191,6 +3741,54 @@ var THE4TH = (() => {
       { kicker: "Never this · 90s", title: "Never this" }
     );
   }
+  function emptyWwkd() {
+    return { pains: [], leftover: null, shoe: null, arch: null, feel: null, volume: null, narrow: false };
+  }
+  function viewWwkd() {
+    if (!state.wwkd) state.wwkd = emptyWwkd();
+    var input = state.wwkd;
+    var r = T4.recommendWwkd(input);
+    function row(list, key, multi) {
+      return '<div class="chip-row">' + list.map(function (c) {
+        var on = multi ? input[key].indexOf(c.id) >= 0 : key === "narrow" ? input.narrow : input[key] === c.id;
+        return '<button type="button" class="chip-btn' + (on ? " on" : "") + '" data-act="wwkd-tap" data-key="' + key + '" data-id="' + c.id + '">' + esc(c.label) + "</button>";
+      }).join("") + "</div>";
+    }
+    var picks = r.picks.map(function (p, i) {
+      var sku = T4.SKUS[p.id];
+      return (
+        '<div class="wwkd-sku"><img src="' + asset(sku.image) + '" alt=""><div>' +
+        '<p class="mini teal">' + (i === 0 ? "First pull · " : "") + esc(sku.family) + "</p>" +
+        "<h3>" + esc(sku.name) + "</h3><p class=\"muted\">" + esc(sku.firmness) + "</p>" +
+        '<p class="body">' + esc(p.why) + "</p>" +
+        (p.caution ? '<p class="mini miss">' + esc(p.caution) + "</p>" : "") +
+        "</div></div>"
+      );
+    }).join("");
+    var fam = r.family && T4.SUPPORTS[r.family];
+    var body =
+      '<p class="warn-banner">' + esc(T4.WWKD_DISCLAIMER) + "</p>" +
+      "<h1>What Would Karen Do</h1>" +
+      '<p class="muted">Tap the pain they named, the leftover life, the leftover shoe, and the foot in front of you. Never diagnose.</p>' +
+      '<div class="panel"><p class="mini teal">Karen\'s picks</p><p>' + esc(r.talk) + "</p></div>" +
+      (fam
+        ? '<div class="panel"><p class="mini teal">The 4th</p><h2>' + esc(fam.name) + "</h2><p class=\"muted\">" + esc(r.familyWhy) + "</p></div>"
+        : "") +
+      '<div class="wwkd-picks">' + (picks || '<p class="muted">Name a leftover or a pain and the SKUs land here.</p>') + "</div>" +
+      (r.help
+        ? '<div class="panel"><p class="mini teal">How it helps</p><h3>' + esc(r.help.title) + "</h3><p>" + esc(r.help.helps) + '</p><p class="mini miss">' + esc(r.help.never) + "</p></div>"
+        : "") +
+      "<h2>Pain</h2>" + row(T4.PAINS, "pains", true) +
+      "<h2>Leftover life</h2>" + row(T4.LIFESTYLES, "leftover", false) +
+      "<h2>Leftover shoe</h2>" + row(T4.SHOES, "shoe", false) +
+      "<h2>Arch, feel, volume</h2>" +
+      row(T4.ARCHES, "arch", false) +
+      row(T4.FEELS, "feel", false) +
+      row(T4.VOLUMES, "volume", false) +
+      row([{ id: "narrow", label: "Narrow available" }], "narrow", false) +
+      '<div class="navrow">' + btn("Clear the board", "wwkd-clear", "ghost") + btn("Open the R5 chart", "catalog", "cream grow") + "</div>";
+    return shell(body, { kicker: "W.W.K.D.", title: "What Would Karen Do" });
+  }
   function goHome() {
     state.view = "home";
     render();
@@ -3501,6 +4099,15 @@ var THE4TH = (() => {
         "</header>" +
         '<section class="modes">' +
           card(
+            "layers",
+            "Floor tool · never diagnose",
+            "W.W.K.D.",
+            "Pain. Leftover life. Shoes. Foot. Tap what they said and Karen's picks pop — family, SKU, the words to use.",
+            "Ask Karen",
+            "wwkd",
+            true,
+          ) +
+          card(
             "book",
             state.frameworkDone ? "Reviewed" : "Start here",
             "The framework",
@@ -3523,7 +4130,6 @@ var THE4TH = (() => {
             "Choose the 4th, name the SKU, then build PLACE from their words. Debrief after every pair.",
             "Walk the floor",
             "floor",
-            true,
           ) +
           card(
             "quote",
@@ -4437,6 +5043,7 @@ var THE4TH = (() => {
     else if (state.view === "exam") {
       html = !state.examActive && state.examLog.length ? viewExamReport() : viewRound(true);
     } else if (state.view === "never") html = viewNever();
+    else if (state.view === "wwkd") html = viewWwkd();
     app.innerHTML = html;
     var key =
       state.view +
@@ -4469,6 +5076,30 @@ var THE4TH = (() => {
     var id = t.getAttribute("data-id");
     if (t.disabled) return;
     if (act === "home") goHome();
+    else if (act === "wwkd") {
+      state.view = "wwkd";
+      if (!state.wwkd) state.wwkd = emptyWwkd();
+      render();
+    } else if (act === "wwkd-clear") {
+      state.wwkd = emptyWwkd();
+      render();
+    } else if (act === "wwkd-tap") {
+      if (!state.wwkd) state.wwkd = emptyWwkd();
+      var key = t.getAttribute("data-key");
+      if (key === "pains") {
+        var ix = state.wwkd.pains.indexOf(id);
+        if (ix >= 0) state.wwkd.pains.splice(ix, 1);
+        else {
+          if (state.wwkd.pains.length >= 3) state.wwkd.pains.shift();
+          state.wwkd.pains.push(id);
+        }
+      } else if (key === "narrow") {
+        state.wwkd.narrow = !state.wwkd.narrow;
+      } else {
+        state.wwkd[key] = state.wwkd[key] === id ? null : id;
+      }
+      render();
+    }
     else if (act === "framework") startFramework();
     else if (act === "catalog") startCatalog();
     else if (act === "floor") startFloor();
