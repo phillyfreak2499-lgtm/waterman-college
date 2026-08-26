@@ -1,0 +1,891 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>Flash SKU — Waterman College</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,500;1,9..144,600&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<script src="/games/quad-bridge.js"></script>
+<style>
+:root{
+  --navy:#0f1c28; --ink:#1a2a36; --teal:#2a9b8f; --teal-deep:#1e746b;
+  --cream:#f3ede3; --gold:#e8b423; --paper:#f7f3ec;
+  --good:#2f7d57; --miss:#9b3b32;
+  --muted:#9aa7b0; --surface:#173041; --border:rgba(243,237,227,.14);
+  --display:"Fraunces","Iowan Old Style",Palatino,Georgia,serif;
+  --sans:"Outfit","Segoe UI",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--navy);color:var(--cream);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer;border:none;background:none}
+button:disabled{opacity:.45;cursor:default}
+img{display:block;max-width:100%}
+h1,h2{font-family:var(--display);letter-spacing:-.03em;line-height:1.15;margin:0;font-weight:500}
+p{margin:0}
+.page{max-width:40rem;margin:0 auto;padding:1.1rem 1rem 3.5rem}
+.top{display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin-bottom:1rem}
+.kicker{font-size:.7rem;font-weight:500;letter-spacing:.18em;text-transform:uppercase;color:var(--teal)}
+.muted{color:var(--muted);font-size:.9rem;line-height:1.55}
+.display{font-style:italic;font-size:clamp(2.4rem,8vw,3.6rem)}
+.hero-shot{overflow:hidden;border-radius:28px;border:1px solid var(--border);background:var(--gold);margin-bottom:1.25rem}
+.hero-shot img{width:100%;aspect-ratio:16/9;object-fit:cover;object-position:center 35%}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;min-height:52px;padding:0 1.15rem;border-radius:16px;font-weight:600}
+.btn.cream{background:var(--cream);color:var(--ink)}
+.btn.ghost{border:1px solid var(--border);color:var(--cream)}
+.row{display:flex;flex-direction:column;gap:.5rem;margin-top:1rem}
+@media(min-width:640px){.row{flex-direction:row}.row .btn{flex:1}}
+.tips{margin:1.25rem 0 0;padding:0;list-style:none;display:grid;gap:.65rem}
+.tips li{color:var(--muted);font-size:.9rem;line-height:1.5;border-left:2px solid rgba(42,155,143,.7);padding-left:.85rem}
+.hud{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem}
+.time{font-family:var(--display);font-size:2.4rem;font-variant-numeric:tabular-nums}
+.bar{height:4px;border-radius:999px;background:var(--surface);overflow:hidden;margin:.75rem 0 1rem}
+.bar>i{display:block;height:100%;background:var(--teal);width:0}
+.paper{overflow:hidden;border-radius:28px;border:1px solid var(--border);background:var(--paper);position:relative}
+.paper img{height:12rem;width:100%;object-fit:contain}
+@media(min-width:640px){.paper img{height:14rem}}
+.chip{position:absolute;left:.75rem;top:.75rem;border-radius:999px;background:rgba(15,28,40,.85);padding:.35rem .75rem;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase}
+.banner{position:absolute;inset:auto 0 0 0;padding:.75rem 1rem;color:var(--cream)}
+.banner.ok{background:rgba(47,125,87,.92)}
+.banner.no{background:rgba(155,59,50,.92)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.75rem}
+.choice{min-height:3.5rem;border-radius:16px;border:1px solid var(--border);background:var(--surface);padding:.7rem .8rem;text-align:left}
+.choice .fam{display:block;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.choice.on{border-color:var(--good);background:rgba(47,125,87,.2)}
+.choice.miss{border-color:var(--miss);background:rgba(155,59,50,.2)}
+.choice.dim{opacity:.5}
+.sku-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+@media(min-width:640px){.sku-grid{grid-template-columns:1fr 1fr 1fr}}
+.sku-card{overflow:hidden;border-radius:20px;border:1px solid var(--border);background:var(--surface);text-align:left}
+.sku-card .ph{background:var(--paper)}
+.sku-card img{height:7rem;width:100%;object-fit:contain}
+.sku-card .pad{padding:.55rem .7rem}
+.detail{margin-top:1rem;border-radius:24px;background:var(--cream);color:var(--ink);padding:1rem 1.1rem}
+.stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem}
+.stat{border-radius:20px;background:var(--surface);padding:.75rem}
+.stat b{display:block;font-family:var(--display);font-size:1.6rem;font-variant-numeric:tabular-nums;margin-top:.2rem}
+.miss-row{display:flex;gap:.75rem;align-items:center;border-radius:18px;background:var(--surface);padding:.55rem .7rem;margin:.45rem 0}
+.miss-row img{height:3.4rem;width:4.6rem;object-fit:contain;background:var(--paper);border-radius:10px}
+.back{min-height:44px;color:var(--muted)}
+.back:hover{color:var(--cream)}
+</style>
+</head>
+<body>
+<div id="app" class="page"></div>
+<script>
+"use strict";
+var FLASH = (() => {
+  var __defProp = Object.defineProperty;
+  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+  var __getOwnPropNames = Object.getOwnPropertyNames;
+  var __hasOwnProp = Object.prototype.hasOwnProperty;
+  var __export = (target, all) => {
+    for (var name in all)
+      __defProp(target, name, { get: all[name], enumerable: true });
+  };
+  var __copyProps = (to, from, except, desc) => {
+    if (from && typeof from === "object" || typeof from === "function") {
+      for (let key of __getOwnPropNames(from))
+        if (!__hasOwnProp.call(to, key) && key !== except)
+          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+    }
+    return to;
+  };
+  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+  // src/lib/flash-sku.ts
+  var flash_sku_exports = {};
+  __export(flash_sku_exports, {
+    FAMILY: () => FAMILY,
+    FLASH_CHOICES: () => FLASH_CHOICES,
+    FLASH_LOCK_MS: () => FLASH_LOCK_MS,
+    FLASH_SECONDS: () => FLASH_SECONDS,
+    FLASH_TELLS: () => FLASH_TELLS,
+    SKUS: () => SKUS,
+    SKU_ORDER: () => SKU_ORDER,
+    dealFlashChoices: () => dealFlashChoices,
+    dealFlashOrder: () => dealFlashOrder,
+    familyName: () => familyName,
+    flashTell: () => flashTell,
+    gradeFlash: () => gradeFlash,
+    pointsForHit: () => pointsForHit
+  });
+
+  // src/lib/catalog.ts
+  var FAMILY = {
+    strengthener: {
+      name: "Strengthener",
+      plural: "Strengtheners",
+      image: "/supports/catalog/family-strengthener.jpg",
+      pitch: "The workhorse. Repositions the foot and supports all four arches.",
+      bullets: [
+        "Exercises muscles, tendons, and ligaments \u2014 longest adjustment period",
+        "Metatarsal rise sits behind the ball of the foot and keeps plantar fascia stretched",
+        "Deep heel counter stabilizes the foot and redistributes pressure",
+        "Heel cup gathers the fat pad \u2014 great for standing and golf, not for running",
+        "Most flexible (Diamond, Hug) for sensitive, diabetic, or arthritic feet",
+        "Ground Force is the SLS positioned for golf \u2014 slim enough for a low-profile golf shoe"
+      ]
+    },
+    maintainer: {
+      name: "Maintainer",
+      plural: "Maintainers",
+      image: "/supports/catalog/family-maintainer.jpg",
+      pitch: "Holds the alignment the Strengthener built, in shoes a Strengthener will not fit.",
+      bullets: [
+        "Lower arch, little or no metatarsal rise, thinner profile",
+        "Flat heel platform = side-to-side mobility for court, run, gym",
+        "Deluxe / Deluxe Plus are the exception: rigid, no metatarsal, deep heel cup",
+        "Inner longitudinal support is the pronation story",
+        "Firmer for high arches, more flexible for lower arches"
+      ]
+    },
+    relaxer: {
+      name: "Relaxer",
+      plural: "Relaxers",
+      image: "/supports/catalog/family-relaxer.jpg",
+      pitch: "The rest step. Enough support that they never go bare.",
+      bullets: [
+        "Thinnest. Little to no adjustment. Fits almost any shoe",
+        "No metatarsal rise except SLR \u2014 SLR is the wider-foot athletic start",
+        "Flat heel platform, except Skinny (slight heel counter)",
+        "Worn last every day \u2014 slippers, sandals, dress, recovery",
+        "Perfect to start athletic activity in until the foot is ready for a Maintainer"
+      ]
+    }
+  };
+  var SKUS = {
+    max: {
+      id: "max",
+      name: "Max",
+      short: "Max",
+      family: "strengthener",
+      image: "/supports/catalog/max.jpg",
+      firmness: "Most firm Strengthener",
+      bestFor: "High arches and pronounced pressure areas",
+      bullets: [
+        "More pressure relief than Honeycomb",
+        "Standing, golf, work boots. Chart marks weightlifting as a standing load \u2014 not gym or CrossFit.",
+        "Available in Narrow"
+      ],
+      caution: "May not suit feet that are very stiff or very flat.",
+      narrow: true
+    },
+    honeycomb: {
+      id: "honeycomb",
+      name: "Honeycomb",
+      short: "Honeycomb",
+      family: "strengthener",
+      image: "/supports/catalog/honeycomb.jpg",
+      firmness: "More rigid than Classic and Diamond",
+      bestFor: "Higher arches, more pronounced pressure",
+      bullets: [
+        "Heel cup, stabilizer, and metatarsal rise",
+        "Little side-to-side flexion \u2014 rigid through the whole foot",
+        "Standing, golf. Chart marks weightlifting as a standing load \u2014 not gym or CrossFit."
+      ],
+      caution: "Not available in narrow sizes."
+    },
+    classic: {
+      id: "classic",
+      name: "Classic",
+      short: "Classic",
+      family: "strengthener",
+      image: "/supports/catalog/classic.jpg",
+      firmness: "The standard Strengthener",
+      bestFor: "Most popular \u2014 the core pair for most 3-systems",
+      bullets: [
+        "Metatarsal arch support that helps take pressure off the heel and the ball",
+        "Stabilizes the entire foot",
+        "Talk track: metatarsalgia, Morton's neuroma, hammer toes, bunions",
+        "Available in Narrow"
+      ],
+      narrow: true
+    },
+    sls: {
+      id: "sls",
+      name: "Slimline Strengthener",
+      short: "SLS",
+      family: "strengthener",
+      image: "/supports/catalog/sls.jpg",
+      firmness: "Strengthener power, dress-shoe volume",
+      bestFor: "Tighter fitted shoes that still need a Strengthener",
+      bullets: [
+        "55% lighter and 5\xD7 thinner than Classic",
+        "Gait Enhancement Technology \u2014 patented S-shaped GeT on the sole",
+        "The Strengthener that actually fits dress shoes",
+        "On the course, this chassis is named Ground Force \u2014 same support, golf positioning"
+      ],
+      caution: "Not for climbing ladders."
+    },
+    "ground-force": {
+      id: "ground-force",
+      name: "Ground Force",
+      short: "Ground Force",
+      family: "strengthener",
+      image: "/supports/catalog/ground-force.jpg",
+      firmness: "Strengthener power, golf-shoe volume",
+      bestFor: "Low-profile golf shoes. The SLS, positioned for the course.",
+      bullets: [
+        "The Ground Force is the SLS: same proven support, positioned for the golf market.",
+        "55% lighter and 5\xD7 thinner than Classic. Fits tighter, low-profile golf shoes.",
+        "Gait Enhancement Technology \u2014 patented S-shaped GeT on the sole.",
+        "Talk comfort, fit, and stability on the course \u2014 how it feels to wear, not what it will do to the game."
+      ],
+      caution: "We do not carry the leather covering. Never claim swing, distance, handicap, or a number.",
+      tag: "Golf",
+      talk: {
+        say: [
+          "Designed for activities like walking a course or standing for extended periods.",
+          "Helps support your foot and promote stability, which matters throughout your swing.",
+          "Many golfers appreciate the added comfort during a full round.",
+          "Speak to how it feels to wear \u2014 not what it will do to their game."
+        ],
+        avoid: [
+          "Any claim of improved swing, more distance, or faster swing speed.",
+          "Lower handicap, better score, or any quantified outcome.",
+          "Saying it will fix or correct a swing flaw.",
+          "Framing comfort as a guaranteed performance result."
+        ]
+      }
+    },
+    diamond: {
+      id: "diamond",
+      name: "Diamond",
+      short: "Diamond",
+      family: "strengthener",
+      image: "/supports/catalog/diamond.jpg",
+      firmness: "Flexible Strengthener",
+      bestFor: "Flatter or more sensitive feet that still need a Strengthener",
+      bullets: [
+        "Classic shape with a diamond structure on the bottom \u2014 more side-to-side give",
+        "More flexible polymer than Classic",
+        "Available in Narrow"
+      ],
+      narrow: true
+    },
+    hug: {
+      id: "hug",
+      name: "Hug",
+      short: "Hug",
+      family: "strengthener",
+      image: "/supports/catalog/hug.jpg",
+      firmness: "Intermediate / flexible Strengthener",
+      bestFor: "The in-between Strengthener when Classic is too much",
+      bullets: [
+        "Great intermediate \u2014 flexible Strengthener",
+        "Golf, standing, work, shopping",
+        "When they need a Strengthener but Classic feels aggressive"
+      ]
+    },
+    ultra: {
+      id: "ultra",
+      name: "Ultra",
+      short: "Ultra",
+      family: "maintainer",
+      image: "/supports/catalog/ultra.jpg",
+      firmness: "More rigid than Miracle Flex",
+      bestFor: "Lower arches; support felt near the center of the inner longitudinal",
+      bullets: [
+        "Rougher texture than Miracle Flex",
+        "Running, hiking, hunting, court, gym",
+        "Good all-day Maintainer when they want a firmer hold"
+      ]
+    },
+    "miracle-flex": {
+      id: "miracle-flex",
+      name: "Miracle Flex",
+      short: "Miracle Flex",
+      family: "maintainer",
+      image: "/supports/catalog/miracle-flex.jpg",
+      firmness: "Most rigid in the Flex line",
+      bestFor: "Very high arches, unstable feet, and the sports 4th",
+      bullets: [
+        "Metatarsal ridge is not as pronounced as a Strengthener",
+        "Can be worn while running \u2014 the pair the deck names out loud",
+        "Sports 4th. Not golf \u2014 no heel counter. Golf wants the cup.",
+        "Open heels, sandals, tighter slip-ons"
+      ]
+    },
+    slm: {
+      id: "slm",
+      name: "Slimline Maintainer",
+      short: "SLM",
+      family: "maintainer",
+      image: "/supports/catalog/slm.jpg",
+      firmness: "Thin Maintainer, wider platform",
+      bestFor: "Wider feet, lower arches, dress and athletic",
+      bullets: [
+        "Thinner design with GeT and a wider width platform",
+        "Dress shoes, heels, running, hunting",
+        "The leftover dress shoe when volume is tight"
+      ]
+    },
+    "mid-flex": {
+      id: "mid-flex",
+      name: "Mid-Flex",
+      short: "Mid-Flex",
+      family: "maintainer",
+      image: "/supports/catalog/mid-flex.jpg",
+      firmness: "Mid-range flex",
+      bestFor: "Average arches and higher-impact play",
+      bullets: [
+        "Suits a lot of feet",
+        "Dress and open-toed shoes",
+        "Court, run, gym, hunting \u2014 not golf"
+      ]
+    },
+    flex: {
+      id: "flex",
+      name: "Flex",
+      short: "Flex",
+      family: "maintainer",
+      image: "/supports/catalog/flex.jpg",
+      firmness: "Flexible Maintainer",
+      bestFor: "Flatter feet and lightweight shoes",
+      bullets: [
+        "Flexible Maintainer \u2014 flatter feet, light shoes",
+        "Running, court, hunting, gym",
+        "Dress, heels, sandals. Everyday 4th in a second sneaker"
+      ]
+    },
+    deluxe: {
+      id: "deluxe",
+      name: "Deluxe",
+      short: "Deluxe",
+      family: "maintainer",
+      image: "/supports/catalog/deluxe.jpg",
+      firmness: "Rigid Maintainer \u2014 the heel-cup exception",
+      bestFor: "Flatter feet, wide feet, sensitive feet, ankle instability, golf",
+      bullets: [
+        "No metatarsal rise",
+        "Deep heel cup for stability \u2014 customers feel it quickly",
+        "Golf and standing yes. Running and court no."
+      ],
+      caution: "Can be difficult to fit in dress shoes. Heel cup is why it does not run."
+    },
+    "deluxe-plus": {
+      id: "deluxe-plus",
+      name: "Deluxe Plus",
+      short: "Deluxe Plus",
+      family: "maintainer",
+      image: "/supports/catalog/deluxe-plus.jpg",
+      firmness: "Deluxe family",
+      bestFor: "Same Deluxe idea \u2014 golf, standing, stability",
+      bullets: [
+        "Deep heel cup, no metatarsal",
+        "Golf yes. Hiking, hunting, gardening, and flats no \u2014 tighter than Deluxe"
+      ],
+      caution: "Not a running or court pair."
+    },
+    tss: {
+      id: "tss",
+      name: "TSS",
+      short: "TSS",
+      family: "maintainer",
+      image: "/supports/catalog/tss.jpg",
+      firmness: "Softer Maintainer",
+      bestFor: "The 'almost any shoe, almost any activity' Maintainer",
+      bullets: [
+        "Works with nearly every shoe",
+        "Running, court, hunting, gym, dress, heels",
+        "Not golf \u2014 no heel counter"
+      ]
+    },
+    "flex-relaxer": {
+      id: "flex-relaxer",
+      name: "Flex Relaxer",
+      short: "Flex Relaxer",
+      family: "relaxer",
+      image: "/supports/catalog/flex-relaxer.jpg",
+      firmness: "Classic Relaxer",
+      bestFor: "Heels, slippers, sandals \u2014 the no-excuse pair",
+      bullets: [
+        "Support without a metatarsal rise",
+        "Running and court yes. Golf no.",
+        "Little to no adjustment period"
+      ]
+    },
+    slr: {
+      id: "slr",
+      name: "Slimline Relaxer",
+      short: "SLR",
+      family: "relaxer",
+      image: "/supports/catalog/slr.jpg",
+      firmness: "The Relaxer that still supports all four arches",
+      bestFor: "Wider feet, and the first athletic step before a Maintainer",
+      bullets: [
+        "Mild metatarsal rise \u2014 the Relaxer exception",
+        "Slightly wider platform",
+        "Court, run, gym. Golf no."
+      ]
+    },
+    skinny: {
+      id: "skinny",
+      name: "Skinny",
+      short: "Skinny",
+      family: "relaxer",
+      image: "/supports/catalog/skinny.jpg",
+      firmness: "Low volume with a slight heel cup",
+      bestFor: "Slender feet, dress, heels, and golf",
+      bullets: [
+        "Lower longitudinal arch and a slight heel counter",
+        "The Relaxer the chart marks for golf",
+        "Can be worn during high-impact sports"
+      ]
+    }
+  };
+  var SKU_ORDER = [
+    "max",
+    "honeycomb",
+    "classic",
+    "sls",
+    "ground-force",
+    "diamond",
+    "hug",
+    "ultra",
+    "miracle-flex",
+    "slm",
+    "mid-flex",
+    "flex",
+    "deluxe",
+    "deluxe-plus",
+    "tss",
+    "flex-relaxer",
+    "slr",
+    "skinny"
+  ];
+
+  // src/lib/shuffle.ts
+  function hashSeed(input) {
+    let h = 2166136261;
+    for (let i = 0; i < input.length; i++) {
+      h ^= input.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  }
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return function next() {
+      a |= 0;
+      a = a + 1831565813 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function shuffleCopy(items, seed) {
+    const out = items.slice();
+    const rand = mulberry32(hashSeed(seed));
+    for (let i = out.length - 1; i > 0; i--) {
+      const j = Math.floor(rand() * (i + 1));
+      const tmp = out[i];
+      out[i] = out[j];
+      out[j] = tmp;
+    }
+    return out;
+  }
+
+  // src/lib/flash-sku.ts
+  var FLASH_SECONDS = 90;
+  var FLASH_CHOICES = 6;
+  var FLASH_LOCK_MS = 720;
+  var FLASH_TELLS = {
+    max: {
+      id: "max",
+      tell: "Black. Most firm Strengthener. High arch."
+    },
+    honeycomb: {
+      id: "honeycomb",
+      tell: "Amber honeycomb cells. Rigid. No narrow."
+    },
+    classic: {
+      id: "classic",
+      tell: "Beige waffle holes. The standard Strengthener."
+    },
+    sls: {
+      id: "sls",
+      leftover: "Dress leftover",
+      twins: ["ground-force"],
+      tell: "Black slim GeT. Dress Strengthener \u2014 same chassis as Ground Force."
+    },
+    "ground-force": {
+      id: "ground-force",
+      leftover: "Golf leftover",
+      twins: ["sls"],
+      tell: "SLS chassis, golf name. Comfort, fit, stability. Never swing or handicap."
+    },
+    diamond: {
+      id: "diamond",
+      tell: "Dark diamond underside. Flexible Strengthener."
+    },
+    hug: {
+      id: "hug",
+      tell: "Pale. Intermediate Strengthener when Classic is too much."
+    },
+    ultra: {
+      id: "ultra",
+      tell: "Beige, rougher than Miracle Flex. Flatter-foot Maintainer."
+    },
+    "miracle-flex": {
+      id: "miracle-flex",
+      tell: "Beige. Most rigid Flex. Sports 4th \u2014 not golf."
+    },
+    slm: {
+      id: "slm",
+      tell: "Black slim GeT. Wider Maintainer."
+    },
+    "mid-flex": {
+      id: "mid-flex",
+      tell: "Black pair. Mid-range flex. Not the two-tone Flex."
+    },
+    flex: {
+      id: "flex",
+      tell: "White top, tan underside. Flexible Maintainer."
+    },
+    deluxe: {
+      id: "deluxe",
+      leftover: "Deep cup \xB7 volume is there",
+      twins: ["deluxe-plus"],
+      tell: "Tan caramel. Deep heel cup. No metatarsal."
+    },
+    "deluxe-plus": {
+      id: "deluxe-plus",
+      leftover: "Same cup \xB7 tighter shoe",
+      twins: ["deluxe"],
+      tell: "Deluxe family. Tighter than Deluxe. Not hiking or hunting."
+    },
+    tss: {
+      id: "tss",
+      tell: "Beige holes. Almost any shoe. No heel counter."
+    },
+    "flex-relaxer": {
+      id: "flex-relaxer",
+      tell: "Tan Relaxer. No metatarsal."
+    },
+    slr: {
+      id: "slr",
+      tell: "Black slim GeT. Mild met \u2014 the Relaxer exception."
+    },
+    skinny: {
+      id: "skinny",
+      leftover: "Slight cup \xB7 golf Relaxer",
+      tell: "Camel. Slight heel cup. The Relaxer the chart marks for golf."
+    }
+  };
+  var LOOKALIKES = {
+    max: ["honeycomb", "mid-flex", "sls", "diamond"],
+    honeycomb: ["classic", "max", "ultra", "tss"],
+    classic: ["tss", "ultra", "honeycomb", "hug"],
+    sls: ["ground-force", "slm", "slr", "mid-flex"],
+    "ground-force": ["sls", "slm", "deluxe", "skinny"],
+    diamond: ["max", "hug", "classic", "honeycomb"],
+    hug: ["flex-relaxer", "deluxe", "skinny", "diamond"],
+    ultra: ["miracle-flex", "flex", "tss", "classic"],
+    "miracle-flex": ["ultra", "flex", "tss", "mid-flex"],
+    slm: ["sls", "slr", "mid-flex", "ground-force"],
+    "mid-flex": ["slm", "sls", "flex", "max"],
+    flex: ["flex-relaxer", "ultra", "miracle-flex", "mid-flex"],
+    deluxe: ["deluxe-plus", "skinny", "flex-relaxer", "hug"],
+    "deluxe-plus": ["deluxe", "skinny", "slm", "sls"],
+    tss: ["classic", "ultra", "miracle-flex", "flex"],
+    "flex-relaxer": ["flex", "skinny", "deluxe", "hug"],
+    slr: ["slm", "sls", "skinny", "flex-relaxer"],
+    skinny: ["deluxe", "flex-relaxer", "slr", "hug"]
+  };
+  function flashTell(id) {
+    return FLASH_TELLS[id];
+  }
+  function familyName(id) {
+    return FAMILY[SKUS[id].family].name;
+  }
+  function pointsForHit(streakBefore) {
+    return 100 + Math.min(Math.max(streakBefore, 0), 5) * 20;
+  }
+  function dealFlashOrder(seed) {
+    return shuffleCopy(SKU_ORDER, seed);
+  }
+  function dealFlashChoices(correct, seed) {
+    const twins = FLASH_TELLS[correct]?.twins ?? [];
+    const likes = (LOOKALIKES[correct] ?? []).filter(
+      (id) => id !== correct && !twins.includes(id)
+    );
+    const preferred = [...twins, ...likes];
+    const rest = SKU_ORDER.filter((id) => id !== correct && !preferred.includes(id));
+    const picks = [correct];
+    for (const id of [...preferred, ...shuffleCopy(rest, seed + "-r")]) {
+      if (picks.length >= FLASH_CHOICES) break;
+      if (!picks.includes(id)) picks.push(id);
+    }
+    return shuffleCopy(picks, seed + "-c");
+  }
+  function gradeFlash(log) {
+    const hits = log.filter((r) => r.correct).length;
+    const score = log.reduce((a, r) => a + r.pts, 0);
+    const asked = log.length;
+    return {
+      score,
+      hits,
+      asked,
+      accuracy: asked ? Math.round(hits / asked * 100) : 0,
+      missed: log.filter((r) => !r.correct).map((r) => r.id)
+    };
+  }
+  return __toCommonJS(flash_sku_exports);
+})();
+</script>
+<script>
+(function () {
+  "use strict";
+  var F = window.FLASH;
+  var SAVE = "flash-sku-best-v1";
+  var LOCK = 720;
+  var app = document.getElementById("app");
+  var state = {
+    mode: "intro",
+    seed: "boot",
+    index: 0,
+    left: F.FLASH_SECONDS,
+    log: [],
+    streak: 0,
+    pick: null,
+    study: null,
+    best: 0,
+    endAt: 0,
+  };
+  try {
+    state.best = Number(localStorage.getItem(SAVE) || 0) || 0;
+  } catch (e) {}
+
+  function asset(p) {
+    if (!p) return p;
+    if (p.indexOf("/supports/catalog/") === 0) return "/games/the-4th/catalog/" + p.slice(18);
+    if (p.indexOf("/supports/") === 0) return "/games/the-4th/family/" + p.slice(10);
+    return p;
+  }
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+  function grade() { return F.gradeFlash(state.log); }
+  function order() { return F.dealFlashOrder(state.seed); }
+  function current() {
+    var o = order();
+    return o[state.index % o.length];
+  }
+  function report(score) {
+    try {
+      if (window.QuadScore && typeof window.QuadScore.report === "function") window.QuadScore.report(score);
+    } catch (e) {}
+  }
+
+  var raf = 0;
+  function tick(now) {
+    if (state.mode !== "play") return;
+    state.left = Math.max(0, (state.endAt - now) / 1000);
+    if (state.left <= 0) {
+      finish();
+      return;
+    }
+    var el = document.getElementById("time");
+    var bar = document.getElementById("bar");
+    if (el) el.textContent = Math.ceil(state.left) + "s";
+    if (bar) bar.style.width = (state.left / F.FLASH_SECONDS) * 100 + "%";
+    raf = requestAnimationFrame(tick);
+  }
+
+  function start() {
+    state.seed = "flash-" + Date.now().toString(36);
+    state.index = 0;
+    state.log = [];
+    state.streak = 0;
+    state.pick = null;
+    state.left = F.FLASH_SECONDS;
+    state.endAt = performance.now() + F.FLASH_SECONDS * 1000;
+    state.mode = "play";
+    F.SKU_ORDER.forEach(function (id) {
+      var img = new Image();
+      img.src = asset(F.SKUS[id].image);
+    });
+    render();
+    cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(tick);
+  }
+
+  function finish() {
+    cancelAnimationFrame(raf);
+    state.mode = "done";
+    state.pick = null;
+    var g = grade();
+    state.best = Math.max(state.best, g.score);
+    try { localStorage.setItem(SAVE, String(state.best)); } catch (e) {}
+    report(g.score);
+    render();
+  }
+
+  function answer(id) {
+    if (state.mode !== "play" || state.pick) return;
+    var gold = current();
+    var ok = id === gold;
+    var pts = ok ? F.pointsForHit(state.streak) : 0;
+    state.pick = id;
+    state.streak = ok ? state.streak + 1 : 0;
+    state.log.push({ id: gold, pick: id, correct: ok, pts: pts });
+    render();
+    window.setTimeout(function () {
+      if (state.mode !== "play") return;
+      state.pick = null;
+      state.index += 1;
+      render();
+    }, LOCK);
+  }
+
+  function render() {
+    if (state.mode === "intro") app.innerHTML = viewIntro();
+    else if (state.mode === "study") app.innerHTML = viewStudy();
+    else if (state.mode === "play") app.innerHTML = viewPlay();
+    else app.innerHTML = viewDone();
+  }
+
+  function viewIntro() {
+    return (
+      '<div class="top"><span></span><p class="kicker">Flash SKU · 90s</p></div>' +
+      '<div class="hero-shot"><img src="' + asset("/supports/hero.jpg") + '" alt="Good Feet arch support lineup"></div>' +
+      '<p class="kicker">Official DFW shots</p>' +
+      '<h1 class="display">Flash SKU</h1>' +
+      '<p class="muted" style="margin-top:.75rem;max-width:32rem">Ninety seconds. A photo. Name the pair. Same chassis, different leftover — SLS is dress, Ground Force is golf. Deluxe is the cup you can see. Deluxe Plus is that cup in a tighter shoe.</p>' +
+      (state.best ? '<p style="margin-top:.75rem">Best ' + state.best + " pts</p>" : "") +
+      '<div class="row">' +
+        '<button type="button" class="btn cream" data-act="start">Start the 90</button>' +
+        '<button type="button" class="btn ghost" data-act="study">Study the lineup</button>' +
+      "</div>" +
+      '<ul class="tips">' +
+        "<li>Lookalikes sit next to each other on purpose. Mid-Flex is black. Flex is two-tone.</li>" +
+        "<li>A leftover chip on the photo means the shot is shared — name the leftover, not just the shape.</li>" +
+        "<li>No leather. Gym, run, and court never go in a Strengthener. Golf is a heel counter.</li>" +
+      "</ul>"
+    );
+  }
+
+  function viewStudy() {
+    var cards = F.SKU_ORDER.map(function (id) {
+      var s = F.SKUS[id];
+      return (
+        '<button type="button" class="sku-card" data-act="open" data-id="' + id + '">' +
+          '<div class="ph"><img src="' + asset(s.image) + '" alt=""></div>' +
+          '<div class="pad"><p class="kicker">' + esc(F.FAMILY[s.family].name) + "</p><p>" + esc(s.short) + "</p></div>" +
+        "</button>"
+      );
+    }).join("");
+    var detail = "";
+    if (state.study) {
+      var s = F.SKUS[state.study];
+      var t = F.flashTell(state.study);
+      detail =
+        '<article class="detail"><p class="kicker" style="color:var(--teal-deep)">' +
+        esc(F.FAMILY[s.family].name) +
+        (t.leftover ? " · " + esc(t.leftover) : "") +
+        "</p><h2>" + esc(s.name) + "</h2>" +
+        '<p style="margin-top:.7rem;line-height:1.5">' + esc(t.tell) + "</p>" +
+        '<p class="muted" style="margin-top:.4rem">' + esc(s.bestFor) + "</p></article>";
+    }
+    return (
+      '<div class="top"><button type="button" class="back" data-act="intro">Home</button><p class="kicker">The lineup</p></div>' +
+      "<h1>The lineup</h1>" +
+      '<p class="muted" style="margin:.6rem 0 1rem">Eighteen we carry. No leather. Tap a pair. Learn the tell before the clock runs.</p>' +
+      '<div class="sku-grid">' + cards + "</div>" + detail
+    );
+  }
+
+  function viewPlay() {
+    var id = current();
+    var s = F.SKUS[id];
+    var t = F.flashTell(id);
+    var choices = F.dealFlashChoices(id, state.seed + "-" + state.index);
+    var g = grade();
+    var btns = choices.map(function (cid) {
+      var gold = state.pick && cid === id;
+      var miss = state.pick === cid && cid !== id;
+      var cls = "choice" + (gold ? " on" : "") + (miss ? " miss" : "") + (state.pick && !gold && !miss ? " dim" : "");
+      return (
+        '<button type="button" class="' + cls + '" data-act="pick" data-qa="choice" data-id="' + cid + '"' +
+        (state.pick ? " disabled" : "") + ">" +
+        '<span class="fam">' + esc(F.FAMILY[F.SKUS[cid].family].name) + "</span>" +
+        esc(F.SKUS[cid].short) +
+        "</button>"
+      );
+    }).join("");
+    var banner = "";
+    if (state.pick) {
+      banner =
+        '<div class="banner ' + (state.pick === id ? "ok" : "no") + '">' +
+        "<p class=\"kicker\">" + (state.pick === id ? "Gold" : "Miss — " + s.short) + "</p>" +
+        "<p>" + esc(t.tell) + "</p></div>";
+    }
+    return (
+      '<div class="top"><button type="button" class="back" data-act="intro">Home</button><p class="kicker">Flash SKU · 90s</p></div>' +
+      '<div class="hud"><p class="time" id="time">' + Math.ceil(state.left) + "s</p>" +
+      '<div class="muted">' + g.score + " pts<br>" + g.hits + " gold · " + g.asked + " seen" +
+      (state.streak > 1 ? " · ×" + state.streak : "") + "</div></div>" +
+      '<div class="bar"><i id="bar" style="width:' + (state.left / F.FLASH_SECONDS) * 100 + '%"></i></div>' +
+      '<article class="paper"><img src="' + asset(s.image) + '" alt="">' +
+      (t.leftover ? '<span class="chip">' + esc(t.leftover) + "</span>" : "") +
+      banner + "</article>" +
+      '<p class="kicker" style="margin:1rem 0 .4rem">Name this pair</p>' +
+      '<div class="grid2">' + btns + "</div>"
+    );
+  }
+
+  function viewDone() {
+    var g = grade();
+    var missed = state.log.filter(function (r) { return !r.correct; });
+    var missHtml = missed.length
+      ? '<p class="kicker" style="margin:1rem 0 .4rem">Missed — study these</p>' +
+        missed.map(function (r) {
+          return (
+            '<div class="miss-row"><img src="' + asset(F.SKUS[r.id].image) + '" alt="">' +
+            "<div><p>You said " + esc(F.SKUS[r.pick].short) + "</p>" +
+            "<p class=\"muted\">" + esc(F.SKUS[r.id].short) + " · " + esc(F.flashTell(r.id).tell) + "</p></div></div>"
+          );
+        }).join("")
+      : (g.asked
+        ? '<p class="muted" style="margin-top:1rem">Clean card. Eighteen we carry, none missed this clock.</p>'
+        : "");
+    return (
+      '<div class="top"><button type="button" class="back" data-act="intro">Home</button><p class="kicker">Time</p></div>' +
+      '<h1 class="display">' + (g.accuracy >= 80 ? "The eye is in" : "Keep flashing") + "</h1>" +
+      '<div class="stats" style="margin-top:1rem">' +
+        '<div class="stat"><span class="kicker">Score</span><b>' + g.score + "</b></div>" +
+        '<div class="stat"><span class="kicker">Gold</span><b>' + g.hits + "/" + g.asked + "</b></div>" +
+        '<div class="stat"><span class="kicker">Best</span><b>' + state.best + "</b></div>" +
+      "</div>" + missHtml +
+      '<div class="row">' +
+        '<button type="button" class="btn cream" data-act="start">Flash again</button>' +
+        '<button type="button" class="btn ghost" data-act="study">Study the lineup</button>' +
+      "</div>"
+    );
+  }
+
+  app.addEventListener("click", function (e) {
+    var t = e.target.closest("[data-act]");
+    if (!t) return;
+    var act = t.getAttribute("data-act");
+    var id = t.getAttribute("data-id");
+    if (act === "start") start();
+    else if (act === "study") { state.mode = "study"; state.study = null; render(); }
+    else if (act === "intro") { cancelAnimationFrame(raf); state.mode = "intro"; render(); }
+    else if (act === "open") { state.study = id; render(); }
+    else if (act === "pick") answer(id);
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>

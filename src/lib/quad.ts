@@ -24,6 +24,12 @@ export const QUAD_GAMES = [
     blurb: "Strengthener, Maintainer, Relaxer — call it under pressure.",
   },
   {
+    slug: "flash-sku",
+    title: "Flash SKU",
+    file: "/games/flash-sku.html",
+    blurb: "Ninety seconds. Official photos. Name the pair — SLS is dress, Ground Force is golf.",
+  },
+  {
     slug: "the-4th",
     title: "The 4th",
     file: "/games/the-4th.html",
