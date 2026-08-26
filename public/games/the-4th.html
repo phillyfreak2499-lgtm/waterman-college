@@ -26,6 +26,19 @@ h1,h2,h3{font-family:var(--display);letter-spacing:-.03em;line-height:1.15;margi
 p{margin:0;text-wrap:pretty}
 .page{max-width:56rem;margin:0 auto;padding:1.1rem 1rem 3.5rem}
 .page.home{max-width:64rem}
+.sku-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin:0.75rem 0}
+@media(min-width:640px){.sku-grid{grid-template-columns:1fr 1fr 1fr}}
+.sku-pick{border:1px solid var(--border);background:var(--surface);border-radius:20px;padding:.75rem;text-align:center;min-height:7rem}
+.sku-pick.on{border-color:var(--teal);background:rgba(42,155,143,.15)}
+.sku-pick img{height:4rem;margin:0 auto .4rem;object-fit:contain;background:var(--paper);border-radius:12px;width:100%}
+.sku-pick span{font-size:.9rem;font-weight:500}
+ol.seats{list-style:none;padding:0;margin:0 0 .75rem;display:grid;gap:.5rem}
+.seat{min-height:4rem;border:1px dashed var(--border);border-radius:16px;padding:.75rem 1rem;background:rgba(23,48,65,.6)}
+.seat.on{border-style:solid;border-color:rgba(42,155,143,.4);background:rgba(42,155,143,.1)}
+.mention.used{opacity:.4}
+.never-time{font-family:var(--display);font-size:2.4rem}
+.goldtrap{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.goldtrap .btn{min-height:4rem}
 .top{display:flex;align-items:center;justify-content:space-between;gap:.75rem;margin-bottom:1rem}
 .back,.skip{display:inline-flex;align-items:center;gap:.4rem;min-height:44px;color:var(--muted);font-size:.9rem}
 .back svg,.skip svg,.ico svg,.sig svg,.quote svg,.pick svg,.exam-log svg,.panel svg{width:16px;height:16px}
@@ -216,6 +229,1107 @@ section{margin-top:1.6rem}
 <body>
 <div id="app"></div>
 <script>
+"use strict";
+var T4 = (() => {
+  var __defProp = Object.defineProperty;
+  var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+  var __getOwnPropNames = Object.getOwnPropertyNames;
+  var __hasOwnProp = Object.prototype.hasOwnProperty;
+  var __export = (target, all) => {
+    for (var name in all)
+      __defProp(target, name, { get: all[name], enumerable: true });
+  };
+  var __copyProps = (to, from, except, desc) => {
+    if (from && typeof from === "object" || typeof from === "function") {
+      for (let key of __getOwnPropNames(from))
+        if (!__hasOwnProp.call(to, key) && key !== except)
+          __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+    }
+    return to;
+  };
+  var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+  // src/lib/quad-api.ts
+  var quad_api_exports = {};
+  __export(quad_api_exports, {
+    NEVER_SECONDS: () => NEVER_SECONDS,
+    PLACE_LABELS: () => PLACE_LABELS,
+    ROUND_MAX: () => ROUND_MAX,
+    SCENARIOS: () => SCENARIOS,
+    SKUS: () => SKUS,
+    SUPPORTS: () => SUPPORTS,
+    SUPPORT_ORDER: () => SUPPORT_ORDER,
+    TRAP_CARDS: () => TRAP_CARDS,
+    dealRounds: () => dealRounds,
+    gradePlace: () => gradePlace,
+    placeChips: () => placeChips,
+    resolveRound: () => resolveRound,
+    shuffleCopy: () => shuffleCopy,
+    skuMarked: () => skuMarked,
+    skuQuality: () => skuQuality,
+    skuScore: () => skuScore,
+    skuWhy: () => skuWhy,
+    supportScore: () => supportScore
+  });
+
+  // src/lib/catalog.ts
+  var SKUS = {
+    max: {
+      id: "max",
+      name: "Max",
+      short: "Max",
+      family: "strengthener",
+      image: "/supports/catalog/max.jpg",
+      firmness: "Most firm Strengthener",
+      bestFor: "High arches and pronounced pressure areas",
+      bullets: [
+        "More pressure relief than Honeycomb",
+        "Standing, golf, work boots. Chart marks weightlifting as a standing load \u2014 not gym or CrossFit.",
+        "Available in Narrow"
+      ],
+      caution: "May not suit feet that are very stiff or very flat.",
+      narrow: true
+    },
+    honeycomb: {
+      id: "honeycomb",
+      name: "Honeycomb",
+      short: "Honeycomb",
+      family: "strengthener",
+      image: "/supports/catalog/honeycomb.jpg",
+      firmness: "More rigid than Classic and Diamond",
+      bestFor: "Higher arches, more pronounced pressure",
+      bullets: [
+        "Heel cup, stabilizer, and metatarsal rise",
+        "Little side-to-side flexion \u2014 rigid through the whole foot",
+        "Standing, golf. Chart marks weightlifting as a standing load \u2014 not gym or CrossFit."
+      ],
+      caution: "Not available in narrow sizes."
+    },
+    classic: {
+      id: "classic",
+      name: "Classic",
+      short: "Classic",
+      family: "strengthener",
+      image: "/supports/catalog/classic.jpg",
+      firmness: "The standard Strengthener",
+      bestFor: "Most popular \u2014 the core pair for most 3-systems",
+      bullets: [
+        "Metatarsal arch support that helps take pressure off the heel and the ball",
+        "Stabilizes the entire foot",
+        "Talk track: metatarsalgia, Morton's neuroma, hammer toes, bunions",
+        "Available in Narrow"
+      ],
+      narrow: true
+    },
+    sls: {
+      id: "sls",
+      name: "Slimline Strengthener",
+      short: "SLS",
+      family: "strengthener",
+      image: "/supports/catalog/sls.jpg",
+      firmness: "Strengthener power, dress-shoe volume",
+      bestFor: "Tighter fitted shoes that still need a Strengthener",
+      bullets: [
+        "55% lighter and 5\xD7 thinner than Classic",
+        "Gait Enhancement Technology \u2014 patented S-shaped GeT on the sole",
+        "The Strengthener that actually fits dress shoes"
+      ],
+      caution: "Not for climbing ladders."
+    },
+    diamond: {
+      id: "diamond",
+      name: "Diamond",
+      short: "Diamond",
+      family: "strengthener",
+      image: "/supports/catalog/diamond.jpg",
+      firmness: "Flexible Strengthener",
+      bestFor: "Flatter or more sensitive feet that still need a Strengthener",
+      bullets: [
+        "Classic shape with a diamond structure on the bottom \u2014 more side-to-side give",
+        "More flexible polymer than Classic",
+        "Available in Narrow"
+      ],
+      narrow: true
+    },
+    hug: {
+      id: "hug",
+      name: "Hug",
+      short: "Hug",
+      family: "strengthener",
+      image: "/supports/catalog/hug.jpg",
+      firmness: "Intermediate / flexible Strengthener",
+      bestFor: "The in-between Strengthener when Classic is too much",
+      bullets: [
+        "Great intermediate \u2014 flexible Strengthener",
+        "Golf, standing, work, shopping",
+        "When they need a Strengthener but Classic feels aggressive"
+      ]
+    },
+    ultra: {
+      id: "ultra",
+      name: "Ultra",
+      short: "Ultra",
+      family: "maintainer",
+      image: "/supports/catalog/ultra.jpg",
+      firmness: "More rigid than Miracle Flex",
+      bestFor: "Lower arches; support felt near the center of the inner longitudinal",
+      bullets: [
+        "Rougher texture than Miracle Flex",
+        "Running, hiking, hunting, court, gym",
+        "Good all-day Maintainer when they want a firmer hold"
+      ]
+    },
+    "miracle-flex": {
+      id: "miracle-flex",
+      name: "Miracle Flex",
+      short: "Miracle Flex",
+      family: "maintainer",
+      image: "/supports/catalog/miracle-flex.jpg",
+      firmness: "Most rigid in the Flex line",
+      bestFor: "Very high arches, unstable feet, and the sports 4th",
+      bullets: [
+        "Metatarsal ridge is not as pronounced as a Strengthener",
+        "Can be worn while running \u2014 the pair the deck names out loud",
+        "Sports 4th. Not golf \u2014 no heel counter. Golf wants the cup.",
+        "Open heels, sandals, tighter slip-ons"
+      ]
+    },
+    slm: {
+      id: "slm",
+      name: "Slimline Maintainer",
+      short: "SLM",
+      family: "maintainer",
+      image: "/supports/catalog/slm.jpg",
+      firmness: "Thin Maintainer, wider platform",
+      bestFor: "Wider feet, lower arches, dress and athletic",
+      bullets: [
+        "Thinner design with GeT and a wider width platform",
+        "Dress shoes, heels, running, hunting",
+        "The leftover dress shoe when volume is tight"
+      ]
+    },
+    "mid-flex": {
+      id: "mid-flex",
+      name: "Mid-Flex",
+      short: "Mid-Flex",
+      family: "maintainer",
+      image: "/supports/catalog/mid-flex.jpg",
+      firmness: "Mid-range flex",
+      bestFor: "Average arches and higher-impact play",
+      bullets: [
+        "Suits a lot of feet",
+        "Dress and open-toed shoes",
+        "Court, run, gym, hunting \u2014 not golf"
+      ]
+    },
+    flex: {
+      id: "flex",
+      name: "Flex",
+      short: "Flex",
+      family: "maintainer",
+      image: "/supports/catalog/flex.jpg",
+      firmness: "Flexible Maintainer",
+      bestFor: "Flatter feet and lightweight shoes",
+      bullets: [
+        "The black Flex chassis \u2014 flatter feet, light shoes",
+        "Running, court, hunting, gym",
+        "Dress, heels, sandals. Everyday 4th in a second sneaker"
+      ]
+    },
+    deluxe: {
+      id: "deluxe",
+      name: "Deluxe",
+      short: "Deluxe",
+      family: "maintainer",
+      image: "/supports/catalog/deluxe.jpg",
+      firmness: "Rigid Maintainer \u2014 the heel-cup exception",
+      bestFor: "Flatter feet, wide feet, sensitive feet, ankle instability, golf",
+      bullets: [
+        "No metatarsal rise",
+        "Deep heel cup for stability \u2014 customers feel it quickly",
+        "Golf and standing yes. Running and court no."
+      ],
+      caution: "Can be difficult to fit in dress shoes. Heel cup is why it does not run."
+    },
+    "deluxe-plus": {
+      id: "deluxe-plus",
+      name: "Deluxe Plus",
+      short: "Deluxe Plus",
+      family: "maintainer",
+      image: "/supports/catalog/deluxe-plus.jpg",
+      firmness: "Deluxe family",
+      bestFor: "Same Deluxe idea \u2014 golf, standing, stability",
+      bullets: [
+        "Deep heel cup, no metatarsal",
+        "Golf yes. Hiking, hunting, gardening, and flats no \u2014 tighter than Deluxe"
+      ],
+      caution: "Not a running or court pair."
+    },
+    tss: {
+      id: "tss",
+      name: "TSS",
+      short: "TSS",
+      family: "maintainer",
+      image: "/supports/catalog/tss.jpg",
+      firmness: "Softer Maintainer",
+      bestFor: "The 'almost any shoe, almost any activity' Maintainer",
+      bullets: [
+        "Works with nearly every shoe",
+        "Running, court, hunting, gym, dress, heels",
+        "Not golf \u2014 no heel counter"
+      ]
+    },
+    "flex-relaxer": {
+      id: "flex-relaxer",
+      name: "Flex Relaxer",
+      short: "Flex Relaxer",
+      family: "relaxer",
+      image: "/supports/catalog/flex-relaxer.jpg",
+      firmness: "Classic Relaxer",
+      bestFor: "Heels, slippers, sandals \u2014 the no-excuse pair",
+      bullets: [
+        "Support without a metatarsal rise",
+        "Running and court yes. Golf no.",
+        "Little to no adjustment period"
+      ]
+    },
+    slr: {
+      id: "slr",
+      name: "Slimline Relaxer",
+      short: "SLR",
+      family: "relaxer",
+      image: "/supports/catalog/slr.jpg",
+      firmness: "The Relaxer that still supports all four arches",
+      bestFor: "Wider feet, and the first athletic step before a Maintainer",
+      bullets: [
+        "Mild metatarsal rise \u2014 the Relaxer exception",
+        "Slightly wider platform",
+        "Court, run, gym. Golf no."
+      ]
+    },
+    skinny: {
+      id: "skinny",
+      name: "Skinny",
+      short: "Skinny",
+      family: "relaxer",
+      image: "/supports/catalog/skinny.jpg",
+      firmness: "Low volume with a slight heel cup",
+      bestFor: "Slender feet, dress, heels, and golf",
+      bullets: [
+        "Lower longitudinal arch and a slight heel counter",
+        "The Relaxer the chart marks for golf",
+        "Can be worn during high-impact sports"
+      ]
+    }
+  };
+  var SKU_ORDER = [
+    "max",
+    "honeycomb",
+    "classic",
+    "sls",
+    "diamond",
+    "hug",
+    "ultra",
+    "miracle-flex",
+    "slm",
+    "mid-flex",
+    "flex",
+    "deluxe",
+    "deluxe-plus",
+    "tss",
+    "flex-relaxer",
+    "slr",
+    "skinny"
+  ];
+  var ALL = "11111111111111111";
+  var CHART = {
+    "w-walk": ALL,
+    "w-stand": ALL,
+    "w-sit": ALL,
+    "w-drive": ALL,
+    "w-lift": ALL,
+    "w-hard": ALL,
+    "w-ladder": "11101111111111111",
+    "p-walk": ALL,
+    "p-run": "00000011111001111",
+    "p-hike": "00000011101101111",
+    "p-cycle": "00000011111001111",
+    "p-lift": "11100011111111111",
+    "p-gym": "00000011111111111",
+    "p-sport": "00000011111001110",
+    "p-team": "00000011111001110",
+    "p-golf": "11111100000110001",
+    // R5: Ultra, Miracle, SLM, Flex, Deluxe, TSS, Flex Relaxer, SLR, Skinny.
+    // Mid-Flex is blank on hiking. Deluxe Plus is blank on hunting / hiking / gardening / flats.
+    "p-hunt": "00000011111101111",
+    "p-garden": "11111111111101111",
+    "p-shop": ALL,
+    "s-ath": ALL,
+    "s-dress": "00010011111111111",
+    "s-heel": "00000011111001111",
+    "s-flat": "11110011111101111",
+    "s-work": ALL,
+    "s-boot": ALL,
+    "s-slip": ALL,
+    "s-sand": ALL
+  };
+  function skuMarked(activityId, skuId) {
+    const row = CHART[activityId];
+    if (!row) return false;
+    const i = SKU_ORDER.indexOf(skuId);
+    return i >= 0 && row[i] === "1";
+  }
+
+  // src/lib/supports.ts
+  var SUPPORTS = {
+    "sports-maintainer": {
+      id: "sports-maintainer",
+      name: "Sports Maintainer",
+      short: "Sports",
+      livesIn: "Court, run, gym, box, hunting boots, cleats",
+      blurb: "You work out in a Maintainer. Flat heel platform for side-to-side. Miracle Flex, Ultra, Mid-Flex, Flex, SLM, TSS. Not golf \u2014 golf wants a heel counter.",
+      image: "/supports/maintainer.jpg",
+      tone: "sport",
+      skus: ["miracle-flex", "ultra", "mid-flex", "flex", "slm", "tss"]
+    },
+    "dress-maintainer": {
+      id: "dress-maintainer",
+      name: "Dress Maintainer",
+      short: "Dress",
+      livesIn: "Loafers, heels, church shoes, dance shoes",
+      blurb: "Low profile. SLM, Mid-Flex, Flex, Skinny, SLR. Lives where a Classic will not fit \u2014 and where the 3-system is not already sitting.",
+      image: "/supports/dress.jpg",
+      tone: "dress",
+      skus: ["slm", "mid-flex", "flex", "miracle-flex", "skinny", "slr", "flex-relaxer"]
+    },
+    "second-everyday": {
+      id: "second-everyday",
+      name: "2nd Everyday Maintainer",
+      short: "2nd Everyday",
+      livesIn: "Travel bag, backup work pair, layover sneakers",
+      blurb: "Same all-day story, second pair of shoes. Flex, Ultra, Mid-Flex, TSS. Packed so 5 a.m. is not a swap.",
+      image: "/supports/everyday.jpg",
+      tone: "everyday",
+      skus: ["flex", "ultra", "mid-flex", "tss"]
+    },
+    "second-strengthener": {
+      id: "second-strengthener",
+      name: "2nd Strengthener",
+      short: "2nd Strengthener",
+      livesIn: "Golf shoes, a second standing boot",
+      blurb: "Heel-counter leftover \u2014 golf, a second work boot. Classic, Max, Honeycomb. You do not work out in a Strengthener.",
+      image: "/supports/strengthener.jpg",
+      tone: "firm",
+      skus: ["classic", "max", "honeycomb", "sls", "diamond", "hug"]
+    },
+    "second-relaxer": {
+      id: "second-relaxer",
+      name: "2nd Relaxer",
+      short: "2nd Relaxer",
+      livesIn: "A second home, guest room, travel recovery",
+      blurb: "Flex Relaxer, Skinny, SLR. Recovery is the leftover story \u2014 two houses, burning nights.",
+      image: "/supports/relaxer.jpg",
+      tone: "rest",
+      skus: ["flex-relaxer", "skinny", "slr"]
+    }
+  };
+  var SUPPORT_ORDER = [
+    "sports-maintainer",
+    "dress-maintainer",
+    "second-everyday",
+    "second-strengthener",
+    "second-relaxer"
+  ];
+
+  // src/lib/leftovers.ts
+  var LEFTOVERS = {
+    court: {
+      id: "court",
+      play: "Court / pickleball two days a week",
+      shoe: "Court shoes",
+      activityId: "p-sport",
+      correct: "sports-maintainer",
+      acceptable: [],
+      trap: "second-strengthener",
+      quote: "Two days a week I'm on a court, and I'm not swapping inserts in a locker room.",
+      playRead: "Court is lateral. Sports Maintainer. You do not work out in a Strengthener.",
+      why: "The court is a second life in a second shoe. That's the whole job of the 4th.",
+      trapWhy: "A Strengthener in court shoes is the miss. Heel cups don't do impact sports.",
+      coach: "Lateral sport = Sports Maintainer. Never a Strengthener in the leftover court shoe.",
+      aperture: "That leaves the court shoes empty \u2014 and no locker-room swap.",
+      ease: "You never swap, and you don't play on a foot you just worked."
+    },
+    gym: {
+      id: "gym",
+      play: "Gym / box / lifting after the job",
+      shoe: "Lifting shoes",
+      activityId: "p-gym",
+      correct: "sports-maintainer",
+      acceptable: [],
+      trap: "second-strengthener",
+      quote: "I lift after the job and I am not putting the gym in wrecked work shoes.",
+      playRead: "Gym, box, cardio, lifting \u2014 you work out in a Maintainer. Never a Strengthener.",
+      why: "The leftover gym shoe is a Sports Maintainer. Heel cups don't do impact sports.",
+      trapWhy: "A Strengthener in the gym shoes is the miss. Don't work out in a Strengthener.",
+      coach: "The leftover shoe is the box. You work out in a Maintainer. A 2nd Strengthener in the lifters is the miss.",
+      aperture: "The lifting shoes are empty \u2014 that's the leftover hour.",
+      ease: "Morning is covered without touching the work pair."
+    },
+    golf: {
+      id: "golf",
+      play: "18 holes on the weekend",
+      shoe: "Golf shoes",
+      activityId: "p-golf",
+      correct: "second-strengthener",
+      acceptable: [],
+      trap: "sports-maintainer",
+      quote: "Saturday I play 18 and my heel is barking by the back nine.",
+      playRead: "Golf is not court. Heel counter \u2014 Strengthener, Deluxe, Skinny. Not a flex Sports pair.",
+      why: "Play shoes that never see the 3-system are the 4th. Golf wants a heel counter.",
+      trapWhy: "Sports Maintainer is the trap because golf 'sounds athletic.' Court wants a flat heel. Golf wants the cup.",
+      coach: "Golf is a heel-counter activity. A flat-heel Sports Maintainer is for pickleball, not a golf swing.",
+      aperture: "Saturday the golf shoes are doing the round alone.",
+      ease: "The back nine isn't starting from zero."
+    },
+    dress: {
+      id: "dress",
+      play: "Dress shoes, church, dance, loafers",
+      shoe: "Dress shoes",
+      activityId: "s-dress",
+      correct: "dress-maintainer",
+      acceptable: [],
+      trap: "second-relaxer",
+      quote: "Then I'm in dress shoes for hours, and those shoes undo everything I just did.",
+      playRead: "Low-volume leftover \u2014 loafers, church, dance, heels. That's a Dress Maintainer, not a consolation Relaxer.",
+      why: "When athletic is already placed, the tiny leftover shoe is almost always Dress.",
+      trapWhy: "2nd Relaxer is the lazy age read. Recovery is already at home. The empty shoe is dress.",
+      coach: "They named the tiny shoe. That's Dress, not Sports, not a second Relaxer because of age.",
+      aperture: "The dress shoes are empty \u2014 that's where the morning gets thrown away.",
+      ease: "Those hours after the job don't undo the rest of the week."
+    },
+    travel: {
+      id: "travel",
+      play: "Travel / layover / a bag that cannot swap at 5 a.m.",
+      shoe: "Layover sneakers",
+      activityId: "s-ath",
+      correct: "second-everyday",
+      acceptable: [],
+      trap: "dress-maintainer",
+      quote: "I cannot be swapping supports at 5 a.m. I need a pair that lives in the bag.",
+      playRead: "Packed all-day walking is a 2nd Everyday, not a Dress pair for a uniform that's already covered.",
+      why: "When the leftover is a packed all-day shoe, the 4th is a 2nd Everyday Maintainer.",
+      trapWhy: "Dress in the job shoe double-covers work and leaves 5 a.m. exactly where they said they hate it.",
+      coach: "They wrote the 4th: lives in the bag. That's a 2nd Everyday, not more product in the job shoe.",
+      aperture: "The travel pair is empty unless something stays packed.",
+      ease: "City walking is covered without touching the work pair."
+    },
+    house: {
+      id: "house",
+      play: "A second house / guest room / packing the house pair",
+      shoe: "Second-house slippers",
+      activityId: "s-slip",
+      correct: "second-relaxer",
+      acceptable: [],
+      trap: "sports-maintainer",
+      quote: "I split time at a second place and I hate packing the house pair back and forth.",
+      playRead: "Two homes. Burning nights. The leftover is recovery that stays put \u2014 2nd Relaxer, not a sport.",
+      why: "When recovery is the leftover story, the 4th is a 2nd Relaxer \u2014 not another walking pair.",
+      trapWhy: "Don't invent a sport 4th because walking appeared in the interview. Walking is already covered.",
+      coach: "2nd Relaxer is rare \u2014 and two homes is the rare case. Sports for walking double-covers the pair that's working.",
+      aperture: "The second house has no Relaxer in it.",
+      ease: "We don't make you pack the pair that lets you sleep."
+    },
+    hunt: {
+      id: "hunt",
+      play: "Weekends in a different boot in the stand",
+      shoe: "Hunting boots",
+      activityId: "p-hunt",
+      correct: "sports-maintainer",
+      acceptable: [],
+      trap: "second-strengthener",
+      quote: "Weekends I'm in the stand in a different boot. I'm not swapping out of the job pair.",
+      playRead: "A different boot is a different life. Sports Maintainer, stay-put. Don't stack more Strengthener on the job.",
+      why: "When play uses a totally different boot, that's the 4th \u2014 Sports Maintainer, stay-put.",
+      trapWhy: "2nd Strengthener 'for the long shift' is job-stacking. The wear schedule is already in the duty pair.",
+      coach: "Hunting is a different last and a different life. Don't pile a 2nd Strengthener onto a job that's already covered.",
+      aperture: "The hunting boots are empty.",
+      ease: "Saturday isn't a swap out of the job boot, and the stand isn't empty."
+    },
+    run: {
+      id: "run",
+      play: "Runs before the job, several days a week",
+      shoe: "Running shoes",
+      activityId: "p-run",
+      correct: "sports-maintainer",
+      acceptable: [],
+      trap: "second-strengthener",
+      quote: "I run before I go in. Those running shoes are empty, and a Strengthener does not go in a run.",
+      playRead: "Running is a Maintainer. Strengtheners are blank on the chart. Miracle Flex is the pair the deck names out loud.",
+      why: "The run is a second life in a second shoe. Maintainer. Never a Strengthener.",
+      trapWhy: "A Strengthener in running shoes is the miss. Heel cups don't run.",
+      coach: "Never put a Strengthener in a run. The leftover running shoe is a Sports Maintainer.",
+      aperture: "The running shoes are empty \u2014 and a Strengthener does not go in a run.",
+      ease: "The morning run stays a run. You don't steal the work Strengthener to do it."
+    }
+  };
+  var TRAP_CHIPS = [
+    "You're working out, so I'd put a Strengthener in those leftover shoes and call it done.",
+    "A lot of people add a 4th. The 4-pack is a better value \u2014 want to add that on today?",
+    "At your age recovery is everything, so another Relaxer. We can skip leftover shoes.",
+    "You sit a lot, so you may not need a 4th. The 3-system is plenty for a desk job.",
+    "I can probably do something on the price if we add one more pair right now.",
+    "You're young \u2014 you can just swap them. We don't need a pair that lives in those shoes.",
+    "This will treat the pain. Let's add a 4th pair and get you feeling better today.",
+    "The 3-system is the important part. A 4th is optional if you want to spend more."
+  ];
+  function coverLine(kit) {
+    return `This 4th pair is a ${SUPPORTS[kit.correct].name} that lives in the ${kit.shoe.toLowerCase()}.`;
+  }
+  function placeFor(locate, playback, kit) {
+    return [
+      { key: "P", title: "Playback", text: playback },
+      { key: "L", title: "Locate", text: locate },
+      { key: "A", title: "Aperture", text: kit.aperture },
+      { key: "C", title: "Cover", text: coverLine(kit) },
+      { key: "E", title: "Ease", text: kit.ease }
+    ];
+  }
+
+  // src/lib/people.ts
+  var PEOPLE = [
+    {
+      id: "maria",
+      name: "Maria Santos",
+      age: 42,
+      portrait: "/portraits/maria.jpg",
+      job: "ER nurse",
+      jobHours: "12-hour shifts on concrete",
+      jobQuote: "Twelve hours on that ER floor.",
+      shoes: ["Work sneakers", "Everyday sneakers", "House slippers"],
+      covered: [
+        { support: "Strengthener", shoe: "Work sneakers \u2014 first half of the shift" },
+        { support: "Maintainer", shoe: "Everyday sneakers" },
+        { support: "Relaxer", shoe: "House slippers" }
+      ],
+      ageRead: "42 \u2014 age only breaks a tie. Find the empty shoe first.",
+      jobRead: "Hospital concrete is the all-day demand. That's already the 3-system.",
+      leftovers: ["court", "gym", "golf"],
+      defaultLeftover: "court"
+    },
+    {
+      id: "james",
+      name: "James Whitaker",
+      age: 58,
+      portrait: "/portraits/james.jpg",
+      job: "Warehouse supervisor",
+      jobHours: "Steel-toe, concrete all week",
+      jobQuote: "I'm on concrete all week in these boots.",
+      shoes: ["Work boots", "Casual sneakers", "House shoes"],
+      covered: [
+        { support: "Strengthener", shoe: "Work boots" },
+        { support: "Maintainer", shoe: "Casual sneakers" },
+        { support: "Relaxer", shoe: "House shoes" }
+      ],
+      ageRead: "58 \u2014 age doesn't send you to a floppy Sports pair when the leftover wants a heel counter.",
+      jobRead: "Concrete + steel-toe is already the Strengthener's home \u2014 the 3-system stays in the boots.",
+      leftovers: ["golf", "gym", "travel"],
+      defaultLeftover: "golf"
+    },
+    {
+      id: "priya",
+      name: "Priya Shah",
+      age: 34,
+      portrait: "/portraits/priya.jpg",
+      job: "Attorney",
+      jobHours: "Heels and loafers, 9 hours, 4 days a week",
+      jobQuote: "Then I'm in these loafers for nine hours.",
+      shoes: ["Running shoes", "Everyday sneakers", "House slippers"],
+      covered: [
+        { support: "Strengthener", shoe: "Everyday sneakers \u2014 short window, not the leftover" },
+        { support: "Maintainer", shoe: "Running shoes" },
+        { support: "Relaxer", shoe: "House slippers" }
+      ],
+      ageRead: "34 \u2014 the run is a Maintainer. Never put a Strengthener in running shoes.",
+      jobRead: "Nine hours in a low-volume dress shoe is a life. Don't skip it because it's an office.",
+      leftovers: ["dress", "court", "golf"],
+      defaultLeftover: "dress"
+    },
+    {
+      id: "robert",
+      name: "Robert Hale",
+      age: 71,
+      portrait: "/portraits/robert.jpg",
+      job: "Retired",
+      jobHours: "Morning 3-mile walks, errands, garden",
+      jobQuote: "I walk every morning. Evenings my feet swell some.",
+      shoes: ["Walking shoes", "Errand sneakers", "House slippers"],
+      covered: [
+        { support: "Strengthener", shoe: "Walking shoes \u2014 short morning window" },
+        { support: "Maintainer", shoe: "Errand sneakers" },
+        { support: "Relaxer", shoe: "House slippers" }
+      ],
+      ageRead: "71 + swelling will tempt you toward a 2nd Relaxer. Swelling is already the Relaxer's job at home.",
+      jobRead: "Retired is not 'no job.' Walking and errands are already placed.",
+      leftovers: ["dress", "golf", "house"],
+      defaultLeftover: "dress"
+    },
+    {
+      id: "ashley",
+      name: "Ashley Quinn",
+      age: 29,
+      portrait: "/portraits/ashley.jpg",
+      job: "5th grade teacher",
+      jobHours: "On tile all day",
+      jobQuote: "Kids at 7:30. I am not swapping supports in a dark parking lot.",
+      shoes: ["Teaching sneakers", "House slides"],
+      covered: [
+        { support: "Strengthener + Maintainer", shoe: "Teaching sneakers on a wear schedule" },
+        { support: "Relaxer", shoe: "House slides" }
+      ],
+      ageRead: "29 + leftover gym or court = Sports Maintainer. You do not work out in a Strengthener.",
+      jobRead: "Tile all day is already the wear-schedule pair. Don't add a 2nd Everyday for teaching.",
+      leftovers: ["gym", "court", "dress"],
+      defaultLeftover: "gym"
+    },
+    {
+      id: "david",
+      name: "David Chen",
+      age: 47,
+      portrait: "/portraits/david.jpg",
+      job: "Software product manager",
+      jobHours: "Hybrid \u2014 dress shoes 2 office days, sneakers 3 WFH days",
+      jobQuote: "I sit a lot, I know. Tuesday and Thursday I'm walking the floor between meetings.",
+      shoes: ["Tennis shoes", "WFH sneakers", "House shoes"],
+      covered: [
+        { support: "Strengthener", shoe: "WFH sneakers \u2014 short window, not the court" },
+        { support: "Maintainer", shoe: "Tennis shoes" },
+        { support: "Relaxer", shoe: "House shoes" }
+      ],
+      ageRead: "47 \u2014 leftover court is a Maintainer. Leftover golf still wants a heel counter.",
+      jobRead: "Desk is not 'no 4th.' Two dress days are still a life in a different shoe.",
+      leftovers: ["dress", "golf", "travel"],
+      defaultLeftover: "dress"
+    },
+    {
+      id: "linda",
+      name: "Linda Brooks",
+      age: 63,
+      portrait: "/portraits/linda.jpg",
+      job: "Retail manager",
+      jobHours: "8-hour shifts on the floor",
+      jobQuote: "I walk two miles before we open. I'm on the floor until close.",
+      shoes: ["Work shoes", "Walking shoes", "House shoes"],
+      covered: [
+        { support: "Strengthener", shoe: "Walking shoes \u2014 short morning window" },
+        { support: "Maintainer", shoe: "Retail work shoes" },
+        { support: "Relaxer", shoe: "House shoes" }
+      ],
+      ageRead: "63 is not an automatic 2nd Relaxer. She has a leftover shoe.",
+      jobRead: "Retail all-day is already the Maintainer.",
+      leftovers: ["dress", "gym", "house"],
+      defaultLeftover: "dress"
+    },
+    {
+      id: "marcus",
+      name: "Marcus Bell",
+      age: 38,
+      portrait: "/portraits/marcus.jpg",
+      job: "Chef",
+      jobHours: "10 hours on kitchen mats",
+      jobQuote: "Ten hours on that line. I'm not taking kitchen supports into leftover shoes.",
+      shoes: ["Kitchen clogs", "Casual sneakers", "House shoes"],
+      covered: [
+        { support: "Strengthener + Maintainer", shoe: "Kitchen clogs on a wear schedule" },
+        { support: "Relaxer", shoe: "House shoes" }
+      ],
+      ageRead: "38 \u2014 leftover court or gym is a Sports Maintainer. You do not work out in a Strengthener.",
+      jobRead: "The line already owns the 3-system. Don't add more kitchen.",
+      leftovers: ["court", "gym", "golf"],
+      defaultLeftover: "court"
+    },
+    {
+      id: "helen",
+      name: "Helen Vargas",
+      age: 76,
+      portrait: "/portraits/helen.jpg",
+      job: "Retired \u2014 splits the year",
+      jobHours: "Mall walking in the morning",
+      jobQuote: "I walk the mall in the morning. Nights my feet burn.",
+      shoes: ["Walking shoes", "House slippers at home"],
+      covered: [
+        { support: "Strengthener + Maintainer", shoe: "Walking shoes, gentle schedule" },
+        { support: "Relaxer", shoe: "House slippers at her house" }
+      ],
+      ageRead: "76 + burning nights. Age is a modifier. The leftover shoe still decides.",
+      jobRead: "Mall walking is already placed. Don't sports it unless the leftover is actually a sport.",
+      leftovers: ["house", "dress", "travel"],
+      defaultLeftover: "house"
+    },
+    {
+      id: "tyler",
+      name: "Tyler Ruiz",
+      age: 24,
+      portrait: "/portraits/tyler.jpg",
+      job: "Warehouse associate",
+      jobHours: "10-hour shifts",
+      jobQuote: "Warehouse shoes are wrecked. I'm not putting leftover life in those.",
+      shoes: ["Warehouse shoes", "Cheap everyday sneakers", "House slides"],
+      covered: [
+        { support: "Strengthener + Maintainer", shoe: "Warehouse shoes on a wear schedule" },
+        { support: "Relaxer", shoe: "House slides" }
+      ],
+      ageRead: "24 is not 'skip the 4th.' Young is not a reason to swap. Find the empty shoe.",
+      jobRead: "Warehouse already owns the 3-system. Cheap everyday sneakers can share the Maintainer.",
+      leftovers: ["gym", "court", "travel"],
+      defaultLeftover: "gym"
+    },
+    {
+      id: "sandra",
+      name: "Sandra Okonkwo",
+      age: 51,
+      portrait: "/portraits/sandra.jpg",
+      job: "Flight attendant",
+      jobHours: "Long hauls, walking the aisle",
+      jobQuote: "Uniform on the aisle is already a full day.",
+      shoes: ["Uniform work shoes", "Hotel slides"],
+      covered: [
+        { support: "Strengthener + Maintainer", shoe: "Uniform work shoes on a wear schedule" },
+        { support: "Relaxer", shoe: "Hotel slides / recovery" }
+      ],
+      ageRead: "51 \u2014 not a 2nd Strengthener story unless the leftover actually wants a heel counter.",
+      jobRead: "Uniform already owns the 3-system. Don't dress-4th the uniform.",
+      leftovers: ["travel", "dress", "house"],
+      defaultLeftover: "travel"
+    },
+    {
+      id: "kevin",
+      name: "Kevin Donovan",
+      age: 45,
+      portrait: "/portraits/kevin.jpg",
+      job: "Police officer",
+      jobHours: "12-hour shifts in duty boots",
+      jobQuote: "Twelve hours in these boots.",
+      shoes: ["Duty boots", "Coaching sneakers", "House shoes"],
+      covered: [
+        { support: "Strengthener + Maintainer", shoe: "Duty boots on a wear schedule" },
+        { support: "Relaxer", shoe: "House shoes" }
+      ],
+      ageRead: "45 \u2014 not a 2nd Strengthener for the job. The job is already placed.",
+      jobRead: "Duty boots own the 3-system. Coaching sneakers can share the everyday Maintainer.",
+      leftovers: ["hunt", "gym", "golf"],
+      defaultLeftover: "hunt"
+    }
+  ];
+  function personById(id) {
+    return PEOPLE.find((p) => p.id === id) ?? PEOPLE[0];
+  }
+
+  // src/lib/shuffle.ts
+  function hashSeed(input) {
+    let h = 2166136261;
+    for (let i = 0; i < input.length; i++) {
+      h ^= input.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return h >>> 0;
+  }
+  function mulberry32(seed) {
+    let a = seed >>> 0;
+    return function next() {
+      a |= 0;
+      a = a + 1831565813 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+  }
+  function shuffleCopy(items, seed) {
+    const out = items.slice();
+    const rand = mulberry32(hashSeed(seed));
+    for (let i = out.length - 1; i > 0; i--) {
+      const j = Math.floor(rand() * (i + 1));
+      const tmp = out[i];
+      out[i] = out[j];
+      out[j] = tmp;
+    }
+    return out;
+  }
+
+  // src/lib/scenarios.ts
+  var PLACE_LABELS = {
+    P: "Playback",
+    L: "Locate",
+    A: "Aperture",
+    C: "Cover",
+    E: "Ease"
+  };
+  function locateText(person) {
+    return person.covered.map((c) => `${c.support} \xB7 ${c.shoe}`).join(". ") + ".";
+  }
+  function parseRoundId(id) {
+    const [personId, leftoverId] = id.split("::");
+    const person = personById(personId ?? "");
+    const kit = leftoverId && leftoverId in LEFTOVERS ? leftoverId : person.defaultLeftover;
+    return { personId: person.id, leftoverId: kit };
+  }
+  function resolveRound(id) {
+    const { personId, leftoverId } = parseRoundId(id);
+    const person = personById(personId);
+    const kit = LEFTOVERS[leftoverId];
+    const roundId = `${person.id}::${kit.id}`;
+    const playback = `${person.jobQuote} ${kit.quote}`;
+    const locate = locateText(person);
+    const place = placeFor(locate, playback, kit);
+    const traps = shuffleCopy(TRAP_CHIPS, `${roundId}-traps`).slice(0, 3).map((text, i) => ({ id: `x${i}`, seat: "X", text }));
+    const shoes = person.shoes.includes(kit.shoe) ? person.shoes : [...person.shoes, kit.shoe];
+    return {
+      id: roundId,
+      personId: person.id,
+      leftoverId: kit.id,
+      name: person.name,
+      age: person.age,
+      portrait: person.portrait,
+      job: person.job,
+      jobHours: person.jobHours,
+      play: kit.play,
+      quote: playback,
+      shoes,
+      covered: person.covered,
+      leftover: kit.shoe,
+      activityId: kit.activityId,
+      ageRead: person.ageRead,
+      jobRead: person.jobRead,
+      playRead: kit.playRead,
+      correct: kit.correct,
+      acceptable: kit.acceptable,
+      trap: kit.trap,
+      place,
+      traps,
+      goldSpeech: place.map((p) => p.text).join(" "),
+      coach: kit.coach,
+      why: kit.why,
+      trapWhy: kit.trapWhy
+    };
+  }
+  function dealRounds(seed, count) {
+    const people = shuffleCopy(PEOPLE, `${seed}-${Math.random().toString(36).slice(2)}`);
+    const ids = people.map((p) => {
+      const kit = shuffleCopy(p.leftovers, `${seed}-${p.id}-${Math.random().toString(36).slice(2)}`)[0];
+      return `${p.id}::${kit}`;
+    });
+    return count ? ids.slice(0, count) : ids;
+  }
+  var SCENARIOS = PEOPLE.map(
+    (p) => resolveRound(`${p.id}::${p.defaultLeftover}`)
+  );
+  var SUPPORT_POINTS = {
+    correct: 10,
+    acceptable: 5,
+    miss: 0
+  };
+  var SKU_POINTS = {
+    gold: 10,
+    miss: 0
+  };
+  var PLACE_POINTS = {
+    gold: 15,
+    okay: 6,
+    miss: 0
+  };
+  function supportScore(s, pick) {
+    if (pick === s.correct) return SUPPORT_POINTS.correct;
+    if (s.acceptable.includes(pick)) return SUPPORT_POINTS.acceptable;
+    return SUPPORT_POINTS.miss;
+  }
+  function skuScore(s, sku) {
+    if (!sku) return 0;
+    return skuMarked(s.activityId, sku) ? SKU_POINTS.gold : SKU_POINTS.miss;
+  }
+  function skuQuality(s, sku) {
+    return skuScore(s, sku) === SKU_POINTS.gold ? "gold" : "miss";
+  }
+  function gradePlace(built) {
+    const order = ["P", "L", "A", "C", "E"];
+    if (built.length < 5 || built.some((id) => id.startsWith("x"))) {
+      return { pts: PLACE_POINTS.miss, quality: "miss" };
+    }
+    if (built.every((id, i) => id === order[i])) {
+      return { pts: PLACE_POINTS.gold, quality: "gold" };
+    }
+    if (built.every((id) => order.includes(id))) {
+      return { pts: PLACE_POINTS.okay, quality: "okay" };
+    }
+    return { pts: PLACE_POINTS.miss, quality: "miss" };
+  }
+  function placeChips(s) {
+    const gold = s.place.map((p) => ({
+      id: p.key,
+      seat: p.key,
+      text: p.text
+    }));
+    return shuffleCopy([...gold, ...s.traps], `${s.id}-chips`);
+  }
+  function skuWhy(s, sku) {
+    if (!sku) return "You didn't lock a SKU.";
+    const name = SKUS[sku].name;
+    if (skuMarked(s.activityId, sku)) {
+      return `${name} is marked on the chart for this leftover.`;
+    }
+    return `${name} is not marked for this leftover. ${s.playRead}`;
+  }
+  var ROUND_MAX = SUPPORT_POINTS.correct + SKU_POINTS.gold + PLACE_POINTS.gold;
+
+  // src/lib/traps.ts
+  var TRAP_CARDS = [
+    {
+      id: "gym-strengthener",
+      who: "Teacher \xB7 5 a.m. box",
+      quote: "Box at 5. Kids at 7:30. I am not swapping in a parking lot.",
+      said: "You're working out at 5 a.m., so I'd put a Strengthener in the lifting shoes.",
+      gold: false,
+      why: "You work out in a Maintainer. Heel cups don't do impact sports."
+    },
+    {
+      id: "four-pack",
+      who: "ER nurse \xB7 pickleball",
+      quote: "Twelve hours on that ER floor. I'm not swapping inserts in a locker room.",
+      said: "A lot of our nurses add a 4th pair. The 4-pack is a better value. Want to add that on today?",
+      gold: false,
+      why: "That's a register. Gold names the leftover shoe in her words \u2014 not a 4-pack."
+    },
+    {
+      id: "age-relaxer",
+      who: "Retired \xB7 71 \xB7 church shoes",
+      quote: "Sunday I'm in church shoes for three hours and that's when the hip starts.",
+      said: "At 71 recovery is everything, so I'd do a second Relaxer for the swelling.",
+      gold: false,
+      why: "Age is a modifier. The empty shoe is church. That's Dress, not another Relaxer."
+    },
+    {
+      id: "desk-skip",
+      who: "Hybrid PM \xB7 two dress days",
+      quote: "I sit a lot. Tuesday and Thursday I'm in dress shoes walking the floor.",
+      said: "You sit a lot so you may not need a 4th. The 3-system is plenty for a desk job.",
+      gold: false,
+      why: "Sitting is not a reason to skip. He named two dress days. Those shoes are empty."
+    },
+    {
+      id: "golf-flex",
+      who: "Warehouse \xB7 Saturday 18",
+      quote: "Saturday I play 18 and my left heel starts screaming by the back nine.",
+      said: "Golf is athletic, so I'd put a Miracle Flex in the golf shoes.",
+      gold: false,
+      why: "Golf wants a heel counter. Miracle Flex is blank on golf. That's a 2nd Strengthener."
+    },
+    {
+      id: "run-strengthener",
+      who: "Attorney \xB7 runs before court",
+      quote: "I run before court. The running shoes feel great.",
+      said: "I'd put a Strengthener in the running shoes so the morning has more support.",
+      gold: false,
+      why: "Strengtheners are blank on running. Heel cups don't run."
+    },
+    {
+      id: "price-wink",
+      who: "Any leftover",
+      quote: "I'm not trying to spend more. I just don't want to swap at 5 a.m.",
+      said: "If we add a 4th pair I can probably do something on the price.",
+      gold: false,
+      why: "Price is a flag. Ease on the 5 a.m. swap they already named."
+    },
+    {
+      id: "young-swap",
+      who: "24 \xB7 warehouse \xB7 lifts after",
+      quote: "I'm not putting my gym in wrecked warehouse shoes.",
+      said: "You're young \u2014 you can just swap them. We don't need a 4th.",
+      gold: false,
+      why: "Young is not skip the 4th. He refused the swap. Believe him."
+    },
+    {
+      id: "medical",
+      who: "Any interview",
+      quote: "My plantar fasciitis is killing me on the shift.",
+      said: "This 4th pair will treat your plantar fasciitis.",
+      gold: false,
+      why: "No medical claims. Ever. Cover the leftover shoe. Don't diagnose."
+    },
+    {
+      id: "mall-sport",
+      who: "76 \xB7 mall walking \xB7 two houses",
+      quote: "I walk the mall in the morning. I hate packing the house pair to Houston.",
+      said: "Walking is your activity, so the 4th should be a Sports Maintainer for the mall.",
+      gold: false,
+      why: "Walking is already placed. The leftover is the second house \u2014 2nd Relaxer."
+    },
+    {
+      id: "optional",
+      who: "Attorney \xB7 loafers undo the run",
+      quote: "The loafers undo everything.",
+      said: "The 3-system is the important part. A 4th is optional if you want to spend more.",
+      gold: false,
+      why: "She diagnosed the leftover. Optional spend is how empty loafers stay empty."
+    },
+    {
+      id: "job-stack",
+      who: "Officer \xB7 12-hour boots \xB7 hunting",
+      quote: "Weekends I'm in the stand in a different boot.",
+      said: "You're on your feet 12 hours so I'd add a second Strengthener for the job.",
+      gold: false,
+      why: "Job-stacking. The wear schedule is already in the duty boots. Hunting is the leftover."
+    },
+    {
+      id: "gold-court",
+      who: "ER nurse \xB7 pickleball",
+      quote: "Twelve hours on that ER floor. Pickleball Tuesday and Thursday. No locker-room swap.",
+      said: "Strengthener covers the hospital. That leaves the court shoes empty. This 4th is a Sports Maintainer that lives in the pickleball shoes.",
+      gold: true,
+      why: "Leftover named. Type plus shoe. No Strengthener on the court."
+    },
+    {
+      id: "gold-golf",
+      who: "Warehouse \xB7 back nine",
+      quote: "Concrete all week. Saturday 18. Heel barking by the back nine.",
+      said: "Saturday the golf shoes are doing the round alone. This 4th is a second Strengthener that lives in the golf shoes.",
+      gold: true,
+      why: "Golf wants the heel counter. Cover plus Ease on the back nine."
+    },
+    {
+      id: "gold-dress",
+      who: "Attorney \xB7 loafers",
+      quote: "I run before court. The loafers undo everything.",
+      said: "The run is already a Maintainer. The work shoes are the gap. This 4th is a Dress Maintainer living in the loafers.",
+      gold: true,
+      why: "She named the leftover. Dress, not a second Sports pair."
+    },
+    {
+      id: "gold-gym",
+      who: "Teacher \xB7 box at 5",
+      quote: "Box at 5. Kids at 7:30. Not swapping in a dark parking lot.",
+      said: "Teaching shoes already have the wear schedule. You work out in a Maintainer. This 4th lives in the lifting shoes.",
+      gold: true,
+      why: "Parking-lot swap is the aperture. Maintainer in the leftover gym shoe."
+    },
+    {
+      id: "gold-travel",
+      who: "Flight attendant \xB7 5 a.m.",
+      quote: "I cannot be swapping supports at 5 a.m. in a hotel.",
+      said: "Uniform already has the 3-system. This 4th is a second Everyday that stays in the roll-aboard.",
+      gold: true,
+      why: "They wrote the 4th: lives in the bag. 2nd Everyday, not more uniform."
+    },
+    {
+      id: "gold-house",
+      who: "76 \xB7 Houston house",
+      quote: "Three months a year at my sister's. I hate packing those house ones.",
+      said: "Walking is covered. This 4th is a second Relaxer that lives at your sister's. We don't make you pack the pair that lets you sleep.",
+      gold: true,
+      why: "Two homes is the rare 2nd Relaxer. Not a sport 4th."
+    }
+  ];
+  var NEVER_SECONDS = 90;
+  return __toCommonJS(quad_api_exports);
+})();
+
 var THE4TH = (() => {
   var __defProp = Object.defineProperty;
   var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
@@ -1845,7 +2959,7 @@ var THE4TH = (() => {
 (function () {
   "use strict";
   var D = window.THE4TH;
-  var SAVE = "the-4th-progress-v1";
+  var SAVE = "the-4th-progress-v2";
   var BASE = "/games/the-4th";
   var FW_TITLES = [
     "The leftover shoe",
@@ -1885,14 +2999,10 @@ var THE4TH = (() => {
     });
   }
   function scenarioById(id) {
-    return D.SCENARIOS.find(function (s) { return s.id === id; }) || D.SCENARIOS[0];
+    return T4.resolveRound(id);
   }
   function idsFor(seed, count) {
-    var ids = D.shuffleCopy(
-      D.SCENARIOS.map(function (s) { return s.id; }),
-      seed + "-" + Math.random().toString(36).slice(2),
-    );
-    return count ? ids.slice(0, count) : ids;
+    return T4.dealRounds(seed, count);
   }
   function leftoverHighlight(shoe, leftover) {
     var s = shoe.toLowerCase();
@@ -1905,6 +3015,7 @@ var THE4TH = (() => {
       bestFloor: 0,
       bestPlace: 0,
       bestExam: 0,
+      bestNever: 0,
       lastExamScore: null,
       frameworkDone: false,
       placeLessonDone: false,
@@ -1925,6 +3036,7 @@ var THE4TH = (() => {
       bestFloor: state.bestFloor,
       bestPlace: state.bestPlace,
       bestExam: state.bestExam,
+      bestNever: state.bestNever || 0,
       lastExamScore: state.lastExamScore,
       frameworkDone: state.frameworkDone,
       placeLessonDone: state.placeLessonDone,
@@ -1949,6 +3061,7 @@ var THE4TH = (() => {
     floorOrder: D.SCENARIOS.map(function (s) { return s.id; }),
     floorStep: "brief",
     supportPick: null,
+    skuPick: null,
     mentionPick: null,
     floorLog: [],
     placeIndex: 0,
@@ -1970,23 +3083,114 @@ var THE4TH = (() => {
     bestPlace: boot.bestPlace,
     bestExam: boot.bestExam,
     lastExamScore: boot.lastExamScore,
+    bestNever: boot.bestNever || 0,
+    lastNeverScore: null,
+    neverRunning: false,
+    neverOrder: [],
+    neverIndex: 0,
+    neverLeft: T4.NEVER_SECONDS,
+    neverLog: [],
     frameworkDone: boot.frameworkDone,
     placeLessonDone: boot.placeLessonDone,
   };
 
-  function buildResult(scenarioId, supportPick, mentionPick) {
+  function buildResult(scenarioId, supportPick, skuPick, placeBuilt) {
     var s = scenarioById(scenarioId);
-    var m = s.mentions.find(function (x) { return x.id === mentionPick; });
+    var place = T4.gradePlace(placeBuilt || []);
     return {
       scenarioId: scenarioId,
       supportPick: supportPick,
-      mentionPick: mentionPick,
-      supportPts: D.supportScore(s, supportPick),
-      mentionPts: D.mentionScore(s, mentionPick),
-      mentionQuality: m ? m.quality : "miss",
+      skuPick: skuPick,
+      placeBuilt: placeBuilt || [],
+      supportPts: T4.supportScore(s, supportPick),
+      skuPts: T4.skuScore(s, skuPick),
+      mentionPts: place.pts,
+      mentionQuality: place.quality,
+      skuQuality: T4.skuQuality(s, skuPick),
     };
   }
 
+
+  function openNever() {
+    state.view = "never";
+    state.neverRunning = false;
+    state.lastNeverScore = null;
+    state.neverLog = [];
+    state.neverLeft = T4.NEVER_SECONDS;
+    render();
+  }
+  function startNever() {
+    state.view = "never";
+    state.neverOrder = T4.shuffleCopy(T4.TRAP_CARDS.map(function (c) { return c.id; }), "never-" + Math.random().toString(36).slice(2));
+    state.neverIndex = 0;
+    state.neverLeft = T4.NEVER_SECONDS;
+    state.neverRunning = true;
+    state.neverLog = [];
+    state.lastNeverScore = null;
+    if (window.__neverTick) clearInterval(window.__neverTick);
+    window.__neverTick = setInterval(function () {
+      if (!state.neverRunning) { clearInterval(window.__neverTick); return; }
+      if (state.neverLeft <= 1) { finishNever(); return; }
+      state.neverLeft -= 1;
+      render();
+    }, 1000);
+    render();
+  }
+  function answerNever(gold) {
+    if (!state.neverRunning) return;
+    var id = state.neverOrder[state.neverIndex % state.neverOrder.length];
+    var card = T4.TRAP_CARDS.find(function (c) { return c.id === id; });
+    state.neverLog.push({ id: id, pickGold: gold, correct: gold === card.gold });
+    state.neverIndex += 1;
+    render();
+  }
+  function finishNever() {
+    if (window.__neverTick) clearInterval(window.__neverTick);
+    state.neverRunning = false;
+    var answered = state.neverLog.length;
+    var hits = state.neverLog.filter(function (r) { return r.correct; }).length;
+    var pct = answered ? Math.round((hits / answered) * 100) : 0;
+    state.lastNeverScore = pct;
+    state.bestNever = Math.max(state.bestNever || 0, pct);
+    writeSaved();
+    render();
+  }
+  function viewNever() {
+    var hits = state.neverLog.filter(function (r) { return r.correct; }).length;
+    if (!state.neverRunning && state.lastNeverScore == null) {
+      return shell(
+        "<h1>Never this</h1><p class=\"muted\">Ninety seconds. A customer quote, then a mention. Tap Gold if that is how a specialist sounds. Tap Trap if it is a register.</p>" +
+        btn("Start the 90", "never-go", "cream xl"),
+        { kicker: "Never this · 90s", title: "Never this" }
+      );
+    }
+    if (state.neverRunning) {
+      var id = state.neverOrder[state.neverIndex % Math.max(state.neverOrder.length, 1)];
+      var card = T4.TRAP_CARDS.find(function (c) { return c.id === id; });
+      return shell(
+        '<div class="row-between"><p class="never-time">' + state.neverLeft + 's</p><p class="muted">' + hits + " gold · " + state.neverLog.length + " heard</p></div>" +
+        '<p class="kicker">' + esc(card.who) + "</p>" +
+        '<blockquote class="panel">“' + esc(card.quote) + "”</blockquote>" +
+        '<p class="mini">They said</p>' +
+        '<p class="cream-text strong">' + esc(card.said) + "</p>" +
+        '<div class="goldtrap">' +
+        btn("Gold", "never-gold", "cream xl") +
+        '<button type="button" class="btn ghost xl" data-act="never-trap">Trap</button></div>',
+        { kicker: "Never this · 90s", title: "Never this" }
+      );
+    }
+    var missed = state.neverLog.filter(function (r) { return !r.correct; });
+    return shell(
+      '<h1 class="display">' + (state.lastNeverScore >= 80 ? "Ear is in" : "Keep drilling") + "</h1>" +
+      '<p class="muted">' + hits + " / " + state.neverLog.length + " in 90 seconds · " + state.lastNeverScore + "%</p>" +
+      missed.map(function (m) {
+        var c = T4.TRAP_CARDS.find(function (x) { return x.id === m.id; });
+        return '<div class="panel"><p class="mini miss">' + (c.gold ? "That was gold" : "That was a trap") + "</p><p>" + esc(c.said) + '</p><p class="muted">' + esc(c.why) + "</p></div>";
+      }).join("") +
+      '<div class="navrow">' + btn("Home", "home", "ghost") + btn("Run it again", "never-go", "cream grow") + "</div>",
+      { kicker: "Never this · 90s", title: "Never this" }
+    );
+  }
   function goHome() {
     state.view = "home";
     render();
@@ -1997,6 +3201,8 @@ var THE4TH = (() => {
     state.floorIndex = 0;
     state.floorStep = "brief";
     state.supportPick = null;
+    state.skuPick = null;
+    state.placeBuilt = [];
     state.mentionPick = null;
     state.floorLog = [];
     render();
@@ -2023,6 +3229,8 @@ var THE4TH = (() => {
     state.examIndex = 0;
     state.examStep = "brief";
     state.supportPick = null;
+    state.skuPick = null;
+    state.placeBuilt = [];
     state.mentionPick = null;
     state.examLog = [];
     render();
@@ -2045,50 +3253,64 @@ var THE4TH = (() => {
 
   function lockSupport() {
     if (!state.supportPick) return;
-    if (state.view === "exam") state.examStep = "mention";
-    else state.floorStep = "mention";
+    state.skuPick = null;
+    if (state.view === "exam") state.examStep = "sku";
+    else state.floorStep = "sku";
     render();
   }
-  function lockMention() {
-    if (!state.supportPick || !state.mentionPick) return;
+  function lockSku() {
+    if (!state.skuPick) return;
+    state.placeBuilt = [];
+    if (state.view === "exam") state.examStep = "place";
+    else state.floorStep = "place";
+    render();
+  }
+  function lockPlace() {
+    if (!state.supportPick || !state.skuPick || state.placeBuilt.length < 5) return;
     if (state.view === "exam") {
-      var result = buildResult(state.examOrder[state.examIndex], state.supportPick, state.mentionPick);
+      var result = buildResult(state.examOrder[state.examIndex], state.supportPick, state.skuPick, state.placeBuilt);
       state.examLog.push(result);
       var last = state.examIndex >= state.examOrder.length - 1;
       if (last) {
-        var total = state.examLog.reduce(function (a, r) { return a + r.supportPts + r.mentionPts; }, 0);
-        var max = state.examOrder.length * D.ROUND_MAX;
+        var total = state.examLog.reduce(function (a, r) { return a + r.supportPts + r.skuPts + r.mentionPts; }, 0);
+        var max = state.examOrder.length * T4.ROUND_MAX;
         var pct = Math.round((total / max) * 100);
         state.examActive = false;
         state.examStep = "debrief";
         state.lastExamScore = pct;
         state.bestExam = Math.max(state.bestExam, pct);
         state.supportPick = null;
+        state.skuPick = null;
+        state.placeBuilt = [];
         state.mentionPick = null;
         writeSaved();
       } else {
         state.examIndex += 1;
         state.examStep = "brief";
         state.supportPick = null;
+        state.skuPick = null;
+        state.placeBuilt = [];
         state.mentionPick = null;
       }
       render();
       return;
     }
-    state.floorLog.push(buildResult(state.floorOrder[state.floorIndex], state.supportPick, state.mentionPick));
+    state.floorLog.push(buildResult(state.floorOrder[state.floorIndex], state.supportPick, state.skuPick, state.placeBuilt));
     state.floorStep = "debrief";
     render();
   }
   function nextFloor() {
     var last = state.floorIndex >= state.floorOrder.length - 1;
     if (last) {
-      var total = state.floorLog.reduce(function (a, r) { return a + r.supportPts + r.mentionPts; }, 0);
-      var max = state.floorLog.length * D.ROUND_MAX;
+      var total = state.floorLog.reduce(function (a, r) { return a + r.supportPts + r.skuPts + r.mentionPts; }, 0);
+      var max = state.floorLog.length * T4.ROUND_MAX;
       var pct = max ? Math.round((total / max) * 100) : 0;
       state.bestFloor = Math.max(state.bestFloor, pct);
       state.view = "home";
       state.floorStep = "brief";
       state.supportPick = null;
+      state.skuPick = null;
+      state.placeBuilt = [];
       state.mentionPick = null;
       writeSaved();
       render();
@@ -2097,6 +3319,8 @@ var THE4TH = (() => {
     state.floorIndex += 1;
     state.floorStep = "brief";
     state.supportPick = null;
+    state.skuPick = null;
+    state.placeBuilt = [];
     state.mentionPick = null;
     render();
   }
@@ -2266,7 +3490,7 @@ var THE4TH = (() => {
             '<p class="kicker">Specialist trainer</p>' +
             "<h1 class=\"display\">The 4th</h1>" +
             '<p class="lede">Age. Job. Play. Mention.</p>' +
-            "<p class=\"muted\">Twelve floor customers. You pick the leftover support — then you say it like a specialist, not a register add-on.</p>" +
+            "<p class=\"muted\">Twelve faces. Fresh leftover each walk. You name the family, pull the SKU the chart marks, then build PLACE.</p>" +
             '<p class="ruleline">' +
             esc(D.RULE) +
             "</p>" +
@@ -2296,7 +3520,7 @@ var THE4TH = (() => {
             "layers",
             state.bestFloor ? "Best " + state.bestFloor + "%" : D.SCENARIOS.length + " customers",
             "Floor scenarios",
-            "Choose the 4th, then choose how you'd mention it. Debrief after every pair.",
+            "Choose the 4th, name the SKU, then build PLACE from their words. Debrief after every pair.",
             "Walk the floor",
             "floor",
             true,
@@ -2319,9 +3543,17 @@ var THE4TH = (() => {
               ? "Last " + state.lastExamScore + "% · best " + state.bestExam + "%"
               : "8 customers, no peeking",
             "Presentation eval",
-            "Pass at 80. Upsell language is a flag. Callback language is the grade.",
+            "Pass at 80. Family, SKU, PLACE. Upsell language is a flag.",
             "Take the eval",
             "exam",
+          ) +
+          card(
+            "clip",
+            state.bestNever ? "Best " + state.bestNever + "%" : "90 seconds",
+            "Never this",
+            "Work out in a Strengthener. 4-pack. Another Relaxer because they are 72. Hear it. Flag it.",
+            "Start the 90",
+            "never",
           ) +
         "</section>" +
       "</div>"
@@ -2680,12 +3912,14 @@ var THE4TH = (() => {
         ? "Read the card"
         : step === "support"
           ? "Which 4th?"
-          : step === "mention"
-            ? "How do you mention it?"
-            : exam
-              ? "Eval closed"
-              : "Debrief";
-    var body = customerCard(s, step === "mention");
+          : step === "sku"
+            ? "Name the SKU"
+            : step === "place" || step === "mention"
+              ? "Build the mention"
+              : exam
+                ? "Eval closed"
+                : "Debrief";
+    var body = customerCard(s, step === "sku" || step === "place" || step === "mention");
     if (step === "brief") {
       body += btn("Choose the 4th", "begin", "cream xl");
     } else if (step === "support") {
@@ -2717,38 +3951,63 @@ var THE4TH = (() => {
         '<button type="button" class="btn cream xl" data-act="lock-support"' +
         (state.supportPick ? "" : " disabled") +
         ">Lock the 4th</button>";
-    } else if (step === "mention") {
-      var mentions = D.shuffleCopy(s.mentions, s.id + "-mention");
+    } else if (step === "sku") {
+      var family = D.SUPPORTS[state.supportPick];
+      var skus = family.skus;
       body +=
-        (state.supportPick
-          ? '<p class="locked">Locked 4th · ' + esc(D.SUPPORTS[state.supportPick].name) + "</p>"
-          : "") +
+        '<p class="locked">Locked 4th · ' + esc(family.name) + "</p>" +
+        '<p class="muted">Pull the SKU the chart actually marks for ' + esc(s.leftover.toLowerCase()) + ". Golf wants a heel counter. Gym never wants a Strengthener.</p>" +
+        '<div class="sku-grid">' +
+        skus.map(function (id) {
+          var sku = T4.SKUS[id];
+          var on = state.skuPick === id;
+          return (
+            '<button type="button" class="sku-pick' + (on ? " on" : "") + '" data-act="pick-sku" data-id="' + id + '">' +
+            '<img src="' + asset(sku.image) + '" alt="">' +
+            "<span>" + esc(sku.name) + "</span></button>"
+          );
+        }).join("") +
+        "</div>" +
+        '<button type="button" class="btn cream xl" data-act="lock-sku"' + (state.skuPick ? "" : " disabled") + ">Lock the SKU</button>";
+    } else if (step === "place" || step === "mention") {
+      var chips = T4.placeChips(s);
+      var seats = ["Playback", "Locate", "Aperture", "Cover", "Ease"];
+      body +=
         '<p class="muted">' +
         (exam
-          ? "Gold uses their words. A miss sounds like a register."
-          : "Gold uses PLACE: their words, leftover shoe, named 4th, their outcome. A miss sounds like a register.") +
-        '</p><div class="stack">' +
-        mentions
-          .map(function (m) {
-            var on = state.mentionPick === m.id;
-            return (
-              '<button type="button" class="mention' +
-              (on ? " on" : "") +
-              '" data-act="mention" data-id="' +
-              m.id +
-              '"><span class="body">' +
-              esc(m.text) +
-              "</span></button>"
-            );
-          })
-          .join("") +
-        "</div>" +
-        '<button type="button" class="btn cream xl" data-act="lock-mention"' +
-        (state.mentionPick ? "" : " disabled") +
+          ? "Five seats. Their words. A register chip is a flag."
+          : "Tap chips into PLACE order. A register line is a miss.") +
+        "</p><ol class=\"seats\">" +
+        seats.map(function (seat, i) {
+          var cid = state.placeBuilt[i];
+          var chip = chips.find(function (c) { return c.id === cid; });
+          return (
+            "<li class=\"seat" + (cid ? " on" : "") + '\"><p class="mini">' +
+            seat +
+            '</p><p>' +
+            (chip ? esc(chip.text) : "Tap a line below") +
+            "</p></li>"
+          );
+        }).join("") +
+        '</ol><div class="stack">' +
+        chips.map(function (chip) {
+          var used = state.placeBuilt.indexOf(chip.id) >= 0;
+          return (
+            '<button type="button" class="mention' + (used ? " used" : "") + '" data-act="chip" data-id="' +
+            chip.id +
+            '"' + (used || state.placeBuilt.length >= 5 ? " disabled" : "") + ">" +
+            '<span class="body">' + esc(chip.text) + "</span></button>"
+          );
+        }).join("") +
+        '</div><div class="navrow"><button type="button" class="btn ghost" data-act="undo-chip"' +
+        (state.placeBuilt.length ? "" : " disabled") +
+        ">Undo</button>" +
+        '<button type="button" class="btn cream grow" data-act="lock-place"' +
+        (state.placeBuilt.length < 5 ? " disabled" : "") +
         ">" +
-        (exam ? "Lock mention" : "See the debrief") +
-        "</button>";
-    } else if (step === "debrief" && !exam) {
+        (exam ? "Lock PLACE" : "See the debrief") +
+        "</button></div>";
+    } else if (step === "debrief" && !exam) {    } else if (step === "debrief" && !exam) {
       var last = state.floorLog[state.floorLog.length - 1];
       body += debrief(s, last, index + 1 >= order.length);
     }
@@ -2805,12 +4064,25 @@ var THE4TH = (() => {
         : result.mentionQuality === "okay"
           ? "You got the pair in the right shoe, but you didn't playback the quote. Gold repeats the leftover life, then eases."
           : "That sounded like a register. Gold uses their words, names the leftover shoe, and eases. Don't price it, don't 4-pack it, don't skip the leftover.";
-    var goldText = scenario.mentions.find(function (m) { return m.quality === "gold"; }).text;
-    var pickedMention = scenario.mentions.find(function (m) { return m.id === result.mentionPick; });
+    var goldText = scenario.goldSpeech || scenario.place.map(function (p) { return p.text; }).join(" ");
+    var skuName = result.skuPick && T4.SKUS[result.skuPick] ? T4.SKUS[result.skuPick].name : "—";
+    var mentionTitle2 =
+      result.mentionQuality === "gold"
+        ? "PLACE — in order, their words"
+        : result.mentionQuality === "okay"
+          ? "Right lines, wrong order"
+          : "Register chip or skipped leftover";
+    var mentionBody2 =
+      result.mentionQuality === "gold"
+        ? scenario.coach
+        : result.mentionQuality === "okay"
+          ? "You used their leftover, but PLACE has a job: Playback, Locate, Aperture, Cover, Ease — in that order."
+          : "A register line is a flag. Gold uses their words, names the leftover shoe, and eases.";
     return (
       '<div class="grade-grid">' +
       gradeCard("The 4th", supportTone, supportTitle, supportBody) +
-      gradeCard("The mention", result.mentionQuality, mentionTitle, mentionBody, pickedMention && pickedMention.label) +
+      gradeCard("The SKU", result.skuQuality || "miss", skuName, T4.skuWhy(scenario, result.skuPick || null)) +
+      gradeCard("The mention", result.mentionQuality, mentionTitle2, mentionBody2) +
       '</div><div class="paper-box"><p class="mini teal-deep">Age · Job · Play</p><ul class="plain ink">' +
       "<li>" + esc(scenario.ageRead) + "</li><li>" + esc(scenario.jobRead) + "</li><li>" + esc(scenario.playRead) + "</li></ul></div>" +
       '<div class="paper-box"><p class="mini teal-deep">What gold sounds like</p><p class="italic ink">' +
@@ -2875,7 +4147,7 @@ var THE4TH = (() => {
               '</p><p class="muted tight">' +
               esc(D.SUPPORTS[r.supportPick].short + " · " + r.mentionQuality) +
               "</p></div><p class=\"pts\">" +
-              (r.supportPts + r.mentionPts) +
+              (r.supportPts + (r.skuPts || 0) + r.mentionPts) +
               "</p>" +
               (r.supportPts === 10 && r.mentionQuality === "gold" ? icon("check") : "") +
               "</li>"
@@ -3164,7 +4436,7 @@ var THE4TH = (() => {
     else if (state.view === "place") html = viewPlace();
     else if (state.view === "exam") {
       html = !state.examActive && state.examLog.length ? viewExamReport() : viewRound(true);
-    }
+    } else if (state.view === "never") html = viewNever();
     app.innerHTML = html;
     var key =
       state.view +
