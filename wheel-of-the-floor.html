@@ -225,7 +225,13 @@ function saveSave(){ try { localStorage.setItem(SAVE_KEY, JSON.stringify(save));
 let save = loadSave();
 
 function esc(s){
-  return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+  return String(s).replace(/[&<>"']/g, function (ch) {
+    if (ch === "&") return "\u0026amp;";
+    if (ch === "<") return "\u0026lt;";
+    if (ch === ">") return "\u0026gt;";
+    if (ch === '"') return "\u0026quot;";
+    return "\u0026#39;";
+  });
 }
 function shuffle(a){
   const b = a.slice();

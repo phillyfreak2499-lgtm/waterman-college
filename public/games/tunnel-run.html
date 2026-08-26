@@ -2412,7 +2412,7 @@ function hud(pulse) {
     if (src) sv.textContent = src;
   }
 }
-function esc(s) { return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;"); }
+function esc(s) { return String(s).replace(/[&<>"']/g, function (ch) { if (ch === "&") return "\u0026amp;"; if (ch === "<") return "\u0026lt;"; if (ch === ">") return "\u0026gt;"; if (ch === '"') return "\u0026quot;"; return "\u0026#39;"; }); }
 function statRow(pairs) {
   return '<div class="stats">' + pairs.map(p => '<div class="stat"><b>' + p[0] + '</b><span>' + p[1] + '</span></div>').join("") + '</div>';
 }
