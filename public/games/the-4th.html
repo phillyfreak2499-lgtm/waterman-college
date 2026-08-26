@@ -1006,10 +1006,10 @@ var THE4TH = (() => {
       name: "2nd Relaxer",
       short: "2nd Relaxer",
       livesIn: "A second home, guest room, travel recovery",
-      blurb: "Flex Relaxer, Skinny, SLR, Comfort Leather. Recovery is the leftover story \u2014 two houses, burning nights.",
+      blurb: "Flex Relaxer, Skinny, SLR. Recovery is the leftover story \u2014 two houses, burning nights.",
       image: "/supports/relaxer.jpg",
       tone: "rest",
-      skus: ["flex-relaxer", "skinny", "slr", "comfort-leather"]
+      skus: ["flex-relaxer", "skinny", "slr"]
     }
   };
   var SUPPORT_ORDER = [
@@ -1056,7 +1056,7 @@ var THE4TH = (() => {
       bullets: [
         "Thinnest. Little to no adjustment. Fits almost any shoe",
         "No metatarsal rise except SLR \u2014 SLR is the wider-foot athletic start",
-        "Flat heel platform, except Skinny and Comfort Leather (slight heel counter)",
+        "Flat heel platform, except Skinny (slight heel counter)",
         "Worn last every day \u2014 slippers, sandals, dress, recovery",
         "Perfect to start athletic activity in until the foot is ready for a Maintainer"
       ]
@@ -1122,21 +1122,6 @@ var THE4TH = (() => {
         "55% lighter and 5\xD7 thinner than Classic",
         "Gait Enhancement Technology \u2014 patented S-shaped GeT on the sole",
         "The Strengthener that actually fits dress shoes"
-      ],
-      caution: "Not for climbing ladders."
-    },
-    "sls-leather": {
-      id: "sls-leather",
-      name: "SLS Leather",
-      short: "SLS Leather",
-      family: "strengthener",
-      image: "/supports/catalog/sls-leather.jpg",
-      firmness: "SLS with a leather top cover",
-      bestFor: "Dress-volume Strengthener when they want leather against the foot",
-      bullets: [
-        "Same thin GeT chassis as SLS \u2014 leather top, not a different support",
-        "Fits dress shoes",
-        "Same ladder caution as SLS"
       ],
       caution: "Not for climbing ladders."
     },
@@ -1226,20 +1211,6 @@ var THE4TH = (() => {
         "Court, run, gym, hunting \u2014 not golf"
       ]
     },
-    "mid-flex-leather": {
-      id: "mid-flex-leather",
-      name: "Mid-Flex Leather",
-      short: "Mid-Flex Lthr",
-      family: "maintainer",
-      image: "/supports/catalog/mid-flex-leather.jpg",
-      firmness: "Mid-Flex with leather top",
-      bestFor: "Same flex with a leather cover \u2014 hiking yes, flats no",
-      bullets: [
-        "Leather top on a Mid-Flex chassis \u2014 not a different support",
-        "Hiking is marked; regular Mid-Flex is not",
-        "Hunting is blank on leather, marked on regular Mid-Flex"
-      ]
-    },
     flex: {
       id: "flex",
       name: "Flex",
@@ -1252,20 +1223,6 @@ var THE4TH = (() => {
         "The black Flex chassis \u2014 flatter feet, light shoes",
         "Running, court, hunting, gym",
         "Dress, heels, sandals. Everyday 4th in a second sneaker"
-      ]
-    },
-    "flex-faux-leather": {
-      id: "flex-faux-leather",
-      name: "Flex Faux Leather",
-      short: "Flex Faux Lthr",
-      family: "maintainer",
-      image: "/supports/catalog/flex-faux-leather.jpg",
-      firmness: "Flex with a faux-leather top",
-      bestFor: "Flex story when they want a covered top",
-      bullets: [
-        "Same Flex chassis, faux-leather cover \u2014 not a different support",
-        "Not marked for hiking, hunting, gardening, or flats",
-        "Court, run, gym, dress, heels still yes"
       ]
     },
     deluxe: {
@@ -1352,19 +1309,6 @@ var THE4TH = (() => {
         "The Relaxer the chart marks for golf",
         "Can be worn during high-impact sports"
       ]
-    },
-    "comfort-leather": {
-      id: "comfort-leather",
-      name: "Comfort Leather",
-      short: "Comfort Lthr",
-      family: "relaxer",
-      image: "/supports/catalog/comfort-leather.jpg",
-      firmness: "Skinny family with leather and a slight heel counter",
-      bestFor: "Dress, heels, golf \u2014 leather against the foot",
-      bullets: [
-        "Slight heel counter, same as Skinny",
-        "Golf yes. Court, hunting, and gardening no."
-      ]
     }
   };
   var SKU_ORDER = [
@@ -1372,23 +1316,19 @@ var THE4TH = (() => {
     "honeycomb",
     "classic",
     "sls",
-    "sls-leather",
     "diamond",
     "hug",
     "ultra",
     "miracle-flex",
     "slm",
     "mid-flex",
-    "mid-flex-leather",
     "flex",
-    "flex-faux-leather",
     "deluxe",
     "deluxe-plus",
     "tss",
     "flex-relaxer",
     "slr",
-    "skinny",
-    "comfort-leather"
+    "skinny"
   ];
   var YOUTH = [
     {
@@ -1425,7 +1365,7 @@ var THE4TH = (() => {
       id: "w-ladder",
       group: "Work",
       label: "Climbing ladders",
-      note: "SLS and SLS Leather are not marked."
+      note: "SLS is not marked."
     },
     { id: "p-walk", group: "Play", label: "Walking" },
     {
@@ -1459,13 +1399,13 @@ var THE4TH = (() => {
       id: "p-golf",
       group: "Play",
       label: "Golf",
-      note: "Heel counter: any Strengthener, Deluxe, Deluxe Plus, Skinny, Comfort Leather. Not a flex Sports pair."
+      note: "Heel counter: any Strengthener, Deluxe, Deluxe Plus, Skinny. Not a flex Sports pair."
     },
     {
       id: "p-hunt",
       group: "Play",
       label: "Hunting",
-      note: "Mid-Flex yes, Mid-Flex Leather no. Flex yes, Flex Faux Leather no. Deluxe yes, Deluxe Plus no."
+      note: "Deluxe yes. Deluxe Plus no \u2014 tighter than Deluxe."
     },
     { id: "p-garden", group: "Play", label: "Gardening" },
     { id: "p-shop", group: "Play", label: "Shopping" },
@@ -1474,7 +1414,7 @@ var THE4TH = (() => {
       id: "s-dress",
       group: "Shoes",
       label: "Dress shoes",
-      note: "SLS / SLS Leather are the only Strengtheners that fit dress."
+      note: "SLS is the only Strengthener that fits dress."
     },
     { id: "s-heel", group: "Shoes", label: "High heels" },
     { id: "s-flat", group: "Shoes", label: "Flats" },
@@ -1483,7 +1423,7 @@ var THE4TH = (() => {
     { id: "s-slip", group: "Shoes", label: "Slippers" },
     { id: "s-sand", group: "Shoes", label: "Sandals / Slides" }
   ];
-  var ALL = "111111111111111111111";
+  var ALL = "11111111111111111";
   var CHART = {
     "w-walk": ALL,
     "w-stand": ALL,
@@ -1491,25 +1431,25 @@ var THE4TH = (() => {
     "w-drive": ALL,
     "w-lift": ALL,
     "w-hard": ALL,
-    "w-ladder": "111001111111111111111",
+    "w-ladder": "11101111111111111",
     "p-walk": ALL,
-    "p-run": "000000011111110011111",
-    "p-hike": "000000011101101011111",
-    "p-cycle": "000000011111110011111",
-    "p-lift": "111000011111111111111",
-    "p-gym": "000000011111111111111",
-    "p-sport": "000000011111110011100",
-    "p-team": "000000011111110011100",
-    "p-golf": "111111100000001100011",
-    // R5: Ultra, Miracle, SLM, Mid-Flex, Flex, Deluxe, TSS, Flex Relaxer, SLR, Skinny.
-    // Mid-Flex Leather, Flex Faux, Deluxe Plus, Comfort Leather are blank.
-    "p-hunt": "000000011110101011110",
-    "p-garden": "111111111110101011110",
+    "p-run": "00000011111001111",
+    "p-hike": "00000011101101111",
+    "p-cycle": "00000011111001111",
+    "p-lift": "11100011111111111",
+    "p-gym": "00000011111111111",
+    "p-sport": "00000011111001110",
+    "p-team": "00000011111001110",
+    "p-golf": "11111100000110001",
+    // R5: Ultra, Miracle, SLM, Flex, Deluxe, TSS, Flex Relaxer, SLR, Skinny.
+    // Mid-Flex is blank on hiking. Deluxe Plus is blank on hunting / hiking / gardening / flats.
+    "p-hunt": "00000011111101111",
+    "p-garden": "11111111111101111",
     "p-shop": ALL,
     "s-ath": ALL,
-    "s-dress": "000110011111111111111",
-    "s-heel": "000000011111110011111",
-    "s-flat": "111110011110101011111",
+    "s-dress": "00010011111111111",
+    "s-heel": "00000011111001111",
+    "s-flat": "11110011111101111",
     "s-work": ALL,
     "s-boot": ALL,
     "s-slip": ALL,
@@ -1532,7 +1472,7 @@ var THE4TH = (() => {
       id: "platform",
       title: "Flat heel platform",
       image: "/supports/features/heel-platform.jpg",
-      body: "No cup. The heel is free to move \u2014 sports, running, tighter shoes, open heels with Velcro. This is the Sports Maintainer story. Skinny and Comfort Leather keep a slight counter instead."
+      body: "No cup. The heel is free to move \u2014 sports, running, tighter shoes, open heels with Velcro. This is the Sports Maintainer story. Skinny keeps a slight counter instead."
     },
     {
       id: "met",
@@ -1570,15 +1510,15 @@ var THE4TH = (() => {
     },
     {
       title: "Golf is a heel counter",
-      body: "Any Strengthener, Deluxe, Deluxe Plus, Skinny, or Comfort Leather. Flex Sports Maintainers are blank. Court and golf are opposite families."
+      body: "Any Strengthener, Deluxe, Deluxe Plus, Skinny. Flex Sports Maintainers are blank. Court and golf are opposite families."
     },
     {
       title: "Court wants side-to-side",
-      body: "Ultra through Flex Faux, TSS, Flex Relaxer, SLR. Not Deluxe. Not Skinny. Flat heel platform. Not a Strengthener."
+      body: "Ultra through Flex, TSS, Flex Relaxer, SLR. Not Deluxe. Not Skinny. Flat heel platform. Not a Strengthener."
     },
     {
       title: "Dress volume is Slimline",
-      body: "SLS / SLS Leather are the only Strengtheners in dress shoes. Heels take slim Maintainers and Relaxers \u2014 not Deluxe, not a full Classic."
+      body: "SLS is the only Strengthener in dress shoes. Heels take slim Maintainers and Relaxers \u2014 not Deluxe, not a full Classic."
     },
     {
       title: "Lighter = softer",
@@ -1816,7 +1756,7 @@ var THE4TH = (() => {
     {
       title: "Golf",
       fourth: "2nd Strengthener",
-      detail: "Heel counter, not side-to-side. Chart marks every Strengthener, Deluxe, Deluxe Plus, Skinny, Comfort Leather. A flex Sports pair is blank."
+      detail: "Heel counter, not side-to-side. Chart marks every Strengthener, Deluxe, Deluxe Plus, Skinny. A flex Sports pair is blank."
     },
     {
       title: "CrossFit, lifting, box",
@@ -1856,17 +1796,17 @@ var THE4TH = (() => {
     {
       kicker: "Golf",
       title: "Heel counter.",
-      body: "Any Strengthener, Deluxe, Deluxe Plus, Skinny, Comfort Leather. Court flex Maintainers are blank. Grouping golf with pickleball is how you miss."
+      body: "Any Strengthener, Deluxe, Deluxe Plus, Skinny. Court flex Maintainers are blank. Grouping golf with pickleball is how you miss."
     },
     {
       kicker: "Court / team",
       title: "Flat heel. Side-to-side.",
-      body: "Ultra through Flex Faux, TSS, Flex Relaxer, SLR. Not Deluxe. Not Skinny. Not a Strengthener."
+      body: "Ultra through Flex, TSS, Flex Relaxer, SLR. Not Deluxe. Not Skinny. Not a Strengthener."
     },
     {
       kicker: "Heels & dress",
       title: "Slimline volume.",
-      body: "SLS / SLS Leather are the only Strengtheners in dress shoes. Heels take slim Maintainers and Relaxers."
+      body: "SLS is the only Strengthener in dress shoes. Heels take slim Maintainers and Relaxers."
     }
   ];
 
@@ -2348,7 +2288,7 @@ var THE4TH = (() => {
             "grid",
             "R5 chart · official photos",
             "Lifestyle chart",
-            "21 supports. Running is not a Strengthener. Golf is not a flex Sports pair. Look it up before you walk.",
+            "17 supports. Running is not a Strengthener. Golf is not a flex Sports pair. Look it up before you walk.",
             "Open the chart",
             "catalog",
           ) +
@@ -2641,7 +2581,7 @@ var THE4TH = (() => {
         '<section><div class="chips">' +
         '<button type="button" class="chip-btn' +
         (state.catFamily === "all" ? " cream" : "") +
-        '" data-act="fam" data-id="all">All 21</button>' +
+        '" data-act="fam" data-id="all">All 17</button>' +
         FAMILIES.map(function (fid) {
           return (
             '<button type="button" class="chip-btn' +
