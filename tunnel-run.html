@@ -79,6 +79,7 @@ canvas{display:block;border-radius:14px;box-shadow:0 0 0 1px rgba(201,162,39,.30
   color:#f0e6cc;font-size:21px;font-weight:800;backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}
 .tb:active,.tb.on{background:rgba(201,162,39,.5);color:#07182b}
 #tJ{width:78px;height:78px;font-size:25px}
+.tb.duck{width:70px;height:58px;font-size:11px;letter-spacing:.12em;font-weight:850}
 </style>
 </head>
 <body>
@@ -99,7 +100,10 @@ canvas{display:block;border-radius:14px;box-shadow:0 0 0 1px rgba(201,162,39,.30
 <div id="ov"><div class="card" id="card"></div></div>
 <div id="touch">
   <div style="display:flex;gap:10px"><button class="tb" id="tL">&#9664;</button><button class="tb" id="tR">&#9654;</button></div>
-  <button class="tb" id="tJ">&#9650;</button>
+  <div style="display:flex;gap:10px;align-items:flex-end">
+    <button class="tb duck" id="tD">DUCK</button>
+    <button class="tb" id="tJ">&#9650;</button>
+  </div>
 </div>
 <div id="rot">Turn your phone sideways for the full floor</div>
 </div>
@@ -166,12 +170,21 @@ const MAX_FALL = 15;
 const COYOTE = 6;
 const BUFFER = 8;
 const IFRAMES = 90;         // invulnerable frames after a hit
+const STAND_H = 34;
+const DUCK_H = 18;
+const STOMP = -9.8;         // bounce after landing on a walk-in
 
 /* --------------------------------------------------- 3. the chunk library
    Each chunk is 12 strings covering rows 6..17. All are the same width.
    Legend:  #solid  =thin platform  ^floor spike  v ceiling spike
             o coin  s spring  c crumbling tile  m h-mover  M v-mover
-            p patrol hazard  H heart
+            p walker walk-in   b hopping closer   r rolling closer
+            f floating objection
+            z sliding spike rail (jump over)   Z hanging saw (duck under)
+            k popping floor pin   T hanging chart (drops)
+            H heart
+   Jump on a walk-in / closer / objection from above to stomp it.
+   Side-check still hurts. Hold Down / S to duck and slide.
    Every chunk must open and close on solid ground so pieces stitch cleanly. */
 function CH(tier, name, rows) { return { tier, name, rows, w: rows[0].length }; }
 
@@ -335,6 +348,45 @@ CH(2,"patrol-yard",[
 "####################",
 "####################",
 "####################"]),
+CH(2,"walk-ins",[
+"                    ",
+"                    ",
+"                    ",
+"                    ",
+"                    ",
+"     oo      oo     ",
+"                    ",
+"                    ",
+"    b          b    ",
+"####################",
+"####################",
+"####################"]),
+CH(2,"spike-rail",[
+"                    ",
+"                    ",
+"                    ",
+"                    ",
+"                    ",
+"        oooo        ",
+"                    ",
+"                    ",
+"      z             ",
+"####################",
+"####################",
+"####################"]),
+CH(2,"duck-tunnel",[
+"                    ",
+"                    ",
+"                    ",
+"                    ",
+"                    ",
+"                    ",
+"                    ",
+"####################",
+"  o  o  o  o  o  o  ",
+"####################",
+"####################",
+"####################"]),
 CH(2,"pit-ledges",[
 "                    ",
 "                    ",
@@ -441,6 +493,214 @@ CH(3,"tight-tower",[
 "##########   #######",
 "##########   #######",
 "##########   #######"]),
+CH(3,"hang-chart",[
+"                    ",
+"         T          ",
+"                    ",
+"                    ",
+"                    ",
+"        oooo        ",
+"                    ",
+"                    ",
+"                    ",
+"####################",
+"####################",
+"####################"]),
+CH(3,"stomp-pit",[
+"                    ",
+"                    ",
+"                    ",
+"                    ",
+"        oo          ",
+"       ====         ",
+"                    ",
+"                    ",
+"   b    ^^    b     ",
+"####################",
+"####################",
+"####################"]),
+CH(3,"rail-and-bot",[
+"                    ",
+"                    ",
+"                    ",
+"                    ",
+"                    ",
+"      oo    oo      ",
+"                    ",
+"                    ",
+"    p    z     p    ",
+"####################",
+"####################",
+"####################"]),
+CH(2,"stomp-line",[
+"                    ",
+"                    ",
+"                    ",
+"                    ",
+"     o   o   o      ",
+"                    ",
+"                    ",
+"                    ",
+"    p   p   p       ",
+"####################",
+"####################",
+"####################"]),
+CH(2,"hop-yard",[
+"                    ",
+"                    ",
+"                    ",
+"                    ",
+"      oo     oo     ",
+"                    ",
+"                    ",
+"                    ",
+"    b         b     ",
+"####################",
+"####################",
+"####################"]),
+CH(2,"pop-run",[
+"                    ",
+"                    ",
+"                    ",
+"                    ",
+"     o  o  o  o     ",
+"                    ",
+"                    ",
+"                    ",
+"   k   k    k   k   ",
+"####################",
+"####################",
+"####################"]),
+CH(2,"jump-or-stomp",[
+"                    ",
+"                    ",
+"                    ",
+"                    ",
+"        oo          ",
+"                    ",
+"                    ",
+"                    ",
+"      p             ",
+"#####    ####    ###",
+"#####    ####    ###",
+"#####    ####    ###"]),
+CH(2,"roll-dash",[
+"                    ",
+"                    ",
+"                    ",
+"                    ",
+"        oooo        ",
+"                    ",
+"                    ",
+"                    ",
+"              r     ",
+"####################",
+"####################",
+"####################"]),
+CH(2,"float-lane",[
+"                    ",
+"                    ",
+"                    ",
+"         f          ",
+"                    ",
+"      oooooo        ",
+"                    ",
+"                    ",
+"                    ",
+"####################",
+"####################",
+"####################"]),
+CH(2,"duck-bar",[
+"                    ",
+"                    ",
+"                    ",
+"                    ",
+"                    ",
+"                    ",
+"                    ",
+"      Z             ",
+"  o  o  o  o  o     ",
+"####################",
+"####################",
+"####################"]),
+CH(3,"low-rail",[
+"                    ",
+"                    ",
+"                    ",
+"     ##########     ",
+"                    ",
+"                    ",
+"                    ",
+"                    ",
+"      z             ",
+"####################",
+"####################",
+"####################"]),
+CH(3,"thwomp-gauntlet",[
+"                    ",
+"     T         T    ",
+"                    ",
+"                    ",
+"                    ",
+"        oooo        ",
+"                    ",
+"                    ",
+"         p          ",
+"####################",
+"####################",
+"####################"]),
+CH(3,"stairs-stomp",[
+"                    ",
+"                    ",
+"                    ",
+"              oo    ",
+"            ####    ",
+"          p         ",
+"         ####       ",
+"       p            ",
+"      ####  p       ",
+"####################",
+"####################",
+"####################"]),
+CH(3,"combo-lab",[
+"                    ",
+"                    ",
+"                    ",
+"                    ",
+"      o   o   o     ",
+"                    ",
+"                    ",
+"                    ",
+"    b  k   z   p    ",
+"####################",
+"####################",
+"####################"]),
+CH(3,"pop-pit",[
+"                    ",
+"                    ",
+"                    ",
+"                    ",
+"        oo          ",
+"       ====         ",
+"                    ",
+"                    ",
+"   k    ^^    r     ",
+"####################",
+"####################",
+"####################"]),
+CH(3,"hop-rail",[
+"                    ",
+"                    ",
+"                    ",
+"                    ",
+"      oo    oo      ",
+"                    ",
+"                    ",
+"                    ",
+"    b    z     r    ",
+"####################",
+"####################",
+"####################"]),
 
 /* ---- rest stops ------------------------------------------------------- */
 CH(0,"breather",[
@@ -518,6 +778,19 @@ function buildFloor(fi, q) {
   CHUNKS.forEach(c => byTier[c.tier].push(c));
   const aid = byTier[0].find(c => c.name === "aid-station");
   const breather = byTier[0].find(c => c.name === "breather");
+  const named = {};
+  CHUNKS.forEach(c => { named[c.name] = c; });
+
+  /* Guarantee the new toys show up so a floor isn't all coin-arcs.
+     Slot 1 and slot 6 sit between rest stops. */
+  const MUST = [
+    ["patrol-yard", "walk-ins"],
+    ["spike-rail", "duck-bar"],
+    ["stomp-line", "pop-run"],
+    ["hang-chart", "hop-yard"],
+    ["thwomp-gauntlet", "low-rail"]
+  ];
+  const forced = MUST[fi] || [];
 
   const order = [];
   let lastName = "", usedAid = false, breathers = 0;
@@ -525,12 +798,13 @@ function buildFloor(fi, q) {
     const tier = tierFor(fi, i);
     if (tier === 0) {
       breathers++;
-      // the second rest stop of a floor carries a heart
       const c = (!usedAid && breathers === 2) ? aid : breather;
       if (c === aid) usedAid = true;
       order.push(c); lastName = c.name; continue;
     }
-    const pool = byTier[tier].filter(c => c.name !== lastName);
+    if (i === 1 && named[forced[0]]) { order.push(named[forced[0]]); lastName = forced[0]; continue; }
+    if (i === 6 && named[forced[1]]) { order.push(named[forced[1]]); lastName = forced[1]; continue; }
+    const pool = byTier[tier].filter(c => c.name !== lastName && forced.indexOf(c.name) < 0);
     const c = pick(pool.length ? pool : byTier[tier]);
     order.push(c); lastName = c.name;
   }
@@ -570,7 +844,22 @@ function buildFloor(fi, q) {
 
   /* --- pull the entities out of the grid -------------------------------- */
   const coins = [], springs = [], crumbles = [], movers = [], patrols = [], hearts = [];
+  const sliders = [], crushers = [], poppers = [];
   const solidBelow = (cx, cy) => cy + 1 < ROWS && tiles[cy + 1][cx] === "#";
+  const pieceAt = (col) => layout.find(L => col >= L.from && col < L.to);
+  const chunkSpan = (col) => {
+    const p = pieceAt(col);
+    return p ? [p.from, p.to - 1] : [col, col];
+  };
+  const expand = (cx, y, needGround) => {
+    const range = chunkSpan(cx);
+    let lo = cx, hi = cx;
+    while (lo > range[0] && tiles[y][lo - 1] === " " && (!needGround || solidBelow(lo - 1, y))) lo--;
+    while (hi < range[1] && tiles[y][hi + 1] === " " && (!needGround || solidBelow(hi + 1, y))) hi++;
+    return [lo, hi];
+  };
+
+  const marks = [];
   for (let y = 0; y < ROWS; y++) for (let cx = 0; cx < cols; cx++) {
     const t = tiles[y][cx], px = cx * T, py = y * T;
     if (t === "o") { coins.push({ x: px + 8, y: py + 8, w: 16, h: 16, got: 0, ph: rnd(6.28) }); tiles[y][cx] = " "; }
@@ -579,12 +868,39 @@ function buildFloor(fi, q) {
     else if (t === "c") { crumbles.push({ x: px, y: py, w: T, h: 12, hit: 0, gone: 0 }); tiles[y][cx] = " "; }
     else if (t === "m") { movers.push({ kind: "h", x: px, y: py + 10, w: 3 * T, h: 12, a: px, b: px + 7 * T, sp: 1.15 + rnd(0.5), dir: 1 }); tiles[y][cx] = " "; }
     else if (t === "M") { movers.push({ kind: "v", x: px, y: py + 10, w: 3 * T, h: 12, a: py + 10 - 5 * T, b: py + 10, sp: 1.05 + rnd(0.4), dir: -1 }); tiles[y][cx] = " "; }
-    else if (t === "p") {
-      let lo = cx, hi = cx;
-      while (lo > 1 && solidBelow(lo - 1, y) && tiles[y][lo - 1] === " ") lo--;
-      while (hi < cols - 2 && solidBelow(hi + 1, y) && (tiles[y][hi + 1] === " " || tiles[y][hi + 1] === "p")) hi++;
-      patrols.push({ x: px, y: py + 6, w: 26, h: 26, a: lo * T, b: (hi + 1) * T - 26, sp: 1.05 + rnd(0.35), dir: 1, t: 0 });
+    else if (t === "p" || t === "b" || t === "r" || t === "f" || t === "z" || t === "Z" || t === "k" || t === "T") {
+      marks.push({ t, cx, y, px, py });
       tiles[y][cx] = " ";
+    }
+  }
+  const kindOf = { p: "walk", b: "hop", r: "roll", f: "float" };
+  for (const m of marks) {
+    const { t, cx, y, px, py } = m;
+    if (kindOf[t]) {
+      const [lo, hi] = expand(cx, y, t !== "f");
+      const hop = t === "b", roll = t === "r", flt = t === "f";
+      patrols.push({
+        kind: kindOf[t],
+        x: px, y: py + (flt ? 0 : 4), w: roll ? 30 : 28, h: roll ? 24 : 28,
+        ox: px, oy: py + (flt ? 0 : 4),
+        a: lo * T, b: Math.max(lo * T + 28, (hi + 1) * T - 28),
+        sp: (roll ? 2.15 : hop ? 0.85 : flt ? 1.05 : 1.05) + rnd(0.35),
+        dir: 1, t: 0, flat: 0, face: 1, vy: hop ? -7.2 : 0
+      });
+    } else if (t === "z" || t === "Z") {
+      const hang = t === "Z";
+      const [lo, hi] = expand(cx, y, !hang);
+      const w = hang ? 56 : 48, h = hang ? 42 : 26;
+      sliders.push({
+        hang, x: px - (hang ? 12 : 0), y: py + (hang ? 2 : 6), w, h,
+        ox: px - (hang ? 12 : 0),
+        a: lo * T, b: Math.max(lo * T + w, (hi + 1) * T - w),
+        sp: (hang ? 1.55 : 1.85) + rnd(0.4), dir: hang ? -1 : 1, t: 0
+      });
+    } else if (t === "k") {
+      poppers.push({ x: px + 4, y: py, w: T - 8, h: T, home: py, phase: ri(70), on: 0, warn: 0 });
+    } else if (t === "T") {
+      crushers.push({ x: px - 12, w: 56, h: 28, home: py, y: py, state: "idle", wait: 0, t: 0 });
     }
   }
   const checkpoints = checkpointCols.map(cc => ({ x: cc * T, y: 13 * T, w: T, h: 2 * T, on: 0 }));
@@ -592,7 +908,7 @@ function buildFloor(fi, q) {
   return {
     q, tiles, cols, rows: ROWS, layout,
     W: cols * T, H: ROWS * T,
-    coins, springs, crumbles, movers, patrols, hearts, checkpoints,
+    coins, springs, crumbles, movers, patrols, sliders, crushers, poppers, hearts, checkpoints,
     spawn: { x: 2 * T, y: 13 * T },
     approachX: approachAt * T,
     zoneX: (F - 7) * T,                       // where the world starts to slow
@@ -621,13 +937,14 @@ const touch = document.getElementById("touch");
 let mode = "title";                 // title | play | lesson | over | win
 let floors = [], fi = 0, W = null, P = null;
 let cam = 0, camY = 0;
-let keys = new Set(), tL = 0, tR = 0, tJ = 0, jHeld = false;
+let keys = new Set(), tL = 0, tR = 0, tJ = 0, tD = 0, jHeld = false;
 let hearts = MAX_HEARTS, coins = 0, score = 0, correct = 0, answered = 0;
 let cleanFloor = true;
 let parts = [], shake = 0, flash = 0, flashCol = "#fff";
 let timeScale = 1, tick = 0, inv = 0, checkpoint = null, best = 0;
 let lastHurt = "", hurtLog = [];
 let dropping = null;                // {tunnel, t} while falling into a mouth
+let combo = 0, hitStop = 0, pops = [];
 
 try { best = +localStorage.getItem("tunnel-run-best") || 0; } catch (e) {}
 
@@ -653,6 +970,24 @@ function dust(x, y, n) {
     c: "rgba(190,214,232,.55)", s: 2 + rnd(2.5), g: .06
   });
 }
+function popTxt(x, y, t, c) {
+  pops.push({ x, y, t: String(t), c: c || "#f0cd55", life: 40 });
+}
+
+/* tiny floor-synth — unlocks on first gesture, never blocks play */
+let AC = null;
+function beep(freq, dur, type, vol) {
+  try {
+    if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
+    if (AC.state === "suspended") AC.resume();
+    const o = AC.createOscillator(), g = AC.createGain();
+    o.type = type || "square"; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol || 0.07, AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, AC.currentTime + dur);
+    o.connect(g); g.connect(AC.destination);
+    o.start(); o.stop(AC.currentTime + dur);
+  } catch (e) {}
+}
 
 /* ------------------------------------------------------------- tile reads */
 function tileAt(cx, cy) {
@@ -666,9 +1001,11 @@ const pbox = () => ({ x: P.x, y: P.y, w: P.w, h: P.h });
 
 /* --------------------------------------------------------------- lifecycle */
 function startRun() {
+  beep(392, 0.08, "square", 0.05);
   const deck = shuffle(BANK).slice(0, FLOORS);
   floors = deck.map((q, i) => buildFloor(i, q));
   fi = 0; hearts = MAX_HEARTS; coins = 0; score = 0; correct = 0; answered = 0;
+  combo = 0; hitStop = 0; pops = [];
   parts = []; loadFloor(0); mode = "play"; ov.classList.add("hid");
   report(0); hud();
 }
@@ -679,13 +1016,25 @@ function loadFloor(i) {
   cam = 0; camY = DEEP - VH; hud();
 }
 function spawnPlayer(x, y) {
-  P = { x, y, vx: 0, vy: 0, w: 24, h: 34, face: 1, gnd: 0, coy: 0, jbuf: 0,
-        jumps: 2, on: null, dead: 0, run: 0, sq: 1, trail: [] };
+  P = { x, y, vx: 0, vy: 0, w: 24, h: STAND_H, face: 1, gnd: 0, coy: 0, jbuf: 0,
+        jumps: 2, on: null, dead: 0, run: 0, sq: 1, trail: [], duck: 0 };
+}
+function resetHazards() {
+  if (!W) return;
+  W.patrols.forEach(q => {
+    q.x = q.ox; q.y = q.oy; q.dir = 1; q.flat = 0; q.t = 0; q.face = 1;
+    q.vy = q.kind === "hop" ? -7.2 : 0;
+  });
+  W.sliders.forEach(s => { s.x = s.ox; s.dir = s.hang ? -1 : 1; });
+  W.crushers.forEach(c => { c.y = c.home; c.state = "idle"; c.wait = 0; });
+  if (W.poppers) W.poppers.forEach(p => { p.phase = 0; p.on = 0; p.warn = 0; });
+  combo = 0;
 }
 function respawn() {
   const c = checkpoint || W.spawn;
   spawnPlayer(c.x, c.y);
   W.crumbles.forEach(cr => { cr.hit = 0; cr.gone = 0; });
+  resetHazards();
   inv = IFRAMES;
   cam = Math.max(0, Math.min(P.x - VW * .36, W.W - VW));
   camY = Math.max(0, Math.min(P.y - VH * .55, DEEP - VH));
@@ -696,6 +1045,7 @@ function hurt(reason) {
   lastHurt = reason; hurtLog.push({ reason, x: Math.round(P.x), floor: fi + 1 });
   hearts--; cleanFloor = false; shake = 15; flash = 9; flashCol = "#b42318";
   burst(P.x + 12, P.y + 14, "#ff6b5e", 18, 7, 5);
+  beep(140, 0.18, "sawtooth", 0.08);
   hud(true);
   if (hearts <= 0) { P.dead = 1; gameOver(reason); }
   else respawn();
@@ -725,15 +1075,17 @@ function step() {
   const kL = keys.has("ArrowLeft") || keys.has("a") || keys.has("A") || tL;
   const kR = keys.has("ArrowRight") || keys.has("d") || keys.has("D") || tR;
   const kJ = keys.has(" ") || keys.has("ArrowUp") || keys.has("w") || keys.has("W") || tJ;
+  const kD = keys.has("ArrowDown") || keys.has("s") || keys.has("S") || tD;
   if (kJ && !jHeld) P.jbuf = BUFFER;
   jHeld = kJ;
   if (P.jbuf > 0) P.jbuf--;
 
-  if (kL) { P.vx -= ACCEL; P.face = -1; }
-  else if (kR) { P.vx += ACCEL; P.face = 1; }
-  else P.vx *= FRICTION;
-  if (P.vx > RUN) P.vx = RUN;
-  if (P.vx < -RUN) P.vx = -RUN;
+  if (kL) { P.vx -= ACCEL * (P.duck ? 0.7 : 1); P.face = -1; }
+  else if (kR) { P.vx += ACCEL * (P.duck ? 0.7 : 1); P.face = 1; }
+  else P.vx *= (P.duck && Math.abs(P.vx) > 1.8 ? 0.94 : FRICTION);
+  const cap = P.duck ? RUN * 1.12 : RUN;
+  if (P.vx > cap) P.vx = cap;
+  if (P.vx < -cap) P.vx = -cap;
 
   if (P.gnd) { P.coy = COYOTE; P.jumps = 2; } else if (P.coy > 0) P.coy--;
   if (P.jbuf > 0 && (P.coy > 0 || P.jumps > 0)) {
@@ -742,7 +1094,9 @@ function step() {
     P.jbuf = 0; P.gnd = 0; P.sq = 0.80;
   }
   if (!kJ && P.vy < -3.4) P.vy *= 0.55;
-  P.vy += GRAV;
+  if (P.vy > 0) P.vy += GRAV * 1.42;
+  else if (P.vy > -2.4) P.vy += GRAV * 0.62;     // apex hang
+  else P.vy += GRAV;
   if (P.vy > MAX_FALL) P.vy = MAX_FALL;
 
   /* ---- moving parts --------------------------------------------------- */
@@ -753,9 +1107,66 @@ function step() {
     m.dx = m.x - ox; m.dy = m.y - oy;
   }
   for (const q of W.patrols) {
-    q.t++; q.x += q.sp * q.dir;
+    if (q.flat > 0) { q.flat--; continue; }
+    q.t++;
+    q.face = q.dir;
+    if (q.kind === "hop") {
+      q.vy += GRAV * 0.82;
+      q.y += q.vy;
+      if (q.y >= q.oy) { q.y = q.oy; q.vy = -7.4; }
+      q.x += q.sp * q.dir * 0.62;
+    } else if (q.kind === "float") {
+      q.x += q.sp * q.dir;
+      q.y = q.oy + Math.sin(q.t * 0.09) * 26;
+    } else {
+      q.x += q.sp * q.dir;
+    }
     if (q.x <= q.a) { q.x = q.a; q.dir = 1; }
     if (q.x >= q.b) { q.x = q.b; q.dir = -1; }
+  }
+  /* walk-ins bounce off each other — Mario-feel, still a closer */
+  for (let i = 0; i < W.patrols.length; i++) {
+    const a = W.patrols[i];
+    if (a.flat > 0 || a.kind === "float") continue;
+    for (let j = i + 1; j < W.patrols.length; j++) {
+      const b = W.patrols[j];
+      if (b.flat > 0 || b.kind === "float") continue;
+      if (Math.abs(a.y - b.y) > 18) continue;
+      if (a.x < b.x + b.w && a.x + a.w > b.x) {
+        if (a.x < b.x) { a.dir = -1; b.dir = 1; a.x -= 2; b.x += 2; }
+        else { a.dir = 1; b.dir = -1; a.x += 2; b.x -= 2; }
+      }
+    }
+  }
+  for (const s of W.sliders) {
+    s.t++; s.x += s.sp * s.dir;
+    if (s.x <= s.a) { s.x = s.a; s.dir = 1; }
+    if (s.x >= s.b) { s.x = s.b; s.dir = -1; }
+  }
+  for (const p of (W.poppers || [])) {
+    p.phase = (p.phase + 1) % 96;
+    p.warn = p.phase >= 52 && p.phase < 64;
+    p.on = p.phase >= 64 && p.phase < 88;
+  }
+  for (const c of W.crushers) {
+    c.t++;
+    const under = P.x + P.w > c.x && P.x < c.x + c.w;
+    if (c.state === "idle") {
+      if (under && P.y + P.h > c.y + 8) { c.state = "warn"; c.wait = 16; }
+    } else if (c.state === "warn") {
+      c.wait--;
+      if (c.wait <= 0) c.state = "drop";
+    } else if (c.state === "drop") {
+      c.y += 10.5;
+      const floorY = 15 * T - c.h;
+      if (c.y >= floorY) { c.y = floorY; c.state = "hold"; c.wait = 26; shake = Math.max(shake, 10); }
+    } else if (c.state === "hold") {
+      c.wait--;
+      if (c.wait <= 0) c.state = "rise";
+    } else if (c.state === "rise") {
+      c.y -= 2.8;
+      if (c.y <= c.home) { c.y = c.home; c.state = "idle"; }
+    }
   }
   for (const c of W.crumbles) {
     if (c.hit && !c.gone) { c.hit++; if (c.hit > 32) { c.gone = 1; burst(c.x + 16, c.y + 6, "#4b83ad", 9, 4, 2); } }
@@ -777,6 +1188,18 @@ function step() {
   /* ---- vertical -------------------------------------------------------- */
   const fell = P.vy, wasGnd = P.gnd;
   P.y += P.vy; P.gnd = 0;
+  /* stomp BEFORE floor snap so a bot on the ground still reads as a bounce */
+  if (fell > 0.4) {
+    for (const q of W.patrols) {
+      if (q.flat > 0) continue;
+      const box = { x: q.x + 3, y: q.y + (q.kind === "float" ? 4 : 6), w: q.w - 6, h: q.h - 8 };
+      const prevFeet = P.y + P.h - fell;
+      if (aabb(pbox(), box) && prevFeet <= q.y + q.h * 0.62) {
+        doStomp(q, kJ);
+        break;
+      }
+    }
+  }
   {
     const x0 = Math.floor(P.x / T), x1 = Math.floor((P.x + P.w - 1) / T);
     if (P.vy > 0) { const cy = Math.floor((P.y + P.h - 1) / T); for (let cx = x0; cx <= x1; cx++) if (isSolid(cx, cy)) { P.y = cy * T - P.h; P.vy = 0; P.gnd = 1; break; } }
@@ -808,6 +1231,23 @@ function step() {
     }
   }
   if (P.gnd && !wasGnd && fell > 6.5) { dust(P.x + 12, P.y + P.h, 9); P.sq = 1.26; if (fell > 12) shake = Math.max(shake, 4); }
+  if (P.gnd) combo = 0;
+
+  /* ---- duck / slide ---------------------------------------------------- */
+  const wantDuck = !!(kD && (P.gnd || P.duck));
+  if (wantDuck && !P.duck) {
+    P.duck = 1;
+    P.y += STAND_H - DUCK_H;
+    P.h = DUCK_H;
+    if (Math.abs(P.vx) > 2.4) dust(P.x + 12, P.y + P.h, 6);
+  } else if (!wantDuck && P.duck) {
+    const ny = P.y - (STAND_H - DUCK_H);
+    const x0 = Math.floor(P.x / T), x1 = Math.floor((P.x + P.w - 1) / T);
+    const y0 = Math.floor(ny / T);
+    let blocked = false;
+    for (let cx = x0; cx <= x1; cx++) if (isSolid(cx, y0)) blocked = true;
+    if (!blocked) { P.duck = 0; P.y = ny; P.h = STAND_H; }
+  }
 
   /* ---- feel ------------------------------------------------------------ */
   P.sq += (1 - P.sq) * 0.16;
@@ -818,6 +1258,7 @@ function step() {
   /* ---- pickups --------------------------------------------------------- */
   for (const c of W.coins) if (!c.got && aabb(pbox(), c)) {
     c.got = 1; coins++; score += 10; burst(c.x + 8, c.y + 8, "#f0cd55", 9, 4.5, 3); hud();
+    beep(880, 0.07, "square", 0.05);
   }
   for (const h of W.hearts) if (!h.got && aabb(pbox(), h)) {
     h.got = 1;
@@ -839,7 +1280,35 @@ function step() {
       if (t === "v" && aabb(pbox(), { x: cx * T + 7, y: cy * T, w: T - 14, h: 19 })) { hurt("Spikes overhead."); return; }
     }
   }
-  for (const q of W.patrols) if (aabb(pbox(), { x: q.x + 3, y: q.y + 4, w: q.w - 6, h: q.h - 6 })) { hurt("A stock cart clipped you."); return; }
+  for (const q of W.patrols) {
+    if (q.flat > 0) continue;
+    const box = { x: q.x + 3, y: q.y + (q.kind === "float" ? 4 : 8), w: q.w - 6, h: q.h - 10 };
+    if (!aabb(pbox(), box)) continue;
+    const who = q.kind === "roll" ? "A rolling closer clipped you."
+      : q.kind === "hop" ? "A hopping closer clipped you."
+      : q.kind === "float" ? "An objection floated into you."
+      : "A walk-in clipped you.";
+    hurt(who); return;
+  }
+  for (const s of W.sliders) {
+    const box = s.hang
+      ? { x: s.x + 6, y: s.y + 4, w: s.w - 12, h: s.h - 10 }
+      : { x: s.x + 5, y: s.y + 8, w: s.w - 10, h: s.h - 8 };
+    if (aabb(pbox(), box)) {
+      hurt(s.hang ? "A hanging saw caught you." : "A spike rail caught you."); return;
+    }
+  }
+  for (const c of W.crushers) {
+    if (aabb(pbox(), { x: c.x + 6, y: c.y + 6, w: c.w - 12, h: c.h - 8 })) {
+      hurt("A hanging chart dropped."); return;
+    }
+  }
+  for (const p of (W.poppers || [])) {
+    if (!p.on) continue;
+    if (aabb(pbox(), { x: p.x + 2, y: p.y + 10, w: p.w - 4, h: p.h - 10 })) {
+      hurt("A floor pin popped."); return;
+    }
+  }
 
   /* ---- the fork, and the long drop ------------------------------------- */
   if (P.y > 15.1 * T) {
@@ -864,6 +1333,18 @@ function step() {
   if (tick % 90 === 0) report(score);
 }
 
+function doStomp(q, held) {
+  q.flat = 220;
+  combo++;
+  const boost = (held ? 1.16 : 1) + Math.min(combo - 1, 4) * 0.08;
+  P.vy = STOMP * boost; P.gnd = 0; P.jumps = 1; P.sq = 0.70;
+  const pts = 50 * combo;
+  score += pts; coins += 1;
+  popTxt(q.x + 4, q.y - 6, combo > 1 ? combo + "× +" + pts : "+" + pts);
+  burst(q.x + 14, q.y + 10, "#C9A227", 16, 5.5, 4);
+  shake = Math.max(shake, 5); hitStop = 4; hud();
+  beep(520 + combo * 70, 0.09, "square", 0.07);
+}
 function startDrop(tunnel) {
   dropping = { tunnel, t: 0 };
   shake = Math.max(shake, 7);
@@ -1050,20 +1531,43 @@ function drawProps() {
     ctx.quadraticCurveTo(s.x + s.w / 2, top - 5 - (1 - c) * 2, s.x + s.w, top + 9);
     ctx.closePath(); ctx.fill();
   }
-  /* patrol carts */
+  /* walk-in bots — stomp from above */
   for (const q of W.patrols) {
     if (q.x + q.w < cam - 60 || q.x > cam + VW + 60) continue;
-    ctx.fillStyle = "rgba(0,0,0,.34)"; ctx.beginPath();
-    ctx.ellipse(q.x + q.w / 2, q.y + q.h + 2, q.w * .55, 4, 0, 0, 6.3); ctx.fill();
-    ctx.fillStyle = "#25384a"; roundRect(q.x + 1, q.y + 5, q.w - 2, q.h - 9, 4); ctx.fill();
-    ctx.fillStyle = "#3d5a72"; ctx.fillRect(q.x + 4, q.y + 8, q.w - 8, 4);
-    ctx.fillStyle = "#101c27";
-    ctx.beginPath(); ctx.arc(q.x + 7, q.y + q.h - 3, 4, 0, 6.3); ctx.arc(q.x + q.w - 7, q.y + q.h - 3, 4, 0, 6.3); ctx.fill();
-    const blink = (Math.sin(q.t * .16) + 1) / 2;
-    ctx.fillStyle = "rgba(216,73,58," + (.45 + blink * .55) + ")";
-    ctx.beginPath(); ctx.arc(q.x + q.w / 2, q.y + 3, 3.6, 0, 6.3); ctx.fill();
-    ctx.fillStyle = "rgba(216,73,58," + (.10 + blink * .18) + ")";
-    ctx.beginPath(); ctx.arc(q.x + q.w / 2, q.y + 3, 13, 0, 6.3); ctx.fill();
+    drawWalkIn(q);
+  }
+  /* sliding spike rails + hanging saws */
+  for (const s of W.sliders) {
+    if (s.x + s.w < cam - 80 || s.x > cam + VW + 80) continue;
+    if (s.hang) drawHangSaw(s);
+    else drawRail(s);
+  }
+  /* popping floor pins */
+  for (const p of (W.poppers || [])) {
+    if (p.x < cam - 40 || p.x > cam + VW + 40) continue;
+    drawPopPin(p);
+  }
+  /* hanging charts (drop crushers) */
+  for (const c of W.crushers) {
+    if (c.x + c.w < cam - 60 || c.x > cam + VW + 60) continue;
+    const jx = c.state === "warn" ? Math.sin(c.t * 1.4) * 2.4 : 0;
+    ctx.strokeStyle = "rgba(201,162,39,.55)"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(c.x + 12, 6 * T); ctx.lineTo(c.x + 12 + jx, c.y);
+    ctx.moveTo(c.x + c.w - 12, 6 * T); ctx.lineTo(c.x + c.w - 12 + jx, c.y); ctx.stroke();
+    const glow = c.state === "drop" || c.state === "warn";
+    ctx.fillStyle = "rgba(0,0,0,.35)"; roundRect(c.x + 3 + jx, c.y + 4, c.w - 6, c.h - 2, 6); ctx.fill();
+    const cg = ctx.createLinearGradient(0, c.y, 0, c.y + c.h);
+    cg.addColorStop(0, glow ? "#f0cd55" : "#e8d9a4");
+    cg.addColorStop(1, glow ? "#b8901d" : "#c9a227");
+    ctx.fillStyle = cg; roundRect(c.x + jx, c.y, c.w, c.h, 6); ctx.fill();
+    ctx.strokeStyle = "rgba(11,42,74,.55)"; ctx.lineWidth = 1.6; roundRect(c.x + 3 + jx, c.y + 3, c.w - 6, c.h - 6, 4); ctx.stroke();
+    ctx.fillStyle = "#0B2A4A"; ctx.font = "800 10px system-ui,sans-serif"; ctx.textAlign = "center";
+    ctx.fillText("CHART", c.x + c.w / 2 + jx, c.y + 18);
+    ctx.textAlign = "left";
+    if (glow) {
+      ctx.fillStyle = "rgba(216,73,58,.18)";
+      ctx.beginPath(); ctx.arc(c.x + c.w / 2 + jx, c.y + c.h / 2, 28, 0, 6.3); ctx.fill();
+    }
   }
   /* checkpoints */
   for (const k of W.checkpoints) {
@@ -1108,6 +1612,144 @@ function heartPath(x, y, s) {
   ctx.bezierCurveTo(x - s * 1.2, y + s * .1, x - s * .58, y - s * .62, x, y + s * .12);
   ctx.bezierCurveTo(x + s * .58, y - s * .62, x + s * 1.2, y + s * .1, x, y + s * .85);
   ctx.closePath();
+}
+
+function drawRail(s) {
+  ctx.strokeStyle = "rgba(201,162,39,.28)"; ctx.lineWidth = 3; ctx.setLineDash([6, 5]);
+  ctx.beginPath(); ctx.moveTo(s.a + 8, s.y + 20); ctx.lineTo(s.b + s.w - 8, s.y + 20); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = "rgba(0,0,0,.32)"; roundRect(s.x + 2, s.y + 14, s.w - 4, 10, 3); ctx.fill();
+  const g = ctx.createLinearGradient(0, s.y, 0, s.y + 16);
+  g.addColorStop(0, "#3a5f7e"); g.addColorStop(1, "#1c3d58");
+  ctx.fillStyle = g; roundRect(s.x, s.y + 12, s.w, 10, 3); ctx.fill();
+  ctx.fillStyle = "#dcb642"; ctx.fillRect(s.x + 4, s.y + 12, s.w - 8, 2);
+  for (let k = 0; k < 3; k++) {
+    const bx = s.x + 6 + k * 14;
+    const sg = ctx.createLinearGradient(bx, 0, bx + 12, 0);
+    sg.addColorStop(0, "#8f1d14"); sg.addColorStop(.45, "#e05646"); sg.addColorStop(1, "#7c1810");
+    ctx.fillStyle = sg; ctx.beginPath();
+    ctx.moveTo(bx, s.y + 14); ctx.lineTo(bx + 6, s.y + 1); ctx.lineTo(bx + 12, s.y + 14);
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "rgba(255,220,210,.5)"; ctx.fillRect(bx + 5.2, s.y + 3, 1.4, 7);
+  }
+}
+function drawHangSaw(s) {
+  const cy = s.y + 10, cx = s.x + s.w / 2, spin = s.t * 0.18;
+  ctx.strokeStyle = "rgba(201,162,39,.4)"; ctx.lineWidth = 2; ctx.setLineDash([4, 6]);
+  ctx.beginPath(); ctx.moveTo(s.a + 10, s.y + 8); ctx.lineTo(s.b + s.w - 10, s.y + 8); ctx.stroke(); ctx.setLineDash([]);
+  ctx.strokeStyle = "rgba(201,162,39,.55)"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(cx - 10, 6 * T); ctx.lineTo(cx - 10, s.y);
+  ctx.moveTo(cx + 10, 6 * T); ctx.lineTo(cx + 10, s.y); ctx.stroke();
+  ctx.save(); ctx.translate(cx, cy); ctx.rotate(spin);
+  ctx.fillStyle = "#9a1f18";
+  ctx.beginPath();
+  for (let i = 0; i < 8; i++) {
+    const a = i * Math.PI / 4, r = i % 2 ? 22 : 13;
+    if (i === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+    else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+  }
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "#e05646";
+  ctx.beginPath(); ctx.arc(0, 0, 9, 0, 6.3); ctx.fill();
+  ctx.fillStyle = "#C9A227"; ctx.beginPath(); ctx.arc(0, 0, 4, 0, 6.3); ctx.fill();
+  ctx.restore();
+}
+function drawPopPin(p) {
+  const up = p.on ? 1 : p.warn ? 0.35 : 0.08;
+  const top = p.home + T * (1 - up);
+  ctx.fillStyle = "#1c3d58"; roundRect(p.x + 4, p.home + T - 8, p.w - 8, 8, 2); ctx.fill();
+  if (p.warn && !p.on) {
+    ctx.fillStyle = "rgba(224,86,70," + (0.25 + Math.sin(tick * 0.6) * 0.15) + ")";
+    ctx.beginPath(); ctx.arc(p.x + p.w / 2, p.home + 10, 12, 0, 6.3); ctx.fill();
+  }
+  const g = ctx.createLinearGradient(0, top, 0, p.home + T);
+  g.addColorStop(0, p.on ? "#e05646" : "#8f1d14");
+  g.addColorStop(1, "#3a1a18");
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.moveTo(p.x + p.w / 2, top);
+  ctx.lineTo(p.x + p.w - 2, p.home + T - 4);
+  ctx.lineTo(p.x + 2, p.home + T - 4);
+  ctx.closePath(); ctx.fill();
+  ctx.fillStyle = "#C9A227";
+  ctx.fillRect(p.x + 5, p.home + T - 6, p.w - 10, 3);
+}
+
+function drawWalkIn(q) {
+  const cx = q.x + q.w / 2, feet = q.y + q.h;
+  ctx.fillStyle = "rgba(0,0,0,.32)";
+  ctx.beginPath(); ctx.ellipse(cx, Math.min(feet + 1, 15 * T - 2), q.flat ? q.w * .7 : q.w * .42, 3.2, 0, 0, 6.3); ctx.fill();
+  if (q.flat > 0) {
+    const a = Math.min(1, q.flat / 20);
+    ctx.globalAlpha = 0.45 + a * 0.55;
+    ctx.fillStyle = q.kind === "roll" ? "#3a5f7e" : "#1a3654";
+    ctx.beginPath(); ctx.ellipse(cx, feet - 5, 16, 5.5, 0, 0, 6.3); ctx.fill();
+    ctx.fillStyle = "#C9A227";
+    ctx.beginPath(); ctx.ellipse(cx - 8, feet - 3, 5, 2.4, 0, 0, 6.3); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx + 8, feet - 3, 5, 2.4, 0, 0, 6.3); ctx.fill();
+    ctx.globalAlpha = 1;
+    return;
+  }
+  if (q.kind === "roll") { drawRoller(q, cx, feet); return; }
+  if (q.kind === "float") { drawFloater(q, cx); return; }
+  const hopStretch = q.kind === "hop" && q.vy < -1 ? 1.12 : q.kind === "hop" && q.y >= q.oy - 2 ? 0.88 : 1;
+  const bob = q.kind === "hop" ? 0 : Math.sin(q.t * 0.22) * 1.4;
+  const sw = Math.sin(q.t * 0.22);
+  ctx.save();
+  ctx.translate(cx, feet);
+  ctx.scale(q.face || 1, 1);
+  ctx.scale(2 - hopStretch, hopStretch);
+  /* legs */
+  ctx.strokeStyle = "#16324c"; ctx.lineWidth = 3.4; ctx.lineCap = "round";
+  ctx.beginPath(); ctx.moveTo(-2, -10); ctx.lineTo(sw * 5, -2); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(2, -10); ctx.lineTo(-sw * 5, -2); ctx.stroke();
+  ctx.fillStyle = "#C9A227";
+  roundRect(sw * 5 - 3.2, -3, 6.4, 3, 1.2); ctx.fill();
+  roundRect(-sw * 5 - 3.2, -3, 6.4, 3, 1.2); ctx.fill();
+  /* body — navy jacket */
+  const g = ctx.createLinearGradient(0, -24 + bob, 0, -10 + bob);
+  g.addColorStop(0, q.kind === "hop" ? "#2a6a9a" : "#1d4a72"); g.addColorStop(1, "#0f2c48");
+  ctx.fillStyle = g; roundRect(-8, -24 + bob, 16, 15, 4); ctx.fill();
+  ctx.fillStyle = "#C9A227"; ctx.fillRect(-8, -16 + bob, 16, 2.2);
+  /* head */
+  ctx.fillStyle = "#f3e4c4"; ctx.beginPath(); ctx.arc(0, -28 + bob, 6.2, 0, 6.3); ctx.fill();
+  ctx.fillStyle = "#0B2A4A";
+  ctx.beginPath(); ctx.arc(2.2, -28.4 + bob, 1.3, 0, 6.3); ctx.fill();
+  ctx.fillStyle = "#c94a3a";
+  ctx.beginPath(); ctx.arc(-1.6, -26.6 + bob, 1.1, 0, 6.3); ctx.fill();
+  /* little "no" badge */
+  ctx.fillStyle = "#c94a3a";
+  ctx.beginPath(); ctx.arc(6, -20 + bob, 3.4, 0, 6.3); ctx.fill();
+  ctx.strokeStyle = "#f7f4ec"; ctx.lineWidth = 1.4;
+  ctx.beginPath(); ctx.moveTo(4.6, -20 + bob); ctx.lineTo(7.4, -20 + bob); ctx.stroke();
+  ctx.restore();
+}
+function drawRoller(q, cx, feet) {
+  const spin = q.t * 0.25 * q.dir;
+  ctx.save(); ctx.translate(cx, feet);
+  ctx.fillStyle = "#1c3d58"; roundRect(-14, -16, 28, 12, 4); ctx.fill();
+  ctx.fillStyle = "#C9A227"; ctx.fillRect(-12, -16, 24, 2);
+  ctx.fillStyle = "#c94a3a"; ctx.fillRect(-6, -12, 12, 3);
+  ctx.fillStyle = "#f7f4ec"; ctx.font = "800 7px system-ui,sans-serif"; ctx.textAlign = "center";
+  ctx.fillText("CART", 0, -9); ctx.textAlign = "left";
+  ctx.save(); ctx.translate(-9, -2); ctx.rotate(spin);
+  ctx.fillStyle = "#0B2A4A"; ctx.beginPath(); ctx.arc(0, 0, 4.5, 0, 6.3); ctx.fill();
+  ctx.strokeStyle = "#C9A227"; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(-4, 0); ctx.lineTo(4, 0); ctx.stroke();
+  ctx.restore();
+  ctx.save(); ctx.translate(9, -2); ctx.rotate(spin);
+  ctx.fillStyle = "#0B2A4A"; ctx.beginPath(); ctx.arc(0, 0, 4.5, 0, 6.3); ctx.fill();
+  ctx.strokeStyle = "#C9A227"; ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(-4, 0); ctx.lineTo(4, 0); ctx.stroke();
+  ctx.restore();
+  ctx.restore();
+}
+function drawFloater(q, cx) {
+  const bob = Math.sin(q.t * 0.09) * 2;
+  ctx.save(); ctx.translate(cx, q.y + q.h / 2 + bob);
+  ctx.fillStyle = "rgba(201,162,39,.14)"; ctx.beginPath(); ctx.arc(0, 0, 20, 0, 6.3); ctx.fill();
+  ctx.fillStyle = "#fbf9f3"; ctx.beginPath(); ctx.arc(0, 0, 13, 0, 6.3); ctx.fill();
+  ctx.strokeStyle = "#C9A227"; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = "#0B2A4A"; ctx.font = "800 9px Georgia,serif"; ctx.textAlign = "center";
+  ctx.fillText("NO", 0, 4); ctx.textAlign = "left";
+  ctx.restore();
 }
 
 /* ---- the fork: mouths, panels, gantry ---------------------------------- */
@@ -1232,13 +1874,24 @@ function drawPlayer() {
   /* speed ghosts */
   P.trail.forEach((t, i) => drawRunner(t.x, t.y, t.f, P.run, P.gnd, 1, .022 + i * .014));
   if (inv > 0 && Math.floor(tick / 4) % 2 === 0) return;
-  drawRunner(P.x, P.y, P.face, P.run, P.gnd, P.sq, 1);
+  const duckSq = P.duck ? 0.62 : 1;
+  drawRunner(P.x, P.y, P.face, P.run, P.gnd, P.sq * duckSq, 1);
 }
 
 function drawParticles() {
   for (const p of parts) {
     ctx.globalAlpha = Math.max(0, p.life / p.max);
     ctx.fillStyle = p.c; ctx.fillRect(p.x, p.y, p.s, p.s);
+  }
+  ctx.globalAlpha = 1;
+  for (let i = pops.length - 1; i >= 0; i--) {
+    const n = pops[i];
+    n.life--; n.y -= 0.7;
+    ctx.globalAlpha = Math.max(0, n.life / 40);
+    ctx.fillStyle = n.c; ctx.font = "800 13px system-ui,sans-serif";
+    ctx.textAlign = "center"; ctx.fillText(n.t, n.x + 12, n.y);
+    ctx.textAlign = "left";
+    if (n.life <= 0) pops.splice(i, 1);
   }
   ctx.globalAlpha = 1;
 }
@@ -1311,14 +1964,14 @@ function title() {
   card.innerHTML =
     '<p class="tag">Waterman College · The Quad</p>' +
     '<h1>Tunnel Run</h1>' +
-    '<p class="lead">Run the floor. At the end of every floor the path splits — read the sign, and drop into the tunnel that holds the right answer.</p>' +
+    '<p class="lead">Run the floor. Stomp the walk-ins. Jump the sliding rails. Duck the hanging saws. Pop-pins, hopping closers, and hanging charts will take a heart if you sleep.</p>' +
     '<div class="rule"></div>' +
-    '<p><strong>Three hearts.</strong> Spikes, carts and long falls cost one and drop you back at the last flag. A wrong tunnel costs one too — but the run keeps going, and you keep the lesson.</p>' +
+    '<p><strong>Three hearts.</strong> Jump on a navy walk-in from above — side-check still hurts. Chain stomps for extra bounce. Hold Down to duck under a hanging saw or crawl. A wrong tunnel costs a heart too, but the run keeps going and you keep the lesson.</p>' +
     '<p class="hint">Five floors · Complete Solution · W.R.A.P. · product · inquiries · reviews · WOW</p>' +
     (best ? '<p class="hint">Personal best <strong>' + best + '</strong></p>' : '') +
     '<button class="btn gold" id="go">Start the run</button>' +
     '<p class="hint"><span class="keys">A</span><span class="keys">D</span> or <span class="keys">←</span><span class="keys">→</span> to run · ' +
-    '<span class="keys">Space</span> to jump, twice for a double jump</p>';
+    '<span class="keys">Space</span> jump (twice) · <span class="keys">↓</span> duck / slide</p>';
   $("go").onclick = startRun;
 }
 
@@ -1384,7 +2037,7 @@ function gameOver(reason) {
 const HELD = ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", " ", "w", "W", "a", "A", "d", "D", "s", "S"];
 window.addEventListener("keydown", e => { keys.add(e.key); if (HELD.indexOf(e.key) >= 0) e.preventDefault(); });
 window.addEventListener("keyup", e => keys.delete(e.key));
-window.addEventListener("blur", () => { keys.clear(); tL = tR = tJ = 0; });
+window.addEventListener("blur", () => { keys.clear(); tL = tR = tJ = tD = 0; });
 function bindTouch(el, set) {
   const on = v => e => { e.preventDefault(); set(v); el.classList.toggle("on", !!v); };
   el.addEventListener("touchstart", on(1), { passive: false });
@@ -1392,6 +2045,7 @@ function bindTouch(el, set) {
   el.addEventListener("mousedown", on(1)); el.addEventListener("mouseup", on(0)); el.addEventListener("mouseleave", on(0));
 }
 bindTouch($("tL"), v => tL = v); bindTouch($("tR"), v => tR = v); bindTouch($("tJ"), v => tJ = v);
+bindTouch($("tD"), v => tD = v);
 
 /* ---- fit ---------------------------------------------------------------- */
 function resize() {
@@ -1415,7 +2069,10 @@ function frame(now) {
   const dt = Math.min(90, now - last); last = now;
   acc += dt * (mode === "play" ? timeScale : 1);
   let guard = 0;
-  while (acc >= DT && guard++ < 6) { step(); acc -= DT; }
+  while (acc >= DT && guard++ < 6) {
+    if (hitStop > 0) { hitStop--; acc -= DT; continue; }
+    step(); acc -= DT;
+  }
   if (acc > DT * 6) acc = 0;
   draw();
   requestAnimationFrame(frame);
@@ -1428,19 +2085,33 @@ window.__TR = {
   get state() {
     return { mode, fi, hearts, coins, score, correct, answered, timeScale,
       px: P && P.x, py: P && P.y, gnd: P && P.gnd, vx: P && P.vx, vy: P && P.vy,
-      keys: [...keys].join(","), jumps: P && P.jumps,
+      duck: P && P.duck, keys: [...keys].join(","), jumps: P && P.jumps,
       world: W && { W: W.W, cols: W.cols, forkX: W.forkX, zoneX: W.zoneX,
         approachX: W.approachX, mouthA: W.mouthA, mouthB: W.mouthB, layout: W.layout,
-        coins: W.coins.length, checkpoints: W.checkpoints.length, q: W.q, flip: W.flip } };
+        coins: W.coins.length, checkpoints: W.checkpoints.length,
+        patrols: W.patrols.length, sliders: W.sliders.length, crushers: W.crushers.length,
+        poppers: W.poppers && W.poppers.length, q: W.q, flip: W.flip },
+      combo };
   },
   get floors() { return floors; },
   get hurts() { return hurtLog; },
   get lastHurt() { return lastHurt; },
   build: buildFloor, chunks: CHUNKS, bank: BANK,
-  start: startRun, title: title,
+  start: startRun, title: title, load: loadFloor,
   warp(x) { if (P) { P.x = x; P.vx = 0; } },
   dropInto(t) { if (mode === "play") startDrop(t); },
-  correctTunnel() { return W ? correctTunnel(W) : null; }
+  correctTunnel() { return W ? correctTunnel(W) : null; },
+  stompAt(i) {
+    if (!P || !W || !W.patrols[i]) return false;
+    const b = W.patrols[i];
+    P.x = b.x; P.y = b.y - P.h - 6; P.vy = 6; P.vx = 0; P.gnd = 0; P.duck = 0; P.h = STAND_H;
+    return true;
+  }
+};
+window.__controlsTest = {
+  getX: () => P ? P.x : 0,
+  getVx: () => P ? P.vx : 0,
+  setKeys: (codes) => { keys = new Set(codes || []); }
 };
 
 requestAnimationFrame(frame);
