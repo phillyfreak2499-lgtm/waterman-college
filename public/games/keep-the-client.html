@@ -450,6 +450,7 @@ function finish(won){
   if(state.scored)return; state.scored=true; state.lastWon=won; stopHB();
   if(won){state.wins++;state.streak++;state.best=Math.max(state.best,state.streak);playWin()}
   else{state.losses++;state.streak=0;playLose()}
+  try { if (window.QuadScore) window.QuadScore.report(state.best); } catch(e){}
   renderStats();
   setTimeout(()=>showReveal(), won?200:400);
 }
