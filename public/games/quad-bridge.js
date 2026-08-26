@@ -33,64 +33,21 @@
     } catch (e) {}
   }
 
-  // Snapshot localStorage so we can tell which keys THIS game wrote.
-  var baseline = {};
-  try {
-    for (var i = 0; i < localStorage.length; i++) {
-      var k = localStorage.key(i);
-      baseline[k] = localStorage.getItem(k);
-    }
-  } catch (e) {}
-
-  var SCORE_KEY = /score|best|high|points|pts|xp|streak|level|stars|coins|wins|correct/i;
-  function scan(value, out) {
-    if (out.length > 500) return;
-    if (typeof value === "number") {
-      if (isFinite(value) && value >= 0 && value <= 1e9) out.push(value);
-      return;
-    }
-    if (typeof value === "string") {
-      var n = Number(value);
-      if (value.trim() !== "" && isFinite(n) && n >= 0 && n <= 1e9) out.push(n);
-      return;
-    }
-    if (value && typeof value === "object") {
-      for (var key in value) {
-        if (!Object.prototype.hasOwnProperty.call(value, key)) continue;
-        if (SCORE_KEY.test(key)) scan(value[key], out);
-        else if (value[key] && typeof value[key] === "object") scan(value[key], out);
-      }
-    }
-  }
-
-  // Best score-like number among the keys this game added or changed.
-  function extractScore() {
-    var nums = [];
-    try {
-      for (var i = 0; i < localStorage.length; i++) {
-        var k = localStorage.key(i);
-        var v = localStorage.getItem(k);
-        if (baseline[k] === v) continue; // unchanged since load — not from this session
-        var parsed;
-        try {
-          parsed = JSON.parse(v);
-        } catch (e) {
-          parsed = v;
-        }
-        var scoped = {};
-        scoped[k] = parsed;
-        scan(scoped, nums);
-      }
-    } catch (e) {}
-    return nums.length ? Math.max.apply(null, nums) : null;
-  }
+  // NOTE: this bridge used to guess a score by scanning every localStorage key
+  // the game had changed for anything matching /score|best|high|xp|.../ and
+  // reporting the maximum. That was wrong in two ways: some games persist a
+  // whole high-score TABLE, so the max could be a previous learner's best on a
+  // shared store tablet, reported as the current user's; and three games write
+  // no storage at all, so they could never produce a score. Games now report
+  // explicitly via QuadScore.report() at the end of a run.
 
   var lastSent = null;
+  // Insurance only: re-post the score the game already reported, in case the
+  // first postMessage raced the parent unmounting its listener on the way out.
+  // The server upserts, so a duplicate is harmless.
   function sync() {
-    var score = extractScore();
-    if (score == null || score === lastSent) return;
-    lastSent = score;
-    post({ score: score });
+    if (lastSent == null) return;
+    post({ score: lastSent });
   }
 
   // Explicit API for games that want to report a precise score.

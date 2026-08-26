@@ -93,6 +93,25 @@ button:disabled{cursor:default;opacity:.5}
 .stage-btn .num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;
   border-radius:8px;background:var(--navy);color:#fff;font-size:12px;font-weight:800;margin-right:7px;vertical-align:middle}
 .center{text-align:center}
+.brief-sec{margin-top:18px}
+.brief-sec h3{font-family:Georgia,"Times New Roman",serif;font-size:16.5px;color:var(--navy);margin-bottom:6px}
+.brief-sec p{font-size:13px;color:var(--muted);line-height:1.5}
+.numlist{counter-reset:bn;margin-top:10px}
+.numlist li{list-style:none;position:relative;padding:10px 12px 10px 40px;margin:7px 0;background:rgba(11,42,74,.045);
+  border-radius:12px;font-size:13.5px;line-height:1.42;color:var(--ink)}
+.numlist li::before{counter-increment:bn;content:counter(bn);position:absolute;left:11px;top:10px;width:20px;height:20px;
+  border-radius:7px;background:var(--navy);color:#fff;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.numlist li b{color:var(--navy)}
+.reflist{margin-top:8px}
+.reflist li{list-style:none;display:flex;gap:9px;align-items:baseline;padding:7px 0;border-bottom:1px solid rgba(11,42,74,.07);
+  font-size:13px;line-height:1.4;color:var(--ink)}
+.reflist li:last-child{border-bottom:none}
+.reflist.solo b{flex:1 1 auto}
+.reflist b{flex:0 0 128px;color:var(--navy);font-weight:700}
+.reflist span{color:var(--muted);font-size:12.5px}
+.wraplist li{list-style:none;padding:8px 11px;margin:6px 0;border-left:3.5px solid var(--gold);
+  background:rgba(201,162,39,.08);border-radius:0 10px 10px 0;font-size:13px;line-height:1.42;color:var(--ink)}
+.wraplist li b{color:var(--navy);font-size:14px}
 .small{font-size:12px;color:var(--muted)}
 .row{display:flex;gap:8px;align-items:center}
 .score-big{font-size:52px;font-weight:800;color:var(--navy);letter-spacing:-.025em;line-height:1;
@@ -193,10 +212,11 @@ function esc(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",
 let state={screen:"title",stage:1,score:0,streak:0,bestStreak:0,qi:0,queue:[],step:"fear",
   selected:{fear:null,principle:null,wrap:null},lastCorrect:{fear:false,principle:false,wrap:false},
   health:3,maxHealth:3,bossHp:2,bossMax:2,integrity:3,maxIntegrity:3,depth:0,maxDepth:6,
-  timer:0,timerMax:0,timerId:null,perfects:0,high:0,locked:false};
+  timer:0,timerMax:0,timerId:null,perfects:0,high:0,locked:false,seenBrief:false};
 
-function loadHigh(){try{const r=localStorage.getItem(SAVE_KEY);if(r)state.high=JSON.parse(r).high||0;}catch(e){}}
-function saveHigh(){if(state.score>state.high){state.high=state.score;try{localStorage.setItem(SAVE_KEY,JSON.stringify({high:state.high}));}catch(e){}}
+function loadHigh(){try{const r=localStorage.getItem(SAVE_KEY);if(r){const d=JSON.parse(r);state.high=d.high||0;state.seenBrief=!!d.seenBrief;}}catch(e){}}
+function saveBriefSeen(){state.seenBrief=true;try{localStorage.setItem(SAVE_KEY,JSON.stringify({high:state.high,seenBrief:true}));}catch(e){}}
+function saveHigh(){if(state.score>state.high){state.high=state.score;try{localStorage.setItem(SAVE_KEY,JSON.stringify({high:state.high,seenBrief:state.seenBrief}));}catch(e){}}
   if(window.QuadScore)window.QuadScore.report(state.score);}
 
 let ctx=null;
@@ -304,6 +324,7 @@ function optionsForStep(step){
 function render(){
   const app=document.getElementById("app");
   if(state.screen==="title")app.innerHTML=viewTitle();
+  else if(state.screen==="brief")app.innerHTML=viewBrief();
   else if(state.screen==="stage1")app.innerHTML=viewStage1();
   else if(state.screen==="stage2")app.innerHTML=viewStage2();
   else if(state.screen==="stage3")app.innerHTML=viewStage3();
@@ -321,7 +342,72 @@ function viewTitle(){loadHigh();return `
       <button class="stage-btn" data-go="2"><strong><span class="num">2</span>Fear Arena</strong><span>Boss rush. Health bar. Timed pressure.</span></button>
       <button class="stage-btn" data-go="3"><strong><span class="num">3</span>Mind Breach</strong><span>Deeper chambers. Rising multipliers. Path integrity.</span></button>
     </div>
-    <p class="small center" style="margin-top:18px">Customer Fears · Psychological Principles · W.R.A.P.</p>
+    <button class="btn ghost" data-brief style="margin-top:14px">Training briefing — read this first</button>
+    <p class="small center" style="margin-top:14px">Customer Fears · Psychological Principles · W.R.A.P.</p>
+  </div>`;}
+function viewBrief(){
+  const fears=FEARS.map(f=>`<li><b>${esc(f.label)}</b></li>`).join("");
+  const prins=PRINCIPLES.map(p=>`<li><b>${esc(p.label)}</b><span>${esc(p.tip)}</span></li>`).join("");
+  return `
+  <div class="hud"><span class="chip">Training</span><span class="chip gold">Fear Buster</span></div>
+  <div class="card pop">
+    <div class="tag">Before you play</div>
+    <h1>The Confidence Protocol</h1>
+    <p class="sub">Every Client objection is a fear wearing a costume. Your job is to name the fear, answer it with the
+      right psychological principle, and close the loop with W.R.A.P. This briefing is the whole system — three minutes now
+      saves you the whole run.</p>
+
+    <div class="brief-sec">
+      <h3>How a round works</h3>
+      <ol class="numlist">
+        <li><b>Read the Client's line.</b> One sentence, in their words — exactly what you'd hear on the floor.</li>
+        <li><b>Identify the fear.</b> Pick which of the eight customer fears is really talking. Worth 100 points.</li>
+        <li><b>Choose the principle.</b> Fire the psychological principle that dissolves <em>that specific</em> fear. Worth 150.</li>
+        <li><b>Seal it with W.R.A.P.</b> Pick the response that actually uses the protocol. Worth 200.</li>
+      </ol>
+      <p>Get all three right and it's a <b>Perfect Triple</b> — your combo multiplier climbs (up to ×4) and rides into the
+        next scenario. Miss any one and the combo resets to zero. Either way you'll see why the right answer was right
+        before you move on.</p>
+    </div>
+
+    <div class="brief-sec">
+      <h3>The eight Client fears</h3>
+      <p>Nobody says "I'm afraid." They say something else. These are the eight things underneath it.</p>
+      <ul class="reflist solo">${fears}</ul>
+    </div>
+
+    <div class="brief-sec">
+      <h3>The eight principles</h3>
+      <p>Each fear has a principle that answers it. Matching the wrong one isn't wrong information — it's the right
+        information aimed at the wrong worry.</p>
+      <ul class="reflist">${prins}</ul>
+    </div>
+
+    <div class="brief-sec">
+      <h3>W.R.A.P. — the four beats</h3>
+      <ul class="wraplist">
+        <li><b>W — Why</b> Understand the need first. Educate before anything else moves.</li>
+        <li><b>R — Ready</b> Build enthusiasm. Let them feel the lift before money enters the room.</li>
+        <li><b>A — Answer</b> Answer the actual question with specifics — clinical backing, real numbers, real options.</li>
+        <li><b>P — Pain Better</b> Put the relief in their hands and confirm the improvement live.</li>
+      </ul>
+      <p>In step 3 every option is dressed as a W.R.A.P. line. Only one of them actually does the job — the rest are
+        pressure, deflection, or a shrug in a nice jacket.</p>
+    </div>
+
+    <div class="brief-sec">
+      <h3>The three stages</h3>
+      <ul class="reflist">
+        <li><b>1 · Basic Protocol</b><span>Six scenarios, no clock, no penalty. Learn the matching here.</span></li>
+        <li><b>2 · Fear Arena</b><span>Eight scenarios on a timer. Three health. A miss or a timeout costs you one.</span></li>
+        <li><b>3 · Mind Breach</b><span>Every Perfect Triple takes you a chamber deeper — bigger multipliers, tighter clock.</span></li>
+      </ul>
+      <p>Start with Stage 1 until the eight-and-eight feel automatic. The timed stages punish hesitation, not ignorance —
+        and you can reopen this briefing from the menu any time.</p>
+    </div>
+
+    <button class="btn gold" data-briefstart style="margin-top:20px">Start Stage 1 — Basic Protocol</button>
+    <button class="btn ghost" data-menu>Back to menu</button>
   </div>`;}
 function viewStage1(){
   const q=current(),step=state.step;let body="";
@@ -401,6 +487,8 @@ function viewResult(){
 function updateTimerUI(){const el=document.getElementById("timerFill");if(!el)return;el.style.width=Math.max(0,state.timer/state.timerMax*100)+"%";}
 function bind(){
   document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>startStage(+b.getAttribute("data-go")));
+  const brief=document.querySelector("[data-brief]");if(brief)brief.onclick=()=>{saveBriefSeen();state.screen="brief";render();window.scrollTo(0,0);};
+  const bstart=document.querySelector("[data-briefstart]");if(bstart)bstart.onclick=()=>{saveBriefSeen();startStage(1);window.scrollTo(0,0);};
   document.querySelectorAll("[data-fear]").forEach(b=>b.onclick=()=>chooseFear(b.getAttribute("data-fear")));
   document.querySelectorAll("[data-principle]").forEach(b=>b.onclick=()=>choosePrinciple(b.getAttribute("data-principle")));
   document.querySelectorAll("[data-wrap]").forEach(b=>b.onclick=()=>chooseWrap(b.getAttribute("data-wrap")));
@@ -408,7 +496,7 @@ function bind(){
   const menu=document.querySelector("[data-menu]");if(menu)menu.onclick=()=>{clearTimer();state.screen="title";render();};
   const again=document.querySelector("[data-again]");if(again)again.onclick=()=>startStage(state.stage);
 }
-loadHigh();render();
+loadHigh();if(!state.seenBrief){state.screen="brief";saveBriefSeen();}render();
 })();
 </script>
 </body>

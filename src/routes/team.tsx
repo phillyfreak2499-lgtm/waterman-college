@@ -14,6 +14,7 @@ import {
 } from "@/lib/access";
 import { assignTraining, getTeam, groupTeam, revokeTraining, type TeamMember, type TeamSnapshot } from "@/lib/org";
 import { listTeamEvalStatus } from "@/lib/presentation-eval";
+import { listTeamQuadActivity, type TeamQuadActivity } from "@/lib/quad-scores";
 
 export const Route = createFileRoute("/team")({ component: TeamPage });
 
@@ -34,6 +35,7 @@ function TeamDesk() {
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
   const [evalStatus, setEvalStatus] = useState<Awaited<ReturnType<typeof listTeamEvalStatus>> | null>(null);
+  const [quad, setQuad] = useState<Record<string, TeamQuadActivity>>({});
 
   useEffect(() => {
     if (!ready || !access.canManagePeople) return;
@@ -55,6 +57,13 @@ function TeamDesk() {
       })
       .catch(() => {
         if (!cancelled) setEvalStatus(null);
+      });
+    listTeamQuadActivity()
+      .then((s) => {
+        if (!cancelled) setQuad(s.byPerson);
+      })
+      .catch(() => {
+        if (!cancelled) setQuad({});
       });
     return () => {
       cancelled = true;
@@ -181,6 +190,7 @@ function TeamDesk() {
                   onChange={setSnap}
                   needsEval={evalStatus?.needsThisWeek.includes(group.lead.id)}
                   evalInfo={evalStatus?.byPerson[group.lead.id]}
+                  quadInfo={quad[group.lead.id]}
                 />
               )}
               {group.members.map((person) => (
@@ -193,6 +203,7 @@ function TeamDesk() {
                   onChange={setSnap}
                   needsEval={evalStatus?.needsThisWeek.includes(person.id)}
                   evalInfo={evalStatus?.byPerson[person.id]}
+                  quadInfo={quad[person.id]}
                 />
               ))}
             </div>
@@ -224,6 +235,7 @@ function PersonCard({
   onChange,
   needsEval,
   evalInfo,
+  quadInfo,
 }: {
   person: TeamMember;
   tracks: TeamSnapshot["tracks"];
@@ -238,6 +250,7 @@ function PersonCard({
     phaseAvgs: { id: string; label: string; avg: number | null }[];
     evalCount: number;
   } | null;
+  quadInfo?: TeamQuadActivity;
 }) {
   const [open, setOpen] = useState(false);
   const [trackId, setTrackId] = useState(tracks[0]?.id ?? "");
@@ -347,6 +360,28 @@ function PersonCard({
             </li>
           ))}
         </ul>
+      )}
+
+      {quadInfo && quadInfo.plays > 0 && (
+        <div className="mt-4 rounded-md border border-line bg-paper px-3 py-2.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs text-muted">
+              The Quad · {quadInfo.games} game{quadInfo.games === 1 ? "" : "s"} · {quadInfo.plays} play
+              {quadInfo.plays === 1 ? "" : "s"}
+              {quadInfo.lastPlayedAt ? ` · last ${quadInfo.lastPlayedAt.slice(0, 10)}` : ""}
+            </p>
+            {quadInfo.lastTitle && (
+              <span className="text-[0.65rem] uppercase tracking-[0.12em] text-muted">
+                {quadInfo.lastTitle}
+              </span>
+            )}
+          </div>
+          {quadInfo.bestTitle && quadInfo.bestScore != null && (
+            <p className="mt-1.5 text-[0.7rem] text-muted">
+              Best · {quadInfo.bestTitle} {quadInfo.bestScore}
+            </p>
+          )}
+        </div>
       )}
 
       {evalInfo && evalInfo.evalCount > 0 && (

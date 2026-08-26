@@ -96,3 +96,77 @@ export const reportGameResult = createServerFn({ method: "POST" })
     `;
     return { ok: true };
   });
+
+export type TeamQuadActivity = {
+  plays: number;
+  games: number;
+  lastPlayedAt: string | null;
+  lastTitle: string | null;
+  bestTitle: string | null;
+  bestScore: number | null;
+};
+
+/**
+ * Quad activity for the people a leader can see.
+ *
+ * The practice games are the only place on the campus where a learner
+ * demonstrates a skill rather than self-attesting it — lesson completion is a
+ * checkbox the learner ticks, and quiz responses are free text with no correct
+ * answer. Until now `user_game_scores` was written by every learner and read
+ * only by that learner's own Locker, so none of it reached a manager.
+ */
+export const listTeamQuadActivity = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }): Promise<{ byPerson: Record<string, TeamQuadActivity> }> => {
+    const { readAccessRole, isLeader, fetchPeople, visiblePeople } = await import("@/lib/access");
+    const actor = await readAccessRole(context.userId);
+    const byPerson: Record<string, TeamQuadActivity> = {};
+    if (!isLeader(actor) && actor !== "admin") return { byPerson };
+
+    const all = await fetchPeople();
+    const visible = visiblePeople(context.userId, actor, all).filter(
+      (p) => p.id !== context.userId && p.role !== "pending" && p.role !== "admin",
+    );
+    if (!visible.length) return { byPerson };
+
+    const sql = await getSql();
+    const ids = visible.map((p) => p.id);
+    const rows = await sql<{
+      user_id: string;
+      game_slug: string;
+      plays: number;
+      best_score: number | null;
+      last_played_at: unknown;
+    }>`
+      select user_id, game_slug, plays, best_score, last_played_at
+      from user_game_scores
+      where user_id = any(${ids}::text[])
+      order by last_played_at desc
+    `;
+
+    for (const r of rows) {
+      if (!GAME_SLUGS.has(r.game_slug)) continue;
+      const title = GAME_TITLE.get(r.game_slug) ?? r.game_slug;
+      const entry = (byPerson[r.user_id] ??= {
+        plays: 0,
+        games: 0,
+        lastPlayedAt: null,
+        lastTitle: null,
+        bestTitle: null,
+        bestScore: null,
+      });
+      entry.plays += Number(r.plays) || 0;
+      entry.games += 1;
+      // rows arrive newest-first, so the first one we see is the latest play
+      if (!entry.lastPlayedAt) {
+        entry.lastPlayedAt = iso(r.last_played_at);
+        entry.lastTitle = title;
+      }
+      const best = r.best_score == null ? null : Number(r.best_score);
+      if (best != null && (entry.bestScore == null || best > entry.bestScore)) {
+        entry.bestScore = best;
+        entry.bestTitle = title;
+      }
+    }
+    return { byPerson };
+  });

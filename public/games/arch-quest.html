@@ -175,6 +175,8 @@ var GameContent = (() => {
     VALUES: () => VALUES,
     levelFromXp: () => levelFromXp,
     pickQuestions: () => pickQuestions,
+    pickRamped: () => pickRamped,
+    pickOne: () => pickOne,
     shuffle: () => shuffle,
     xpForLevel: () => xpForLevel
   });
@@ -1287,6 +1289,39 @@ var GameContent = (() => {
       pool = pool.filter((q) => q.difficulty <= (opts.maxDiff ?? 3));
     return shuffle(pool).slice(0, Math.min(count, pool.length));
   }
+  // Draw `count` questions that ramp from easy to hard. Falls back to whatever
+  // the bank can supply if a difficulty band is thin.
+  function pickOne(arr) {
+    return arr && arr.length ? arr[Math.floor(Math.random() * arr.length)] : null;
+  }
+  function pickRamped(count) {
+    var bands = [
+      { min: 1, max: 1, share: 0.4 },
+      { min: 2, max: 2, share: 0.4 },
+      { min: 2, max: 3, share: 0.2 },
+    ];
+    var out = [];
+    var seen = Object.create(null);
+    bands.forEach(function (band) {
+      var want = Math.max(1, Math.round(count * band.share));
+      var pool = pickQuestions(QUESTIONS.length, { minDiff: band.min, maxDiff: band.max });
+      for (var i = 0; i < pool.length && want > 0; i++) {
+        if (seen[pool[i].id]) continue;
+        seen[pool[i].id] = 1;
+        out.push(pool[i]);
+        want -= 1;
+      }
+    });
+    if (out.length < count) {
+      var rest = pickQuestions(QUESTIONS.length);
+      for (var j = 0; j < rest.length && out.length < count; j++) {
+        if (seen[rest[j].id]) continue;
+        seen[rest[j].id] = 1;
+        out.push(rest[j]);
+      }
+    }
+    return out.slice(0, count);
+  }
   function xpForLevel(level) {
     return Math.floor(80 * level + 20 * level * level);
   }
@@ -1455,6 +1490,7 @@ var GameContent = (() => {
   }
   function finishRun(result) {
     clearTimer();
+    try { if (window.QuadScore) window.QuadScore.report(result && result.score || 0); } catch (e) {}
     state.lastResult = result;
     state.mode = "results";
     state.game = null;
@@ -1683,7 +1719,7 @@ var GameContent = (() => {
     state.mode = "lightning";
     state.game = {
       type: "lightning",
-      questions: C.pickQuestions(12),
+      questions: C.pickRamped(12),
       idx: 0,
       score: 0,
       streak: 0,
@@ -1837,12 +1873,19 @@ var GameContent = (() => {
       g.correct += 1;
       g.xp += 15 + Math.min(g.streak, 6) * 2;
       noteStreak(g.streak);
-      g.feedback = { ok: true, text: card.name + " is a " + tierName + ". " + card.blurb };
+      g.feedback = {
+        ok: true,
+        text:
+          card.name + " is a " + tierName + ". " +
+          ((card.facts && card.facts.length) ? C.pickOne(card.facts) : card.blurb),
+      };
     } else {
       g.streak = 0;
       g.feedback = {
         ok: false,
-        text: card.name + " is a " + tierName + ". " + (card.facts[0] || card.blurb),
+        text:
+          card.name + " is a " + tierName + ". " +
+          ((card.facts && card.facts.length) ? C.pickOne(card.facts) : card.blurb),
       };
     }
     save();
@@ -2028,7 +2071,7 @@ var GameContent = (() => {
     state.game = {
       type: "sequence",
       order: C.shuffle(C.SALES_STEPS).map(function (s) {
-        return { id: s.order, title: s.title, duration: s.duration };
+        return { id: s.order, title: s.title, duration: s.duration, bullets: s.bullets || [] };
       }),
       dragIdx: null,
       checked: false,
@@ -2060,13 +2103,18 @@ var GameContent = (() => {
     g.checked = true;
     var pts = correct * 100 + (perfect ? 400 : 0);
     g.score = pts;
-    recordAnswer("sales", perfect);
     var i;
     for (i = 0; i < correct; i++) recordAnswer("sales", true);
     for (i = 0; i < 8 - correct; i++) recordAnswer("sales", false);
     var xp = correct * 10 + (perfect ? 50 : 0);
-    addXp(xp);
-    noteGame("sequence", pts);
+    var banked = state.seqXpAwarded || 0;
+    var gain = Math.max(0, xp - banked);
+    if (gain > 0) {
+      state.seqXpAwarded = xp;
+      addXp(gain);
+      noteGame("sequence", pts);
+    }
+    xp = gain;
     if (perfect) {
       state.progress.sequencePerfects += 1;
       grantBadge("sequence_sorter");
@@ -2126,7 +2174,13 @@ var GameContent = (() => {
             esc(step.title) +
             "</strong><small>" +
             esc(step.duration) +
-            "</small></div>" +
+            "</small>" +
+            (g.checked && step.bullets && step.bullets.length
+              ? '<small style="display:block;margin-top:4px;opacity:.85">' +
+                step.bullets.map(function (b) { return esc(b); }).join(" · ") +
+                "</small>"
+              : "") +
+            "</div>" +
             (g.checked && g.correctMap[i] ? "<span>✓</span>" : "") +
             "</li>"
           );
@@ -2146,7 +2200,7 @@ var GameContent = (() => {
     state.mode = "mastery";
     state.game = {
       type: "mastery",
-      queue: C.pickQuestions(40),
+      queue: C.pickRamped(40),
       qi: 0,
       lives: 3,
       score: 0,
@@ -2371,7 +2425,7 @@ var GameContent = (() => {
       if (id === "lightning") startLightning();
       else if (id === "sort") startSort();
       else if (id === "fitlab") startFit();
-      else if (id === "sequence") startSequence();
+      else if (id === "sequence") { state.seqXpAwarded = 0; startSequence(); }
       else if (id === "mastery") startMastery();
       return;
     }

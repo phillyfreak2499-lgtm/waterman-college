@@ -765,6 +765,8 @@ function sessionArcTick(dt){
     if(!state._bossSpawned && (state.prog && state.prog.bossesUnlocked || state.saved >= 2)){
       if(trySpawnBossClient()) setSessionPhase("boss", true);
       else setSessionPhase("heat", false);
+    } else if(state._bossSpawned && (state.clients||[]).some(function(c){ return c && c.isBoss; })){
+      setSessionPhase("boss", false);
     } else setSessionPhase("heat", false);
   } else {
     setSessionPhase("closing_arc", true);
@@ -1821,6 +1823,7 @@ function endShift(){
   state.score = score;
   awardShiftProgression(score);
   state.score=score;
+  try { if (window.QuadScore) window.QuadScore.report(score); } catch(e){}
   const grade = score>=88?"FLOOR ACE": score>=72?"STRONG SHIFT": score>=52?"MIXED SHIFT":"NEEDS COACHING";
   state._lastGrade = grade;
   state._hsResult = recordShiftScore({
@@ -4207,6 +4210,7 @@ function update(dt){
 
   state.t += dt;
   // No clock loss — three walks end the shift
+  sessionArcTick(dt);
 
 
   // movement + stamina (top-down)
@@ -4541,6 +4545,7 @@ function update(dt){
   } else if(state.heat>0.55) tip="<strong>Floor heat high</strong> — prioritize reds over roaming";
   document.getElementById("helpBar").innerHTML = tip;
   updateRadar();
+  updateBumpGreets(dt);
 }
 
 function resize(){

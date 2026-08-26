@@ -719,10 +719,12 @@ header.bar{display:flex;flex-wrap:wrap;gap:.75rem;justify-content:space-between;
       G.modal = null;
       if (ok) {
         G.phase = "won";
+        try { if (window.QuadScore) window.QuadScore.report(100); } catch (e) {}
         pushLog("Correct! You cracked the 3-Step System on file.", "success");
         sfx.win();
       } else {
         G.phase = "lost";
+        try { if (window.QuadScore) window.QuadScore.report(0); } catch (e) {}
         pushLog("Wrong accusation. The customer file stays sealed - case lost.", "danger");
         sfx.lose();
       }

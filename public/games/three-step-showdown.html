@@ -409,11 +409,18 @@ function openBuzzOrAnswer() {
 function startClock() {
   if (state.clockTimer) clearInterval(state.clockTimer);
   state.cueFired = new Set();
-  const started = Date.now();
-  const total = state.timerTotal;
+  // Count down by elapsed delta rather than from a fixed start time. The old
+  // version derived `left` from wall-clock, so pausing froze the display while
+  // the clock kept draining -- pause 12s in a 15s window and you resumed
+  // already timed out, despite the overlay promising the timer was frozen.
+  let last = Date.now();
+  state.timerLeft = state.timerTotal;
   state.clockTimer = setInterval(() => {
+    const now = Date.now();
+    const dt = (now - last) / 1000;
+    last = now;
     if (state.paused) return;
-    const left = Math.max(0, total - (Date.now()-started)/1000);
+    const left = Math.max(0, state.timerLeft - dt);
     state.timerLeft = left;
     const sec = Math.ceil(left);
     if (left>0 && sec===10 && !state.cueFired.has(10)) { state.cueFired.add(10); sfx.ten(); }
@@ -524,6 +531,11 @@ function continueAfterReveal() {
   const next = state.qi + 1;
   if (next >= state.questions.length) {
     state.screen = "final";
+    try {
+      if (window.QuadScore && state.players.length) {
+        window.QuadScore.report(Math.max.apply(null, state.players.map(function (p) { return p.score || 0; })));
+      }
+    } catch (e) {}
     clearTimers();
     sfx.start();
     render();

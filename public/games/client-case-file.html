@@ -3191,6 +3191,7 @@ function confetti(){
 function endGame(){
   state.crisis=null; state.kitchen=false; state.screen="result"; state.lastFeedback=null;
   const { score, foundCount, owned, weaks }=computeScore();
+  try { if (window.QuadScore) window.QuadScore.report(score); } catch(e){}
   const perfect = foundCount===5 && weaks===0 && owned;
   state.runPerfect = perfect;
   if(perfect){
