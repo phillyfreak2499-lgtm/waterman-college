@@ -17,15 +17,6 @@ export const QUAD_GAMES = [
     file: "/games/tunnel-run.html",
     blurb: "2D platformer — drop into the right path. Wrong tunnel ends the run.",
   },
-  // Slot 04 on the Quad board. The 4th is the leftover-support trainer and
-  // belongs here — it replaces this fourth card. Do not append a second copy.
-  {
-    slug: "the-4th",
-    title: "The 4th",
-    file: "/games/the-4th.html",
-    blurb: "Age. Job. Play. Mention. Name the leftover SKU and build PLACE.",
-    tall: true,
-  },
   {
     slug: "three-step-showdown",
     title: "3-Step Showdown",
@@ -49,6 +40,13 @@ export const QUAD_GAMES = [
     title: "Wheel of the Floor",
     file: "/games/wheel-of-the-floor.html",
     blurb: "Spin the floor. Call a consonant. Bank it every time it hits the board. Dump the cart and the round is gone.",
+  },
+  {
+    slug: "the-4th",
+    title: "The 4th",
+    file: "/games/the-4th.html",
+    blurb: "Age. Job. Play. Mention. Name the leftover SKU and build PLACE.",
+    tall: true,
   },
   {
     slug: "new-client-roleplay",
