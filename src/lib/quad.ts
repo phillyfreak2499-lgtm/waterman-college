@@ -45,7 +45,7 @@ export const QUAD_GAMES = [
     slug: "the-4th",
     title: "The 4th",
     file: "/games/the-4th.html",
-    blurb: "Age. Job. Play. Mention. Name the leftover SKU and build PLACE.",
+    blurb: "Leftover shoe. Leftover SKU. PLACE the mention. Laser-focused on the 4th.",
     tall: true,
   },
   {
