@@ -3,8 +3,9 @@
 Private employee training campus for **Waterman Arch Supports** / The Good Feet Store.
 
 The app includes account approval, role-based course access, progress, quizzes,
-the directory, and the Chancellor’s Office. Authentication is local to the
-college; there is no third-party sign-in.
+the directory, the Chancellor’s Office, and the Professor Training Office at
+`/studio`. Authentication is local to the college; there is no third-party
+sign-in.
 
 ## Requirements
 
