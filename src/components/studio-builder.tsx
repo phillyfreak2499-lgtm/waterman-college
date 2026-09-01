@@ -17,6 +17,8 @@ import { isRoleId } from "@/lib/content";
 const darkInput =
   "h-11 w-full rounded-sm border border-paper/15 bg-navy-deep px-3 text-paper placeholder:text-paper/35 focus:outline-2 focus:outline-offset-1 focus:outline-brass";
 
+const GFA_LINE = "GFA \u00b7 Open GFA Training";
+
 type Template = {
   id: string;
   label: string;
@@ -146,8 +148,8 @@ export function LessonsDesk() {
       if (videoUrl.trim() && !body.includes("VIDEO \u00b7")) {
         body = body ? `${body}\n\nVIDEO \u00b7 Watch this` : "VIDEO \u00b7 Watch this";
       }
-      if (fileUrl.trim() && !body.includes("GFA \u00b7") && !body.includes("FORM \u00b7")) {
-        body = body ? `${body}\n\nGFA \u00b7 Open the file` : "GFA \u00b7 Open the file";
+      if (fileUrl.trim() && !body.includes("GFA \u00b7")) {
+        body = body ? `${body}\n\n${GFA_LINE}` : GFA_LINE;
       }
       const next = await saveLesson({ data: { ...lessonForm, trackId, slug, body } });
       replace(next);
@@ -155,7 +157,8 @@ export function LessonsDesk() {
         await attachLine(slug, "VIDEO \u00b7 Watch this", videoUrl, "VIDEO").catch(() => undefined);
       }
       if (fileUrl.trim()) {
-        await attachLine(slug, "GFA \u00b7 Open the file", fileUrl, "GFA").catch(() => undefined);
+        const gfaLine = body.includes(GFA_LINE) ? GFA_LINE : "GFA \u00b7 Open the file";
+        await attachLine(slug, gfaLine, fileUrl, "GFA").catch(() => undefined);
       }
       setLessonForm({ ...lessonForm, slug, body });
       toast.success("Lesson is on the campus.");
@@ -268,6 +271,7 @@ export function LessonsDesk() {
             ["VIDEO \u00b7 ", "Video line"],
             ["ROLEPLAY \u00b7 ", "Roleplay"],
             ["GFA \u00b7 ", "File / form"],
+            [GFA_LINE, "GFA Training"],
             ["PRACTICE \u00b7 ", "Practice"],
           ].map(([prefix, label]) => (
             <button
@@ -289,9 +293,6 @@ export function LessonsDesk() {
             onChange={(e) => setLessonForm({ ...lessonForm, body: e.target.value })}
             required
           />
-          <span className="mt-1 block text-xs text-paper/40">
-            Blank line between paragraphs. Tagged lines become tappable once a link is attached.
-          </span>
         </label>
         <label className="block">
           <span className="mb-1.5 block text-xs font-medium uppercase tracking-[0.14em] text-paper/50">
@@ -307,16 +308,29 @@ export function LessonsDesk() {
         </label>
         <label className="block">
           <span className="mb-1.5 block text-xs font-medium uppercase tracking-[0.14em] text-paper/50">
-            File or slide link (Drive, Dropbox, PDF)
+            GFA Training or file link
           </span>
           <input
             className={darkInput}
             type="url"
-            placeholder="https://"
+            placeholder="Paste the Good Feet Academy link"
             value={fileUrl}
             onChange={(e) => setFileUrl(e.target.value)}
           />
         </label>
+        <button
+          type="button"
+          className="w-full rounded-lg border border-paper/25 bg-paper/[0.07] px-4 py-3 text-left backdrop-blur-sm hover:border-brass/50"
+          onClick={() => {
+            if (!lessonForm.body.includes(GFA_LINE)) insertTag(GFA_LINE);
+            toast.success("GFA Training glass is on the lesson. Paste the Academy link above, then save.");
+          }}
+        >
+          <p className="text-[0.65rem] font-medium uppercase tracking-[0.18em] text-brass-soft">GFA Training</p>
+          <p className="mt-1 text-sm text-paper/70">
+            Attach the Good Feet Academy course. Paste the GFA link in the field above, tap this glass, then save. Staff tap it on the live hall.
+          </p>
+        </button>
         <label className="block">
           <span className="mb-1.5 block text-xs font-medium uppercase tracking-[0.14em] text-paper/50">Takeaway</span>
           <input
