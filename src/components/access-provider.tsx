@@ -27,6 +27,7 @@ const empty: AccessProfile = {
   isChancellor: false,
   canManagePeople: false,
   canSeeCompany: false,
+  canOpenStudio: false,
   perms: ALL_OFF_PERMS,
   rbacRoleId: null,
   mustChangePassword: false,

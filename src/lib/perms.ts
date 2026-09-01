@@ -13,6 +13,7 @@ export type Perms = {
   trainManagers: boolean;
   manageUsers: boolean;
   manageTraining: boolean;
+  viewStudio: boolean;
   editSite: boolean;
 };
 
@@ -31,6 +32,7 @@ export const ALL_OFF_PERMS: Perms = {
   trainManagers: false,
   manageUsers: false,
   manageTraining: false,
+  viewStudio: false,
   editSite: false,
 };
 
@@ -49,6 +51,7 @@ export const SUPER_PERMS: Perms = {
   trainManagers: true,
   manageUsers: true,
   manageTraining: true,
+  viewStudio: true,
   editSite: true,
 };
 
