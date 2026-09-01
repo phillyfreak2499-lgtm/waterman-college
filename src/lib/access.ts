@@ -28,6 +28,7 @@ export type AccessProfile = {
   isChancellor: boolean;
   canManagePeople: boolean;
   canSeeCompany: boolean;
+  canOpenStudio: boolean;
   perms: Perms;
   rbacRoleId: string | null;
   mustChangePassword: boolean;
@@ -107,6 +108,16 @@ export function tabsFromPerms(perms: Perms): RoleId[] {
 
 export function canManagePeople(role: AccessRole) {
   return isLeader(role);
+}
+
+export function canOpenStudioFrom(
+  role: AccessRole,
+  isChancellor?: boolean,
+  perms?: Perms | null,
+) {
+  if (isChancellor || role === "admin") return true;
+  if (perms?.viewStudio || perms?.manageTraining) return true;
+  return false;
 }
 
 export function assignableRoles(actor: AccessRole): AccessRole[] {
@@ -233,6 +244,7 @@ function toProfile(
     isChancellor: Boolean(extra?.isChancellor),
     canManagePeople: extra?.perms ? extra.perms.manageUsers : canManagePeople(role),
     canSeeCompany: extra?.perms ? extra.perms.manageUsers || extra.perms.editSite : isOrgWide(role) || role === "admin",
+    canOpenStudio: canOpenStudioFrom(role, extra?.isChancellor, extra?.perms),
     perms,
     rbacRoleId: extra?.rbacRoleId ?? null,
     mustChangePassword: Boolean(extra?.mustChangePassword),
