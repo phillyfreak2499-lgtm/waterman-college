@@ -18,7 +18,9 @@ export type TrainerNote = {
 async function requireOffice(userId: string) {
   const { isChancellorId } = await import("@/lib/rbac");
   if (await isChancellorId(userId)) return;
-  const { isLeader, readAccessRole } = await import("@/lib/access");
+  const { isLeader, readAccessProfile, readAccessRole } = await import("@/lib/access");
+  const profile = await readAccessProfile(userId);
+  if (profile.canOpenStudio) return;
   if (isLeader(await readAccessRole(userId))) return;
   throw new Error("Only the training office can read these notes.");
 }
