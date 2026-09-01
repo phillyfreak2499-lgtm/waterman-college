@@ -112,17 +112,19 @@ export function firstUrlFromText(raw: string): string | null {
 }
 
 async function assertOffice(userId: string) {
-  const { readAccessRole } = await import("@/lib/access");
-  if ((await readAccessRole(userId)) === "admin") return;
   const { isChancellorId } = await import("@/lib/rbac");
   if (await isChancellorId(userId)) return;
+  const { readAccessProfile, readAccessRole } = await import("@/lib/access");
+  const profile = await readAccessProfile(userId);
+  if (profile.canOpenStudio || profile.perms.manageTraining) return;
+  if ((await readAccessRole(userId)) === "admin") return;
   const sql = await getSql();
   const rows = await sql<{ user_id: string }>`
     select user_id from admin_unlocks
     where user_id = ${userId} and expires_at > now()
     limit 1
   `;
-  if (!rows.length) throw new Error("Forbidden");
+  if (!rows.length) throw new Error("Only the training office can change lesson links.");
 }
 
 function cleanText(value: unknown, max: number): string {
