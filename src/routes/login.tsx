@@ -64,7 +64,7 @@ function Login() {
         setStatus("pending");
         return;
       }
-      window.location.href = "/training";
+      window.location.href = "/locker";
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not sign in");
     } finally {
@@ -108,8 +108,8 @@ function Login() {
             <div className="mt-8">
               <p className="text-sm">You’re already signed in as {user.displayName}.</p>
               <Button asChild className="mt-5">
-                <Link to={access.isChancellor ? "/chancellor" : "/training"} search={access.isChancellor ? undefined : {}}>
-                  {access.isChancellor ? "Chancellor’s Office" : "Enter the hall"}
+                <Link to={access.isChancellor ? "/chancellor" : "/locker"}>
+                  {access.isChancellor ? "Chancellor’s Office" : "Open my locker"}
                 </Link>
               </Button>
             </div>
