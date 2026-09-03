@@ -49,7 +49,7 @@ function ChangePasswordForm() {
       if (result.error) throw new Error("The current password did not match.");
       await confirmOwnPasswordChange();
       toast.success("Password changed.");
-      window.location.href = access.isChancellor ? "/chancellor" : "/training";
+      window.location.href = access.isChancellor ? "/chancellor" : "/locker";
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not change the password");
     } finally {
