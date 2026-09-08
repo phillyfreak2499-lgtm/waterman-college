@@ -10,8 +10,14 @@ import {
   type Track,
 } from "@/lib/content";
 import { getSql } from "@/lib/db";
-import { getDeckSlides } from "@/lib/decks";
+import { getDeckSlides, type DeckSlide } from "@/lib/decks";
+import { parseSlides } from "@/lib/decks-schema";
 import { SLIDE_TRACKS } from "@/lib/slide-tracks";
+
+async function assertCanBuild(userId: string) {
+  const { assertCanBuildTraining } = await import("@/lib/training-access.server");
+  await assertCanBuildTraining(userId);
+}
 
 export type SiteSettings = {
   name: string;
@@ -217,6 +223,7 @@ async function seedCatalog() {
     await refreshOnboardingPlan();
     await refreshSlideTracks();
     await retireStorefrontPhoto();
+    await refreshBuilderTraining();
     return;
   }
 
@@ -277,6 +284,7 @@ async function seedCatalog() {
   await refreshOnboardingPlan();
   await refreshSlideTracks();
   await retireStorefrontPhoto();
+  await refreshBuilderTraining();
 }
 
 const cmsGlobal = globalThis as typeof globalThis & {
@@ -390,6 +398,60 @@ async function refreshSlideTracks() {
   `;
 }
 
+async function refreshBuilderTraining() {
+  const sql = await getSql();
+  const flag = await sql<{ value: string }>`
+    select value from cms_settings where key = 'builder_training_v1'
+  `;
+  if (flag.length) return;
+
+  const { BUILDER_TRACK } = await import("@/lib/builder-training");
+  const track = BUILDER_TRACK;
+  const count = await sql<{ n: number }>`select count(*)::int as n from cms_tracks`;
+  const order = count[0]?.n ?? 0;
+
+  await sql`
+    insert into cms_tracks (id, role, title, nav, image, audience, summary, sort_order, updated_at, visible_to_all)
+    values (
+      ${track.id}, ${track.role}, ${track.title}, ${track.nav}, ${track.image},
+      ${track.audience}, ${track.summary}, ${order}, now(), ${track.visibleToAll === true}
+    )
+    on conflict (id) do update set
+      role = excluded.role,
+      title = excluded.title,
+      nav = excluded.nav,
+      image = excluded.image,
+      audience = excluded.audience,
+      summary = excluded.summary,
+      visible_to_all = excluded.visible_to_all,
+      updated_at = now()
+  `;
+  for (const [j, lesson] of track.lessons.entries()) {
+    const id = `${track.id}:${lesson.slug}`;
+    const slides = lesson.slides && lesson.slides.length ? JSON.stringify(lesson.slides) : null;
+    await sql`
+      insert into cms_lessons (id, track_id, slug, title, minutes, kicker, body, takeaway, sort_order, slides)
+      values (
+        ${id}, ${track.id}, ${lesson.slug}, ${lesson.title}, ${lesson.minutes},
+        ${lesson.kicker ?? null}, ${lesson.body.join("\n\n")}, ${lesson.takeaway ?? null}, ${j}, ${slides}
+      )
+      on conflict (id) do update set
+        title = excluded.title,
+        minutes = excluded.minutes,
+        kicker = excluded.kicker,
+        body = excluded.body,
+        takeaway = excluded.takeaway,
+        sort_order = excluded.sort_order,
+        slides = excluded.slides
+    `;
+  }
+
+  await sql`
+    insert into cms_settings (key, value) values ('builder_training_v1', '1')
+    on conflict (key) do nothing
+  `;
+}
+
 async function retireStorefrontPhoto() {
   const sql = await getSql();
   const flag = await sql<{ value: string }>`
@@ -466,8 +528,9 @@ export async function readCatalog(): Promise<Catalog> {
     body: string;
     takeaway: string | null;
     eval_phases: string[] | null;
+    slides: string | null;
   }>`
-    select track_id, slug, title, minutes, kicker, body, takeaway, eval_phases
+    select track_id, slug, title, minutes, kicker, body, takeaway, eval_phases, slides
     from cms_lessons
     order by sort_order asc, title asc
     limit 10000
@@ -493,7 +556,9 @@ export async function readCatalog(): Promise<Catalog> {
         kicker: l.kicker || undefined,
         body: l.body.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean),
         takeaway: l.takeaway || undefined,
-        slides: getDeckSlides(track.id, l.slug),
+        // Author-built slides win; fall back to the static deck registered in
+        // slide-tracks.ts. strict:false so a legacy/bad blob degrades gracefully.
+        slides: parseSlides(l.slides, { strict: false }) ?? getDeckSlides(track.id, l.slug),
         evalPhases: Array.isArray(l.eval_phases) ? l.eval_phases.filter(Boolean) : [],
       })),
   }));
@@ -760,7 +825,7 @@ export const saveTrack = createServerFn({ method: "POST" })
   })
   .middleware([authMiddleware])
   .handler(async ({ context, data: track }) => {
-    await assertAdmin(context.userId);
+    await assertCanBuild(context.userId);
     const sql = await getSql();
     const id = track.id || slugify(track.title);
     const count = await sql<{ n: number }>`select count(*)::int as n from cms_tracks`;
@@ -787,7 +852,7 @@ export const deleteTrack = createServerFn({ method: "POST" })
   .validator((id: string) => cleanId(id, "Course"))
   .middleware([authMiddleware])
   .handler(async ({ context, data: id }) => {
-    await assertAdmin(context.userId);
+    await assertCanBuild(context.userId);
     const sql = await getSql();
     await sql.transaction(async (tx) => {
       await tx`delete from cms_lessons where track_id = ${id}`;
@@ -805,7 +870,7 @@ export const archiveTrack = createServerFn({ method: "POST" })
   }))
   .middleware([authMiddleware])
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.userId);
+    await assertCanBuild(context.userId);
     const sql = await getSql();
     await sql`
       update cms_tracks set archived = ${data.archived}, updated_at = now() where id = ${data.id}
@@ -818,7 +883,7 @@ export const archiveTrack = createServerFn({ method: "POST" })
 export const listOfficeTracks = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
-    await assertAdmin(context.userId);
+    await assertCanBuild(context.userId);
     const sql = await getSql();
     const rows = await sql<{
       id: string;
@@ -859,6 +924,8 @@ export type LessonInput = {
   takeaway: string;
   /** Presentation phases this lesson maps to for auto-suggestions. */
   evalPhases?: string[];
+  /** Authored slide deck as a JSON string (validated with decks-schema). */
+  slides?: string;
 };
 
 export const saveLesson = createServerFn({ method: "POST" })
@@ -882,11 +949,22 @@ export const saveLesson = createServerFn({ method: "POST" })
             )
             .slice(0, 6)
         : [],
+      // Validate + normalise the deck here so a bad payload is rejected at the
+      // edge. `undefined` (field absent) means "leave slides untouched" so the
+      // legacy Office editor never wipes a builder-authored deck; a provided
+      // value (string or empty) sets/clears it.
+      slides:
+        lesson.slides === undefined
+          ? undefined
+          : (() => {
+              const parsed = parseSlides(lesson.slides);
+              return parsed && parsed.length ? JSON.stringify(parsed) : null;
+            })(),
     };
   })
   .middleware([authMiddleware])
   .handler(async ({ context, data: lesson }) => {
-    await assertAdmin(context.userId);
+    await assertCanBuild(context.userId);
     const sql = await getSql();
     const slug = lesson.slug || slugify(lesson.title);
     const id = `${lesson.trackId}:${slug}`;
@@ -894,13 +972,36 @@ export const saveLesson = createServerFn({ method: "POST" })
       select count(*)::int as n from cms_lessons where track_id = ${lesson.trackId}
     `;
     const phases = lesson.evalPhases ?? [];
+    const slidesProvided = lesson.slides !== undefined;
+    const slidesValue = lesson.slides ?? null;
+    if (slidesProvided) {
+      await sql`
+        insert into cms_lessons (id, track_id, slug, title, minutes, kicker, body, takeaway, sort_order, eval_phases, slides)
+        values (
+          ${id}, ${lesson.trackId}, ${slug}, ${lesson.title},
+          ${lesson.minutes}, ${lesson.kicker || null},
+          ${lesson.body}, ${lesson.takeaway || null}, ${count[0]?.n ?? 0},
+          ${phases}, ${slidesValue}
+        )
+        on conflict (id) do update set
+          title = excluded.title,
+          minutes = excluded.minutes,
+          kicker = excluded.kicker,
+          body = excluded.body,
+          takeaway = excluded.takeaway,
+          eval_phases = excluded.eval_phases,
+          slides = excluded.slides
+      `;
+      return readCatalog();
+    }
+    // No slides field supplied: preserve any existing deck (do not touch slides).
     await sql`
-      insert into cms_lessons (id, track_id, slug, title, minutes, kicker, body, takeaway, sort_order, eval_phases)
+      insert into cms_lessons (id, track_id, slug, title, minutes, kicker, body, takeaway, sort_order, eval_phases, slides)
       values (
         ${id}, ${lesson.trackId}, ${slug}, ${lesson.title},
         ${lesson.minutes}, ${lesson.kicker || null},
         ${lesson.body}, ${lesson.takeaway || null}, ${count[0]?.n ?? 0},
-        ${phases}
+        ${phases}, ${null}
       )
       on conflict (id) do update set
         title = excluded.title,
@@ -920,7 +1021,7 @@ export const deleteLesson = createServerFn({ method: "POST" })
   }))
   .middleware([authMiddleware])
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.userId);
+    await assertCanBuild(context.userId);
     const sql = await getSql();
     await sql`delete from cms_lessons where track_id = ${data.trackId} and slug = ${data.slug}`;
     return readCatalog();
@@ -950,7 +1051,7 @@ export const uploadMedia = createServerFn({ method: "POST" })
   }))
   .middleware([authMiddleware])
   .handler(async ({ context, data: input }) => {
-    await assertAdmin(context.userId);
+    await assertCanBuild(context.userId);
     const raw = input.data.includes(",") ? input.data.slice(input.data.indexOf(",") + 1) : input.data;
     if (!/^[a-z0-9+/]+={0,2}$/i.test(raw) || raw.length % 4 !== 0) {
       throw new Error("The image data is invalid.");
@@ -1018,7 +1119,7 @@ export const removeMyProfilePhoto = createServerFn({ method: "POST" })
 export const listMedia = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => {
-    await assertAdmin(context.userId);
+    await assertCanBuild(context.userId);
     const sql = await getSql();
     const rows = await sql<Omit<MediaItem, "data">>`
       select id, filename, mime from cms_media
@@ -1037,8 +1138,422 @@ export const deleteMedia = createServerFn({ method: "POST" })
   })
   .middleware([authMiddleware])
   .handler(async ({ context, data: id }) => {
-    await assertAdmin(context.userId);
+    await assertCanBuild(context.userId);
     const sql = await getSql();
     await sql`delete from cms_media where id = ${id}`;
     return true;
+  });
+
+// ── Training Building Center ────────────────────────────────────────────────
+// The builder needs richer data than readCatalog (which hides archived tracks
+// and drops sort/slide metadata) and a few mutations readCatalog's editors
+// never had: reorder, duplicate, publish-with-notice, and JSON import/export.
+
+export type BuildLesson = {
+  slug: string;
+  title: string;
+  minutes: number;
+  kicker: string;
+  /** Raw body blob (paragraphs joined by blank lines) for lossless round-trip. */
+  body: string;
+  takeaway: string;
+  evalPhases: string[];
+  slides: DeckSlide[] | null;
+  sortOrder: number;
+};
+
+export type BuildTrack = {
+  id: string;
+  role: RoleId;
+  title: string;
+  nav: string;
+  image: string;
+  audience: string;
+  summary: string;
+  visibleToAll: boolean;
+  archived: boolean;
+  sortOrder: number;
+  lessons: BuildLesson[];
+};
+
+async function readBuildCatalog(): Promise<BuildTrack[]> {
+  const sql = await getSql();
+  const trackRows = await sql<{
+    id: string;
+    role: RoleId;
+    title: string;
+    nav: string;
+    image: string;
+    audience: string;
+    summary: string;
+    visible_to_all: boolean;
+    archived: boolean;
+    sort_order: number;
+  }>`
+    select id, role, title, nav, image, audience, summary, visible_to_all, archived, sort_order
+    from cms_tracks
+    order by archived asc, sort_order asc, title asc
+    limit 1000
+  `;
+  const lessonRows = await sql<{
+    track_id: string;
+    slug: string;
+    title: string;
+    minutes: number;
+    kicker: string | null;
+    body: string;
+    takeaway: string | null;
+    eval_phases: string[] | null;
+    slides: string | null;
+    sort_order: number;
+  }>`
+    select track_id, slug, title, minutes, kicker, body, takeaway, eval_phases, slides, sort_order
+    from cms_lessons
+    order by sort_order asc, title asc
+    limit 10000
+  `;
+  return trackRows.map((track) => ({
+    id: track.id,
+    role: track.role,
+    title: track.title,
+    nav: track.nav,
+    image: track.image,
+    audience: track.audience,
+    summary: track.summary,
+    visibleToAll: track.visible_to_all === true,
+    archived: track.archived === true,
+    sortOrder: Number(track.sort_order) || 0,
+    lessons: lessonRows
+      .filter((l) => l.track_id === track.id)
+      .map((l) => ({
+        slug: l.slug,
+        title: l.title,
+        minutes: Number(l.minutes) || 8,
+        kicker: l.kicker ?? "",
+        body: l.body,
+        takeaway: l.takeaway ?? "",
+        evalPhases: Array.isArray(l.eval_phases) ? l.eval_phases.filter(Boolean) : [],
+        slides: parseSlides(l.slides, { strict: false }),
+        sortOrder: Number(l.sort_order) || 0,
+      })),
+  }));
+}
+
+export const getBuildCatalog = createServerFn({ method: "GET" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    await assertCanBuild(context.userId);
+    return readBuildCatalog();
+  });
+
+export const reorderTracks = createServerFn({ method: "POST" })
+  .validator((input: { ids: string[] }) => {
+    if (!input || !Array.isArray(input.ids) || input.ids.length > 1000) {
+      throw new Error("Invalid order.");
+    }
+    return { ids: input.ids.map((id) => cleanId(id, "Course")) };
+  })
+  .middleware([authMiddleware])
+  .handler(async ({ context, data }) => {
+    await assertCanBuild(context.userId);
+    const sql = await getSql();
+    await sql.transaction(async (tx) => {
+      for (const [i, id] of data.ids.entries()) {
+        await tx`update cms_tracks set sort_order = ${i}, updated_at = now() where id = ${id}`;
+      }
+    });
+    return readBuildCatalog();
+  });
+
+export const reorderLessons = createServerFn({ method: "POST" })
+  .validator((input: { trackId: string; slugs: string[] }) => {
+    if (!input || !Array.isArray(input.slugs) || input.slugs.length > 1000) {
+      throw new Error("Invalid order.");
+    }
+    return {
+      trackId: cleanId(input.trackId, "Course"),
+      slugs: input.slugs.map((s) => cleanId(s, "Lesson")),
+    };
+  })
+  .middleware([authMiddleware])
+  .handler(async ({ context, data }) => {
+    await assertCanBuild(context.userId);
+    const sql = await getSql();
+    await sql.transaction(async (tx) => {
+      for (const [i, slug] of data.slugs.entries()) {
+        await tx`
+          update cms_lessons set sort_order = ${i}
+          where track_id = ${data.trackId} and slug = ${slug}
+        `;
+      }
+    });
+    return readBuildCatalog();
+  });
+
+export const duplicateLesson = createServerFn({ method: "POST" })
+  .validator((input: { trackId: string; slug: string }) => ({
+    trackId: cleanId(input?.trackId, "Course"),
+    slug: cleanId(input?.slug, "Lesson"),
+  }))
+  .middleware([authMiddleware])
+  .handler(async ({ context, data }) => {
+    await assertCanBuild(context.userId);
+    const sql = await getSql();
+    const rows = await sql<{
+      title: string;
+      minutes: number;
+      kicker: string | null;
+      body: string;
+      takeaway: string | null;
+      eval_phases: string[] | null;
+      slides: string | null;
+    }>`
+      select title, minutes, kicker, body, takeaway, eval_phases, slides
+      from cms_lessons where track_id = ${data.trackId} and slug = ${data.slug} limit 1
+    `;
+    const src = rows[0];
+    if (!src) throw new Error("That lesson no longer exists.");
+    // Find a free slug: <slug>-copy, -copy-2, …
+    const existing = await sql<{ slug: string }>`
+      select slug from cms_lessons where track_id = ${data.trackId} limit 2000
+    `;
+    const taken = new Set(existing.map((r) => r.slug));
+    let slug = `${data.slug}-copy`;
+    let n = 2;
+    while (taken.has(slug)) slug = `${data.slug}-copy-${n++}`;
+    const count = await sql<{ n: number }>`
+      select count(*)::int as n from cms_lessons where track_id = ${data.trackId}
+    `;
+    await sql`
+      insert into cms_lessons (id, track_id, slug, title, minutes, kicker, body, takeaway, sort_order, eval_phases, slides)
+      values (
+        ${`${data.trackId}:${slug}`}, ${data.trackId}, ${slug}, ${`${src.title} (copy)`},
+        ${src.minutes}, ${src.kicker}, ${src.body}, ${src.takeaway}, ${count[0]?.n ?? 0},
+        ${src.eval_phases ?? []}, ${src.slides}
+      )
+    `;
+    return readBuildCatalog();
+  });
+
+export const duplicateTrack = createServerFn({ method: "POST" })
+  .validator((id: string) => cleanId(id, "Course"))
+  .middleware([authMiddleware])
+  .handler(async ({ context, data: id }) => {
+    await assertCanBuild(context.userId);
+    const sql = await getSql();
+    const trackRows = await sql<{
+      role: RoleId;
+      title: string;
+      nav: string;
+      image: string;
+      audience: string;
+      summary: string;
+      visible_to_all: boolean;
+    }>`
+      select role, title, nav, image, audience, summary, visible_to_all
+      from cms_tracks where id = ${id} limit 1
+    `;
+    const src = trackRows[0];
+    if (!src) throw new Error("That course no longer exists.");
+    const all = await sql<{ id: string }>`select id from cms_tracks limit 2000`;
+    const taken = new Set(all.map((r) => r.id));
+    let newId = `${id}-copy`;
+    let n = 2;
+    while (taken.has(newId)) newId = `${id}-copy-${n++}`;
+    const count = await sql<{ n: number }>`select count(*)::int as n from cms_tracks`;
+    const lessons = await sql<{
+      slug: string;
+      title: string;
+      minutes: number;
+      kicker: string | null;
+      body: string;
+      takeaway: string | null;
+      eval_phases: string[] | null;
+      slides: string | null;
+      sort_order: number;
+    }>`
+      select slug, title, minutes, kicker, body, takeaway, eval_phases, slides, sort_order
+      from cms_lessons where track_id = ${id} order by sort_order asc limit 2000
+    `;
+    await sql.transaction(async (tx) => {
+      await tx`
+        insert into cms_tracks (id, role, title, nav, image, audience, summary, sort_order, updated_at, visible_to_all, archived)
+        values (
+          ${newId}, ${src.role}, ${`${src.title} (copy)`}, ${src.nav}, ${src.image},
+          ${src.audience}, ${src.summary}, ${count[0]?.n ?? 0}, now(), ${src.visible_to_all}, true
+        )
+      `;
+      for (const l of lessons) {
+        await tx`
+          insert into cms_lessons (id, track_id, slug, title, minutes, kicker, body, takeaway, sort_order, eval_phases, slides)
+          values (
+            ${`${newId}:${l.slug}`}, ${newId}, ${l.slug}, ${l.title}, ${l.minutes},
+            ${l.kicker}, ${l.body}, ${l.takeaway}, ${l.sort_order}, ${l.eval_phases ?? []}, ${l.slides}
+          )
+        `;
+        // Carry tagged-line resource links across to the copy (same slugs/keys).
+        await tx`
+          insert into lesson_links (track_id, lesson_slug, line_key, tag, label, url, updated_by, updated_at)
+          select ${newId}, lesson_slug, line_key, tag, label, url, ${context.userId}, now()
+          from lesson_links where track_id = ${id}
+          on conflict (track_id, lesson_slug, line_key) do nothing
+        `;
+      }
+    });
+    // The copy starts archived (a safe draft); the builder can restore it.
+    return readBuildCatalog();
+  });
+
+export const publishTrack = createServerFn({ method: "POST" })
+  .validator((id: string) => cleanId(id, "Course"))
+  .middleware([authMiddleware])
+  .handler(async ({ context, data: id }) => {
+    await assertCanBuild(context.userId);
+    const sql = await getSql();
+    const rows = await sql<{ title: string; summary: string; archived: boolean }>`
+      select title, summary, archived from cms_tracks where id = ${id} limit 1
+    `;
+    const track = rows[0];
+    if (!track) throw new Error("That course no longer exists.");
+    if (track.archived) {
+      await sql`update cms_tracks set archived = false, updated_at = now() where id = ${id}`;
+    }
+    void import("@/lib/notify")
+      .then(({ dispatchNotice }) =>
+        dispatchNotice({
+          kind: "training",
+          title: `New training: ${track.title}`,
+          body: (track.summary || "A new course is live.").slice(0, 200),
+          href: `/training/${id}`,
+          exceptUserId: context.userId,
+        }),
+      )
+      .catch(() => undefined);
+    const { writeAudit } = await import("@/lib/rbac");
+    await writeAudit(context.userId, "Builder", "training.published", id);
+    return readBuildCatalog();
+  });
+
+export type TrackBundle = {
+  format: "cogs-course";
+  version: 1;
+  track: Omit<TrackInput, "id">;
+  lessons: {
+    slug: string;
+    title: string;
+    minutes: number;
+    kicker: string;
+    body: string;
+    takeaway: string;
+    evalPhases: string[];
+    slides: DeckSlide[] | null;
+  }[];
+};
+
+export const exportTrack = createServerFn({ method: "GET" })
+  .validator((id: string) => cleanId(id, "Course"))
+  .middleware([authMiddleware])
+  .handler(async ({ context, data: id }): Promise<TrackBundle> => {
+    await assertCanBuild(context.userId);
+    const catalog = await readBuildCatalog();
+    const track = catalog.find((t) => t.id === id);
+    if (!track) throw new Error("That course no longer exists.");
+    return {
+      format: "cogs-course",
+      version: 1,
+      track: {
+        role: track.role,
+        title: track.title,
+        nav: track.nav,
+        image: track.image,
+        audience: track.audience,
+        summary: track.summary,
+        visibleToAll: track.visibleToAll,
+      },
+      lessons: track.lessons.map((l) => ({
+        slug: l.slug,
+        title: l.title,
+        minutes: l.minutes,
+        kicker: l.kicker,
+        body: l.body,
+        takeaway: l.takeaway,
+        evalPhases: l.evalPhases,
+        slides: l.slides,
+      })),
+    };
+  });
+
+export const importTrack = createServerFn({ method: "POST" })
+  .validator((bundle: TrackBundle) => {
+    if (!bundle || bundle.format !== "cogs-course") throw new Error("Not a COGS course file.");
+    if (!isRoleId(bundle.track?.role)) throw new Error("The course has an unknown path.");
+    if (!Array.isArray(bundle.lessons) || bundle.lessons.length > 200) {
+      throw new Error("The course has too many lessons.");
+    }
+    const title = cleanText(bundle.track.title, "Course title", 240);
+    return {
+      track: {
+        role: bundle.track.role,
+        title,
+        nav: cleanText(bundle.track.nav || title, "Navigation label", 120),
+        image: safeImage(bundle.track.image, "/media/3-step-open.jpg")!,
+        audience: cleanText(bundle.track.audience ?? "", "Audience", 500, false),
+        summary: cleanText(bundle.track.summary ?? "", "Summary", 5_000, false),
+        visibleToAll: bundle.track.visibleToAll === true,
+      },
+      lessons: bundle.lessons.map((l) => ({
+        slug: l.slug ? cleanId(l.slug, "Lesson slug") : slugify(cleanText(l.title, "Lesson title", 240)),
+        title: cleanText(l.title, "Lesson title", 240),
+        minutes: Number.isFinite(Number(l.minutes)) ? Math.max(1, Math.min(480, Math.round(Number(l.minutes)))) : 8,
+        kicker: cleanText(l.kicker ?? "", "Kicker", 240, false),
+        body: cleanText(l.body, "Lesson body", 100_000),
+        takeaway: cleanText(l.takeaway ?? "", "Takeaway", 5_000, false),
+        evalPhases: Array.isArray(l.evalPhases)
+          ? l.evalPhases
+              .map((p) => String(p).trim().toLowerCase())
+              .filter((p) => ["welcome", "interview", "analysis", "fitting", "solution", "close"].includes(p))
+              .slice(0, 6)
+          : [],
+        // Re-validate slides through the same schema; drop silently if malformed.
+        slides: (() => {
+          const parsed = parseSlides(l.slides ?? null, { strict: false });
+          return parsed && parsed.length ? JSON.stringify(parsed) : null;
+        })(),
+      })),
+    };
+  })
+  .middleware([authMiddleware])
+  .handler(async ({ context, data }) => {
+    await assertCanBuild(context.userId);
+    const sql = await getSql();
+    const all = await sql<{ id: string }>`select id from cms_tracks limit 2000`;
+    const taken = new Set(all.map((r) => r.id));
+    let id = slugify(data.track.title);
+    let n = 2;
+    while (taken.has(id)) id = `${slugify(data.track.title)}-${n++}`;
+    const count = await sql<{ n: number }>`select count(*)::int as n from cms_tracks`;
+    await sql.transaction(async (tx) => {
+      await tx`
+        insert into cms_tracks (id, role, title, nav, image, audience, summary, sort_order, updated_at, visible_to_all, archived)
+        values (
+          ${id}, ${data.track.role}, ${data.track.title}, ${data.track.nav}, ${data.track.image},
+          ${data.track.audience}, ${data.track.summary}, ${count[0]?.n ?? 0}, now(), ${data.track.visibleToAll}, true
+        )
+      `;
+      const seen = new Set<string>();
+      for (const [j, l] of data.lessons.entries()) {
+        let slug = l.slug;
+        let k = 2;
+        while (seen.has(slug)) slug = `${l.slug}-${k++}`;
+        seen.add(slug);
+        await tx`
+          insert into cms_lessons (id, track_id, slug, title, minutes, kicker, body, takeaway, sort_order, eval_phases, slides)
+          values (
+            ${`${id}:${slug}`}, ${id}, ${slug}, ${l.title}, ${l.minutes}, ${l.kicker || null},
+            ${l.body}, ${l.takeaway || null}, ${j}, ${l.evalPhases}, ${l.slides}
+          )
+        `;
+      }
+    });
+    return readBuildCatalog();
   });

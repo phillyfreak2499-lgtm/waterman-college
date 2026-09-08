@@ -7,7 +7,7 @@ import { pageHead } from "@/lib/page-title";
 import { signOut } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 
-export const Route = createFileRoute("/studio/build")({
+export const Route = createFileRoute("/studio_/build")({
   component: Page,
   head: () => pageHead("Build training", "Start from a template and put it on the campus."),
 });

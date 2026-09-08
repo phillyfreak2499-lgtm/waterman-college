@@ -209,6 +209,19 @@ async function assertOffice(userId: string) {
   if (!isLeader(role)) throw new Error("Forbidden");
 }
 
+/**
+ * Quiz *authoring* (create/edit/delete). Leaders keep their existing access;
+ * additionally any role with the `manageTraining` permission (Professors, and
+ * a boss role the Chancellor grants it) may author, matching the Training
+ * Building Center. Quiz *review* (inbox / hire progress) stays on assertOffice.
+ */
+async function assertQuizAuthor(userId: string) {
+  const role = await readAccessRole(userId);
+  if (isLeader(role)) return;
+  const { assertCanBuildTraining } = await import("@/lib/training-access.server");
+  await assertCanBuildTraining(userId);
+}
+
 async function loadQuizzes(): Promise<Quiz[]> {
   await ensureQuizTables();
   const sql = await getSql();
@@ -353,7 +366,7 @@ export const saveQuiz = createServerFn({ method: "POST" })
   })
   .middleware([authMiddleware])
   .handler(async ({ context, data }) => {
-    await assertOffice(context.userId);
+    await assertQuizAuthor(context.userId);
     await ensureQuizTables();
     const id = data.id?.trim() || globalThis.crypto.randomUUID();
     const sql = await getSql();
@@ -388,7 +401,7 @@ export const deleteQuiz = createServerFn({ method: "POST" })
   })
   .middleware([authMiddleware])
   .handler(async ({ context, data: id }) => {
-    await assertOffice(context.userId);
+    await assertQuizAuthor(context.userId);
     const sql = await getSql();
     await sql`update quizzes set archived = true, updated_at = now() where id = ${id}`;
     return loadQuizzes();

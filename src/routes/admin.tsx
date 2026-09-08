@@ -1,6 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
+import { ImageField } from "@/components/image-field";
 import { QuizEditor, QuizInbox } from "@/components/admin-quizzes";
 import { AccountsEditor } from "@/components/admin-accounts";
 import { LessonLinksEditor } from "@/components/admin-lesson-links";
@@ -34,7 +35,6 @@ import {
   saveTrack,
   slugify,
   unlockAdmin,
-  uploadMedia,
   withPageDefaults,
   type LessonInput,
   type MediaItem,
@@ -80,8 +80,10 @@ function AdminOffice() {
   const [unlocked, setUnlocked] = useState<boolean | null>(null);
   const [tab, setTab] = useState<TabId>("accounts");
 
+  const canBuild = access.perms.manageTraining || access.isAdmin;
+
   useEffect(() => {
-    if (access.isAdmin || access.canSeeCompany) {
+    if (access.isAdmin || access.canSeeCompany || access.perms.manageTraining) {
       setUnlocked(true);
       return;
     }
@@ -92,7 +94,7 @@ function AdminOffice() {
     isAdmin()
       .then(setUnlocked)
       .catch(() => setUnlocked(false));
-  }, [access.isAdmin, access.canSeeCompany, access.canManagePeople]);
+  }, [access.isAdmin, access.canSeeCompany, access.canManagePeople, access.perms.manageTraining]);
 
   if (unlocked === null) {
     return (
@@ -103,7 +105,7 @@ function AdminOffice() {
     );
   }
 
-  const officeOpen = access.isAdmin || access.canSeeCompany || unlocked === true;
+  const officeOpen = access.isAdmin || access.canSeeCompany || canBuild || unlocked === true;
   if (!officeOpen && !access.canManagePeople) {
     return (
       <PasswordGate
@@ -115,11 +117,16 @@ function AdminOffice() {
     );
   }
 
-  const tabs = officeOpen
-    ? access.isAdmin
-      ? TABS
-      : TABS.filter((item) => item.id === "people" || item.id === "inbox" || item.id === "quizzes")
-    : TABS.filter((item) => item.id === "people");
+  const buildTabs: TabId[] = ["training", "lesson-links", "library"];
+  const tabs = access.isAdmin
+    ? TABS
+    : TABS.filter((item) => {
+        if (item.id === "people") return true;
+        if (!officeOpen) return false;
+        if (item.id === "inbox" || item.id === "quizzes") return access.canSeeCompany || canBuild;
+        if (canBuild && buildTabs.includes(item.id)) return true;
+        return false;
+      });
   const active = tabs.some((item) => item.id === tab) ? tab : tabs[0].id;
 
   return (
@@ -138,20 +145,30 @@ function AdminOffice() {
               : "Place Specialists on the right path and under the right manager."}
           </p>
         </div>
-        {officeOpen && access.isAdmin && (
-          <Button
-            variant="ghost"
-            onClick={() => {
-              void lockAdmin()
-                .then(() => setUnlocked(false))
-                .catch((error) =>
-                  toast.error(error instanceof Error ? error.message : "Could not lock the office"),
-                );
-            }}
-          >
-            Lock office
-          </Button>
-        )}
+        <div className="flex flex-wrap items-center gap-3">
+          {canBuild && (
+            <Link
+              to="/build"
+              className="inline-flex h-11 items-center rounded-sm bg-navy px-4 text-sm font-medium text-paper transition-colors hover:bg-navy-deep"
+            >
+              Open the Training Building Center →
+            </Link>
+          )}
+          {officeOpen && access.isAdmin && (
+            <Button
+              variant="ghost"
+              onClick={() => {
+                void lockAdmin()
+                  .then(() => setUnlocked(false))
+                  .catch((error) =>
+                    toast.error(error instanceof Error ? error.message : "Could not lock the office"),
+                  );
+              }}
+            >
+              Lock office
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="mt-8 -mx-5 overflow-x-auto px-5 sm:mx-0 sm:px-0">
@@ -1176,83 +1193,3 @@ function Library() {
   );
 }
 
-function ImageField({
-  label,
-  value,
-  onChange,
-  onUploaded,
-  allowClear,
-  clearTo,
-}: {
-  label: string;
-  value: string;
-  onChange: (url: string) => void;
-  onUploaded?: (item: MediaItem) => void;
-  allowClear?: boolean;
-  clearTo?: string;
-}) {
-  const [busy, setBusy] = useState(false);
-
-  async function onFile(file: File | undefined) {
-    if (!file) return;
-    setBusy(true);
-    try {
-      const payload = await fileToPayload(file);
-      const uploaded = await uploadMedia({ data: payload });
-      onChange(uploaded.url);
-      onUploaded?.({
-        id: uploaded.id,
-        filename: uploaded.filename,
-        mime: file.type,
-        data: uploaded.url,
-      });
-      toast.success("Image uploaded");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Upload failed");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <div>
-      <span className="mb-1.5 block text-xs font-medium uppercase tracking-[0.14em] text-muted">
-        {label}
-      </span>
-      {value && (
-        <img src={value} alt="" className="mb-3 h-28 w-full rounded-sm border border-line object-cover" />
-      )}
-      <div className="flex flex-wrap items-center gap-3">
-        <input
-          type="file"
-          accept="image/*"
-          className="block min-w-0 flex-1 text-sm"
-          disabled={busy}
-          onChange={(e) => void onFile(e.target.files?.[0])}
-        />
-        {allowClear && value && value !== clearTo && (
-          <button
-            type="button"
-            className="h-11 shrink-0 text-sm text-muted hover:text-navy"
-            onClick={() => onChange(clearTo ?? "")}
-          >
-            Use default
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function fileToPayload(file: File) {
-  return new Promise<{ filename: string; mime: string; data: string }>((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = String(reader.result ?? "");
-      const data = result.includes(",") ? result.split(",")[1] : result;
-      resolve({ filename: file.name, mime: file.type || "image/jpeg", data: data ?? "" });
-    };
-    reader.onerror = () => reject(new Error("Could not read file"));
-    reader.readAsDataURL(file);
-  });
-}

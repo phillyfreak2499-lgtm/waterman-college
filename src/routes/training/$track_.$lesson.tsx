@@ -1,5 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { ArrowLeft, ArrowRight, Check, Download, ExternalLink } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Download } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ApplyOnFloor } from "@/components/apply-on-floor";
@@ -18,7 +18,9 @@ import type { Lesson, Track } from "@/lib/content";
 import { trackDeck } from "@/lib/decks";
 import { markComplete, markIncomplete, markViewed } from "@/lib/progress";
 import { lessonKey, lessonStatus } from "@/lib/progress-stats";
-import { lessonLineKey, listLessonLinks, type LessonLink } from "@/lib/lesson-links";
+import { LessonProse } from "@/components/lesson-body";
+import { lessonLineKey } from "@/lib/lesson-tags";
+import { listLessonLinks, type LessonLink } from "@/lib/lesson-links";
 
 export const Route = createFileRoute("/training/$track_/$lesson")({
   component: LessonPage,
@@ -182,10 +184,8 @@ function LessonBody({ track, lesson }: { track: Track; lesson: Lesson }) {
           )}
         </div>
       )}
-      <div className="mt-10 space-y-5 text-lg leading-relaxed text-ink">
-        {lesson.body.map((p, index) => (
-          <LessonLine key={`${key}-${index}`} text={p} href={linkFor(p)} />
-        ))}
+      <div className="mt-10">
+        <LessonProse body={lesson.body} keyPrefix={key} linkFor={linkFor} />
       </div>
       {lesson.takeaway && (
         <aside className="mt-10 border-l-2 border-brass bg-paper-2 px-5 py-5">
@@ -243,44 +243,3 @@ function LessonBody({ track, lesson }: { track: Track; lesson: Lesson }) {
   );
 }
 
-const TAGS = ["VIDEO", "GFA", "PRACTICE", "ROLEPLAY", "FORM", "NEW HIRE ONBOARDING", "WELCOME", "INTERVIEW", "ANALYSIS", "FITTING", "SOLUTION"] as const;
-
-function LessonLine({ text, href }: { text: string; href?: string }) {
-  const tag = TAGS.find((item) => text.startsWith(`${item} · `) || text.startsWith(`${item} `));
-  if (!tag) return <p>{text}</p>;
-  const rest = text.startsWith(`${tag} · `) ? text.slice(tag.length + 3) : text.slice(tag.length + 1);
-  const label = (
-    <span className="mr-2 inline-block text-[0.65rem] font-medium uppercase tracking-[0.14em] text-brass">
-      {tag}
-    </span>
-  );
-  // No destination attached yet — same inert line as before.
-  if (!href) {
-    return (
-      <p>
-        {label}
-        {rest}
-      </p>
-    );
-  }
-  return (
-    <p>
-      {label}
-      <a
-        href={href}
-        target="_blank"
-        // noopener/noreferrer: these destinations are office-supplied and open
-        // in a new tab, so never hand them a window.opener handle.
-        rel="noopener noreferrer"
-        className="inline underline decoration-brass/40 underline-offset-4 transition-colors hover:decoration-navy focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-navy"
-      >
-        {rest}
-        <ExternalLink
-          className="ml-1 inline size-3.5 shrink-0 -translate-y-px text-brass"
-          aria-hidden="true"
-        />
-        <span className="sr-only"> (opens in a new tab)</span>
-      </a>
-    </p>
-  );
-}

@@ -39,6 +39,7 @@ export function SiteHeader({ inverted = false }: { inverted?: boolean }) {
     ...(p.viewQuad ? [{ to: "/quad", label: "The Quad" }] : []),
     ...(p.viewRemarkable ? [{ to: "/remarkable", label: "Be Remarkable" }] : []),
     ...(access.canManagePeople || p.viewTeam ? [{ to: "/team", label: "Team" }] : []),
+    ...(p.manageTraining || access.isAdmin ? [{ to: "/build", label: "Builder" }] : []),
     ...(isLeader(access.role) ? [{ to: "/metrics", label: "Team Metrics" }] : []),
     ...(access.isChancellor ? [{ to: "/chancellor", label: "Chancellor" }] : []),
     ...(!access.isChancellor && (access.isAdmin || access.canSeeCompany)
