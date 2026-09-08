@@ -10,6 +10,10 @@ export type QuizQuestion = {
   prompt: string;
   type: QuestionType;
   choices?: string[];
+  /** Graded quizzes only. Correct option index for "choice". */
+  correctIndex?: number;
+  /** Graded quizzes only. Accepted answer for "short" ("a|b" = any of). */
+  answer?: string;
 };
 
 export type Quiz = {
@@ -19,6 +23,12 @@ export type Quiz = {
   intro: string;
   questions: QuizQuestion[];
   sortOrder: number;
+  /** When true this is a scored test (correct answers + pass mark), not a check-in. */
+  graded: boolean;
+  /** Percent needed to pass (0–100). */
+  passMark: number;
+  /** When true, the lesson can't be completed until this quiz is passed. */
+  requirePass: boolean;
 };
 
 export type QuizAnswer = { questionId: string; prompt?: string; value: string };
@@ -35,6 +45,8 @@ export type QuizResponse = {
   questions: QuizQuestion[];
   submittedAt: string;
   reviewedAt: string | null;
+  score: number | null;
+  passed: boolean | null;
 };
 
 export type MyResponse = {
@@ -42,6 +54,8 @@ export type MyResponse = {
   quizId: string;
   answers: QuizAnswer[];
   submittedAt: string;
+  score: number | null;
+  passed: boolean | null;
 };
 
 export type HireProgressRow = {
@@ -82,6 +96,55 @@ function slugId(seed: string) {
   return seed.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 40);
 }
 
+function normalizeShort(value: string): string {
+  return String(value ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+/** A question can be auto-graded when it carries a correct answer. */
+function isGradeable(q: QuizQuestion): boolean {
+  if (q.type === "choice") return typeof q.correctIndex === "number" && q.correctIndex >= 0;
+  if (q.type === "short") return typeof q.answer === "string" && q.answer.trim().length > 0;
+  return false; // "long" answers are always human-reviewed
+}
+
+function isAnswerCorrect(q: QuizQuestion, value: string): boolean {
+  if (q.type === "choice") {
+    const correct = q.choices?.[q.correctIndex ?? -1];
+    return correct != null && normalizeShort(value) === normalizeShort(correct);
+  }
+  if (q.type === "short") {
+    const accepted = String(q.answer ?? "").split("|").map(normalizeShort).filter(Boolean);
+    return accepted.includes(normalizeShort(value));
+  }
+  return false;
+}
+
+/**
+ * Score a submission over its gradeable questions. Returns null score/passed
+ * when there is nothing to grade (so a "graded" quiz with only long-answer
+ * questions never deadlocks a require-pass gate).
+ */
+function gradeResponse(
+  questions: QuizQuestion[],
+  answers: QuizAnswer[],
+  passMark: number,
+): { score: number | null; passed: boolean | null } {
+  const gradeable = questions.filter(isGradeable);
+  if (gradeable.length === 0) return { score: null, passed: null };
+  const byId = new Map(answers.map((a) => [a.questionId, a.value]));
+  const correct = gradeable.filter((q) => isAnswerCorrect(q, byId.get(q.id) ?? "")).length;
+  const score = Math.round((correct / gradeable.length) * 100);
+  return { score, passed: score >= passMark };
+}
+
+/** Remove the answer key before sending questions to a learner's browser. */
+function stripAnswers(q: QuizQuestion): QuizQuestion {
+  const { correctIndex: _c, answer: _a, ...rest } = q;
+  void _c;
+  void _a;
+  return rest;
+}
+
 const ask = (prompt: string, type: QuestionType = "short", choices?: string[]): QuizQuestion => ({
   id: slugId(prompt),
   prompt,
@@ -89,7 +152,7 @@ const ask = (prompt: string, type: QuestionType = "short", choices?: string[]): 
   choices,
 });
 
-const DEFAULT_QUIZZES: Omit<Quiz, "sortOrder">[] = [
+const DEFAULT_QUIZZES: Omit<Quiz, "sortOrder" | "graded" | "passMark" | "requirePass">[] = [
   {
     id: "day-01-checkin",
     title: "Day 1 check-in",
@@ -222,7 +285,7 @@ async function assertQuizAuthor(userId: string) {
   await assertCanBuildTraining(userId);
 }
 
-async function loadQuizzes(): Promise<Quiz[]> {
+async function loadQuizzes(forAuthor = false): Promise<Quiz[]> {
   await ensureQuizTables();
   const sql = await getSql();
   const rows = await sql<{
@@ -232,21 +295,31 @@ async function loadQuizzes(): Promise<Quiz[]> {
     intro: string | null;
     questions: string;
     sort_order: number;
+    graded: boolean | null;
+    pass_mark: number | null;
+    require_pass: boolean | null;
   }>`
-    select id, title, lesson_slug, intro, questions, sort_order
+    select id, title, lesson_slug, intro, questions, sort_order, graded, pass_mark, require_pass
     from quizzes
     where archived = false
     order by sort_order asc, title asc
     limit 500
   `;
-  return rows.map((row) => ({
-    id: row.id,
-    title: row.title,
-    lessonSlug: row.lesson_slug ?? "",
-    intro: row.intro ?? "",
-    questions: parseQuestions(row.questions),
-    sortOrder: Number(row.sort_order) || 0,
-  }));
+  return rows.map((row) => {
+    const questions = parseQuestions(row.questions);
+    return {
+      id: row.id,
+      title: row.title,
+      lessonSlug: row.lesson_slug ?? "",
+      intro: row.intro ?? "",
+      // Never ship the answer key to a learner's browser.
+      questions: forAuthor ? questions : questions.map(stripAnswers),
+      sortOrder: Number(row.sort_order) || 0,
+      graded: row.graded === true,
+      passMark: Number(row.pass_mark) || 0,
+      requirePass: row.require_pass === true,
+    };
+  });
 }
 
 async function loadMyResponses(userId: string): Promise<MyResponse[]> {
@@ -257,8 +330,10 @@ async function loadMyResponses(userId: string): Promise<MyResponse[]> {
     quiz_id: string;
     answers: string;
     submitted_at: unknown;
+    score: number | null;
+    passed: boolean | null;
   }>`
-    select id, quiz_id, answers, submitted_at
+    select id, quiz_id, answers, submitted_at, score, passed
     from quiz_responses
     where user_id = ${userId}
     order by submitted_at desc
@@ -272,6 +347,8 @@ async function loadMyResponses(userId: string): Promise<MyResponse[]> {
       row.submitted_at instanceof Date
         ? row.submitted_at.toISOString()
         : String(row.submitted_at ?? ""),
+    score: row.score == null ? null : Number(row.score),
+    passed: row.passed == null ? null : row.passed === true,
   }));
 }
 
@@ -290,6 +367,8 @@ async function loadInbox(): Promise<QuizResponse[]> {
     questions: string;
     submitted_at: unknown;
     reviewed_at: unknown;
+    score: number | null;
+    passed: boolean | null;
   }>`
     select
       r.id,
@@ -302,7 +381,9 @@ async function loadInbox(): Promise<QuizResponse[]> {
       r.answers,
       q.questions,
       r.submitted_at,
-      r.reviewed_at
+      r.reviewed_at,
+      r.score,
+      r.passed
     from quiz_responses r
     left join quizzes q on q.id = r.quiz_id
     left join "user" u on u.id = r.user_id
@@ -334,12 +415,22 @@ async function loadInbox(): Promise<QuizResponse[]> {
         : row.reviewed_at instanceof Date
           ? row.reviewed_at.toISOString()
           : String(row.reviewed_at),
+    score: row.score == null ? null : Number(row.score),
+    passed: row.passed == null ? null : row.passed === true,
   }));
 }
 
 export const listQuizzes = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
-  .handler(async () => loadQuizzes());
+  .handler(async () => loadQuizzes(false));
+
+/** Author view — includes the answer key. Gated to quiz authors. */
+export const listQuizzesForAuthor = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    await assertQuizAuthor(context.userId);
+    return loadQuizzes(true);
+  });
 
 export const saveQuiz = createServerFn({ method: "POST" })
   .validator((input: Quiz) => {
@@ -361,8 +452,17 @@ export const saveQuiz = createServerFn({ method: "POST" })
           question.choices.some((choice) => typeof choice !== "string" || choice.length > 300))) {
         throw new Error("Question choices are invalid.");
       }
+      if (question.correctIndex != null &&
+          (typeof question.correctIndex !== "number" || !Number.isInteger(question.correctIndex) ||
+            question.correctIndex < 0 || question.correctIndex >= (question.choices?.length ?? 0))) {
+        throw new Error("A question's correct choice is out of range.");
+      }
+      if (question.answer != null && (typeof question.answer !== "string" || question.answer.length > 300)) {
+        throw new Error("A question's answer is invalid.");
+      }
     }
-    return input;
+    const passMark = Math.max(0, Math.min(100, Math.round(Number(input.passMark) || 0)));
+    return { ...input, graded: input.graded === true, passMark, requirePass: input.requirePass === true };
   })
   .middleware([authMiddleware])
   .handler(async ({ context, data }) => {
@@ -371,7 +471,7 @@ export const saveQuiz = createServerFn({ method: "POST" })
     const id = data.id?.trim() || globalThis.crypto.randomUUID();
     const sql = await getSql();
     await sql`
-      insert into quizzes (id, title, lesson_slug, intro, questions, sort_order, archived, updated_at)
+      insert into quizzes (id, title, lesson_slug, intro, questions, sort_order, archived, updated_at, graded, pass_mark, require_pass)
       values (
         ${id},
         ${data.title.trim()},
@@ -380,7 +480,10 @@ export const saveQuiz = createServerFn({ method: "POST" })
         ${JSON.stringify(data.questions)},
         ${Number(data.sortOrder) || 0},
         false,
-        now()
+        now(),
+        ${data.graded},
+        ${data.passMark},
+        ${data.requirePass}
       )
       on conflict (id) do update set
         title = excluded.title,
@@ -389,9 +492,12 @@ export const saveQuiz = createServerFn({ method: "POST" })
         questions = excluded.questions,
         sort_order = excluded.sort_order,
         archived = false,
-        updated_at = now()
+        updated_at = now(),
+        graded = excluded.graded,
+        pass_mark = excluded.pass_mark,
+        require_pass = excluded.require_pass
     `;
-    return loadQuizzes();
+    return loadQuizzes(true);
   });
 
 export const deleteQuiz = createServerFn({ method: "POST" })
@@ -404,7 +510,7 @@ export const deleteQuiz = createServerFn({ method: "POST" })
     await assertQuizAuthor(context.userId);
     const sql = await getSql();
     await sql`update quizzes set archived = true, updated_at = now() where id = ${id}`;
-    return loadQuizzes();
+    return loadQuizzes(true);
   });
 
 export const submitQuiz = createServerFn({ method: "POST" })
@@ -423,18 +529,24 @@ export const submitQuiz = createServerFn({ method: "POST" })
   .handler(async ({ context, data }) => {
     await ensureQuizTables();
     const sql = await getSql();
-    const quizzes = await sql<{ id: string }>`
-      select id from quizzes where id = ${data.quizId} and archived = false limit 1
+    const quizzes = await sql<{ id: string; questions: string; graded: boolean | null; pass_mark: number | null }>`
+      select id, questions, graded, pass_mark from quizzes where id = ${data.quizId} and archived = false limit 1
     `;
     if (!quizzes.length) throw new Error("That quiz is no longer available.");
+    // Grade server-side against the stored answer key (never trust the client).
+    const graded = quizzes[0].graded === true;
+    const { score, passed } = graded
+      ? gradeResponse(parseQuestions(quizzes[0].questions), data.answers, Number(quizzes[0].pass_mark) || 0)
+      : { score: null, passed: null };
     await sql`
-      insert into quiz_responses (id, quiz_id, user_id, answers, submitted_at)
+      insert into quiz_responses (id, quiz_id, user_id, answers, submitted_at, score, passed)
       values (
         ${globalThis.crypto.randomUUID()}, ${data.quizId}, ${context.userId},
-        ${JSON.stringify(data.answers)}, now()
+        ${JSON.stringify(data.answers)}, now(), ${score}, ${passed}
       )
       on conflict (quiz_id, user_id) do update set
-        answers = excluded.answers, submitted_at = now(), reviewed_at = null
+        answers = excluded.answers, submitted_at = now(), reviewed_at = null,
+        score = excluded.score, passed = excluded.passed
     `;
     return loadMyResponses(context.userId);
   });
@@ -442,6 +554,33 @@ export const submitQuiz = createServerFn({ method: "POST" })
 export const myQuizResponses = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .handler(async ({ context }) => loadMyResponses(context.userId));
+
+/**
+ * Throw when a lesson has a graded, require-pass quiz the user has not passed.
+ * Called by progress.markComplete so a learner can't finish a lesson (and thus
+ * earn the certificate) until they pass its required quiz. Quizzes attach to a
+ * lesson by bare slug, matching how they render.
+ */
+export async function assertLessonQuizzesPassed(userId: string, lessonSlug: string): Promise<void> {
+  const slug = String(lessonSlug ?? "").trim();
+  if (!slug) return;
+  await ensureQuizTables();
+  const sql = await getSql();
+  const required = await sql<{ id: string; title: string }>`
+    select id, title from quizzes
+    where lesson_slug = ${slug} and archived = false and graded = true and require_pass = true
+  `;
+  for (const quiz of required) {
+    const rows = await sql<{ ok: number }>`
+      select 1 as ok from quiz_responses
+      where user_id = ${userId} and quiz_id = ${quiz.id} and passed = true
+      limit 1
+    `;
+    if (!rows.length) {
+      throw new Error(`Pass the quiz "${quiz.title}" before completing this lesson.`);
+    }
+  }
+}
 
 export const listQuizInbox = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
