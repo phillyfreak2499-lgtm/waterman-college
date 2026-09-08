@@ -15,6 +15,13 @@ export default tseslint.config(
       ".nitro/**",
       "node_modules/**",
       "src/routeTree.gen.ts",
+      // Static, self-contained game bundles served as-is — not app source, and
+      // some are intentionally partial script fragments that don't parse alone.
+      "public/**",
+      // Stray root-level leftovers of the same game scripts.
+      "quad-bridge.js",
+      "tr-part2.js",
+      "tr-part4.js",
     ],
   },
   js.configs.recommended,
