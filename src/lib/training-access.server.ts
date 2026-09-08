@@ -17,7 +17,9 @@ export async function assertCanBuildTraining(userId: string): Promise<void> {
   const { readAccessProfile } = await import("@/lib/access");
   const profile = await readAccessProfile(userId);
   if (profile.isAdmin) return; // admin role or Chancellor
-  if (profile.perms.manageTraining) return; // Professors + granted boss roles
+  // canOpenStudio already folds in the manageTraining and viewStudio perms
+  // (and admin/Chancellor), keeping this builder's gate identical to the studio.
+  if (profile.canOpenStudio || profile.perms.manageTraining) return;
   const sql = await getSql();
   const rows = await sql<{ user_id: string }>`
     select user_id from admin_unlocks
