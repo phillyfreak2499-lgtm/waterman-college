@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as BuildRouteImport } from './routes/build'
 import { Route as ChancellorRouteImport } from './routes/chancellor'
 import { Route as ChangePasswordRouteImport } from './routes/change-password'
 import { Route as DirectoryRouteImport } from './routes/directory'
@@ -28,6 +29,7 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as RemarkableRouteImport } from './routes/remarkable'
 import { Route as TeamRouteImport } from './routes/team'
 import { Route as WhyRouteImport } from './routes/why'
+import { Route as BuildTrackRouteImport } from './routes/build_.$track'
 import { Route as QuadGameRouteImport } from './routes/quad_.$game'
 import { Route as TeamHealthRouteImport } from './routes/team_.health'
 import { Route as TrainingIndexRouteImport } from './routes/training/index'
@@ -35,6 +37,7 @@ import { Route as TrainingTrackRouteImport } from './routes/training/$track'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as ApiMediaIdRouteImport } from './routes/api/media/$id'
 import { Route as ApiSetupChancellorRouteImport } from './routes/api/setup/chancellor'
+import { Route as BuildTrackLessonRouteImport } from './routes/build_.$track_.$lesson'
 import { Route as TeamEvaluateUserIdRouteImport } from './routes/team_.evaluate.$userId'
 import { Route as TrainingTrackLessonRouteImport } from './routes/training/$track_.$lesson'
 import { Route as TrainingTrackCertificateRouteImport } from './routes/training/$track_.certificate'
@@ -48,6 +51,11 @@ const IndexRoute = IndexRouteImport.update({
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuildRoute = BuildRouteImport.update({
+  id: '/build',
+  path: '/build',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChancellorRoute = ChancellorRouteImport.update({
@@ -80,6 +88,11 @@ const HowItWorksRoute = HowItWorksRouteImport.update({
   path: '/how-it-works',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HuddleRoute = HuddleRouteImport.update({
+  id: '/huddle',
+  path: '/huddle',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InstallRoute = InstallRouteImport.update({
   id: '/install',
   path: '/install',
@@ -98,11 +111,6 @@ const LoginRoute = LoginRouteImport.update({
 const MetricsRoute = MetricsRouteImport.update({
   id: '/metrics',
   path: '/metrics',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HuddleRoute = HuddleRouteImport.update({
-  id: '/huddle',
-  path: '/huddle',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NotificationsRoute = NotificationsRouteImport.update({
@@ -133,6 +141,11 @@ const TeamRoute = TeamRouteImport.update({
 const WhyRoute = WhyRouteImport.update({
   id: '/why',
   path: '/why',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuildTrackRoute = BuildTrackRouteImport.update({
+  id: '/build_/$track',
+  path: '/build/$track',
   getParentRoute: () => rootRouteImport,
 } as any)
 const QuadGameRoute = QuadGameRouteImport.update({
@@ -170,6 +183,11 @@ const ApiSetupChancellorRoute = ApiSetupChancellorRouteImport.update({
   path: '/api/setup/chancellor',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BuildTrackLessonRoute = BuildTrackLessonRouteImport.update({
+  id: '/build_/$track_/$lesson',
+  path: '/build/$track/$lesson',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TeamEvaluateUserIdRoute = TeamEvaluateUserIdRouteImport.update({
   id: '/team_/evaluate/$userId',
   path: '/team/evaluate/$userId',
@@ -195,6 +213,7 @@ const TeamEvaluateBriefEvalIdRoute = TeamEvaluateBriefEvalIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/build': typeof BuildRoute
   '/chancellor': typeof ChancellorRoute
   '/change-password': typeof ChangePasswordRoute
   '/directory': typeof DirectoryRoute
@@ -212,6 +231,7 @@ export interface FileRoutesByFullPath {
   '/remarkable': typeof RemarkableRoute
   '/team': typeof TeamRoute
   '/why': typeof WhyRoute
+  '/build/$track': typeof BuildTrackRoute
   '/quad/$game': typeof QuadGameRoute
   '/team/health': typeof TeamHealthRoute
   '/training/$track': typeof TrainingTrackRoute
@@ -219,6 +239,7 @@ export interface FileRoutesByFullPath {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/media/$id': typeof ApiMediaIdRoute
   '/api/setup/chancellor': typeof ApiSetupChancellorRoute
+  '/build/$track/$lesson': typeof BuildTrackLessonRoute
   '/team/evaluate/$userId': typeof TeamEvaluateUserIdRoute
   '/training/$track/$lesson': typeof TrainingTrackLessonRoute
   '/training/$track/certificate': typeof TrainingTrackCertificateRoute
@@ -227,6 +248,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/build': typeof BuildRoute
   '/chancellor': typeof ChancellorRoute
   '/change-password': typeof ChangePasswordRoute
   '/directory': typeof DirectoryRoute
@@ -244,6 +266,7 @@ export interface FileRoutesByTo {
   '/remarkable': typeof RemarkableRoute
   '/team': typeof TeamRoute
   '/why': typeof WhyRoute
+  '/build/$track': typeof BuildTrackRoute
   '/quad/$game': typeof QuadGameRoute
   '/team/health': typeof TeamHealthRoute
   '/training/$track': typeof TrainingTrackRoute
@@ -251,6 +274,7 @@ export interface FileRoutesByTo {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/media/$id': typeof ApiMediaIdRoute
   '/api/setup/chancellor': typeof ApiSetupChancellorRoute
+  '/build/$track/$lesson': typeof BuildTrackLessonRoute
   '/team/evaluate/$userId': typeof TeamEvaluateUserIdRoute
   '/training/$track/$lesson': typeof TrainingTrackLessonRoute
   '/training/$track/certificate': typeof TrainingTrackCertificateRoute
@@ -260,6 +284,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/build': typeof BuildRoute
   '/chancellor': typeof ChancellorRoute
   '/change-password': typeof ChangePasswordRoute
   '/directory': typeof DirectoryRoute
@@ -277,6 +302,7 @@ export interface FileRoutesById {
   '/remarkable': typeof RemarkableRoute
   '/team': typeof TeamRoute
   '/why': typeof WhyRoute
+  '/build_/$track': typeof BuildTrackRoute
   '/quad_/$game': typeof QuadGameRoute
   '/team_/health': typeof TeamHealthRoute
   '/training/$track': typeof TrainingTrackRoute
@@ -284,6 +310,7 @@ export interface FileRoutesById {
   '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/media/$id': typeof ApiMediaIdRoute
   '/api/setup/chancellor': typeof ApiSetupChancellorRoute
+  '/build_/$track_/$lesson': typeof BuildTrackLessonRoute
   '/team_/evaluate/$userId': typeof TeamEvaluateUserIdRoute
   '/training/$track_/$lesson': typeof TrainingTrackLessonRoute
   '/training/$track_/certificate': typeof TrainingTrackCertificateRoute
@@ -294,6 +321,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/build'
     | '/chancellor'
     | '/change-password'
     | '/directory'
@@ -311,6 +339,7 @@ export interface FileRouteTypes {
     | '/remarkable'
     | '/team'
     | '/why'
+    | '/build/$track'
     | '/quad/$game'
     | '/team/health'
     | '/training/$track'
@@ -318,6 +347,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/media/$id'
     | '/api/setup/chancellor'
+    | '/build/$track/$lesson'
     | '/team/evaluate/$userId'
     | '/training/$track/$lesson'
     | '/training/$track/certificate'
@@ -326,6 +356,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/build'
     | '/chancellor'
     | '/change-password'
     | '/directory'
@@ -343,6 +374,7 @@ export interface FileRouteTypes {
     | '/remarkable'
     | '/team'
     | '/why'
+    | '/build/$track'
     | '/quad/$game'
     | '/team/health'
     | '/training/$track'
@@ -350,6 +382,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/media/$id'
     | '/api/setup/chancellor'
+    | '/build/$track/$lesson'
     | '/team/evaluate/$userId'
     | '/training/$track/$lesson'
     | '/training/$track/certificate'
@@ -358,6 +391,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/build'
     | '/chancellor'
     | '/change-password'
     | '/directory'
@@ -375,6 +409,7 @@ export interface FileRouteTypes {
     | '/remarkable'
     | '/team'
     | '/why'
+    | '/build_/$track'
     | '/quad_/$game'
     | '/team_/health'
     | '/training/$track'
@@ -382,6 +417,7 @@ export interface FileRouteTypes {
     | '/api/auth/$'
     | '/api/media/$id'
     | '/api/setup/chancellor'
+    | '/build_/$track_/$lesson'
     | '/team_/evaluate/$userId'
     | '/training/$track_/$lesson'
     | '/training/$track_/certificate'
@@ -391,6 +427,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  BuildRoute: typeof BuildRoute
   ChancellorRoute: typeof ChancellorRoute
   ChangePasswordRoute: typeof ChangePasswordRoute
   DirectoryRoute: typeof DirectoryRoute
@@ -408,6 +445,7 @@ export interface RootRouteChildren {
   RemarkableRoute: typeof RemarkableRoute
   TeamRoute: typeof TeamRoute
   WhyRoute: typeof WhyRoute
+  BuildTrackRoute: typeof BuildTrackRoute
   QuadGameRoute: typeof QuadGameRoute
   TeamHealthRoute: typeof TeamHealthRoute
   TrainingTrackRoute: typeof TrainingTrackRoute
@@ -415,6 +453,7 @@ export interface RootRouteChildren {
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiMediaIdRoute: typeof ApiMediaIdRoute
   ApiSetupChancellorRoute: typeof ApiSetupChancellorRoute
+  BuildTrackLessonRoute: typeof BuildTrackLessonRoute
   TeamEvaluateUserIdRoute: typeof TeamEvaluateUserIdRoute
   TrainingTrackLessonRoute: typeof TrainingTrackLessonRoute
   TrainingTrackCertificateRoute: typeof TrainingTrackCertificateRoute
@@ -435,6 +474,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/build': {
+      id: '/build'
+      path: '/build'
+      fullPath: '/build'
+      preLoaderRoute: typeof BuildRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chancellor': {
@@ -479,6 +525,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HowItWorksRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/huddle': {
+      id: '/huddle'
+      path: '/huddle'
+      fullPath: '/huddle'
+      preLoaderRoute: typeof HuddleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/install': {
       id: '/install'
       path: '/install'
@@ -493,25 +546,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LockerRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/metrics': {
-      id: '/metrics'
-      path: '/metrics'
-      fullPath: '/metrics'
-      preLoaderRoute: typeof MetricsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/huddle': {
-      id: '/huddle'
-      path: '/huddle'
-      fullPath: '/huddle'
-      preLoaderRoute: typeof HuddleRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/login': {
       id: '/login'
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/metrics': {
+      id: '/metrics'
+      path: '/metrics'
+      fullPath: '/metrics'
+      preLoaderRoute: typeof MetricsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/notifications': {
@@ -554,6 +600,13 @@ declare module '@tanstack/react-router' {
       path: '/why'
       fullPath: '/why'
       preLoaderRoute: typeof WhyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/build_/$track': {
+      id: '/build_/$track'
+      path: '/build/$track'
+      fullPath: '/build/$track'
+      preLoaderRoute: typeof BuildTrackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/quad_/$game': {
@@ -605,6 +658,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiSetupChancellorRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/build_/$track_/$lesson': {
+      id: '/build_/$track_/$lesson'
+      path: '/build/$track/$lesson'
+      fullPath: '/build/$track/$lesson'
+      preLoaderRoute: typeof BuildTrackLessonRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/team_/evaluate/$userId': {
       id: '/team_/evaluate/$userId'
       path: '/team/evaluate/$userId'
@@ -639,6 +699,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  BuildRoute: BuildRoute,
   ChancellorRoute: ChancellorRoute,
   ChangePasswordRoute: ChangePasswordRoute,
   DirectoryRoute: DirectoryRoute,
@@ -656,6 +717,7 @@ const rootRouteChildren: RootRouteChildren = {
   RemarkableRoute: RemarkableRoute,
   TeamRoute: TeamRoute,
   WhyRoute: WhyRoute,
+  BuildTrackRoute: BuildTrackRoute,
   QuadGameRoute: QuadGameRoute,
   TeamHealthRoute: TeamHealthRoute,
   TrainingTrackRoute: TrainingTrackRoute,
@@ -663,6 +725,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiMediaIdRoute: ApiMediaIdRoute,
   ApiSetupChancellorRoute: ApiSetupChancellorRoute,
+  BuildTrackLessonRoute: BuildTrackLessonRoute,
   TeamEvaluateUserIdRoute: TeamEvaluateUserIdRoute,
   TrainingTrackLessonRoute: TrainingTrackLessonRoute,
   TrainingTrackCertificateRoute: TrainingTrackCertificateRoute,

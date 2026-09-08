@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { getSql } from "@/lib/db";
+import { LESSON_TAGS, lessonLineKey, tagOfLine, type LessonTag } from "@/lib/lesson-tags";
 
 /**
  * Resource links for tagged lesson lines.
@@ -9,23 +10,16 @@ import { getSql } from "@/lib/db";
  * `VIDEO · …` — that named a resource but linked nowhere. This module lets the
  * training office attach a destination to an individual line, and lets the
  * lesson page render that line as a real link.
+ *
+ * The tag list and line-key helpers now live in `@/lib/lesson-tags` (one source
+ * of truth shared with the lesson renderer and the builder). Re-exported here
+ * so existing importers keep working.
  */
 
-/** Tags that may carry a resource link. Mirrors TAGS in the lesson route. */
-export const LINKABLE_TAGS = [
-  "VIDEO",
-  "GFA",
-  "PRACTICE",
-  "ROLEPLAY",
-  "FORM",
-  "SOLUTION",
-  "INTERVIEW",
-  "ANALYSIS",
-  "FITTING",
-  "WELCOME",
-] as const;
-
-export type LinkableTag = (typeof LINKABLE_TAGS)[number];
+/** @deprecated import `LESSON_TAGS` from `@/lib/lesson-tags`. */
+export const LINKABLE_TAGS = LESSON_TAGS;
+export type LinkableTag = LessonTag;
+export { lessonLineKey, tagOfLine };
 
 export type LessonLink = {
   trackId: string;
@@ -35,39 +29,6 @@ export type LessonLink = {
   label: string;
   url: string;
 };
-
-/** The tag at the start of a lesson line, or null when it carries none. */
-export function tagOfLine(text: string): LinkableTag | null {
-  return (
-    LINKABLE_TAGS.find(
-      (tag) => text.startsWith(`${tag} · `) || text.startsWith(`${tag} `),
-    ) ?? null
-  );
-}
-
-/**
- * Stable identifier for a tagged line within a lesson.
- *
- * Deliberately NOT the line's index: paragraphs get reordered and inserted by
- * the CMS editor, and an index-keyed link would silently re-attach itself to a
- * different line. Derived from the tag plus the first few normalised words, so
- * light copy edits later in the sentence keep the link attached.
- */
-export function lessonLineKey(text: string): string | null {
-  const tag = tagOfLine(text);
-  if (!tag) return null;
-  const rest = text.startsWith(`${tag} · `)
-    ? text.slice(tag.length + 3)
-    : text.slice(tag.length + 1);
-  const words = rest
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, " ")
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 6)
-    .join("-");
-  return `${tag.toLowerCase().replace(/\s+/g, "-")}:${words}`.slice(0, 160);
-}
 
 /**
  * Accept only a plain http(s) destination.
@@ -112,17 +73,8 @@ export function firstUrlFromText(raw: string): string | null {
 }
 
 async function assertOffice(userId: string) {
-  const { readAccessRole } = await import("@/lib/access");
-  if ((await readAccessRole(userId)) === "admin") return;
-  const { isChancellorId } = await import("@/lib/rbac");
-  if (await isChancellorId(userId)) return;
-  const sql = await getSql();
-  const rows = await sql<{ user_id: string }>`
-    select user_id from admin_unlocks
-    where user_id = ${userId} and expires_at > now()
-    limit 1
-  `;
-  if (!rows.length) throw new Error("Forbidden");
+  const { assertCanBuildTraining } = await import("@/lib/training-access.server");
+  await assertCanBuildTraining(userId);
 }
 
 function cleanText(value: unknown, max: number): string {
