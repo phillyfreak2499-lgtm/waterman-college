@@ -76,6 +76,9 @@ export const markComplete = createServerFn({ method: "POST" })
     if (!lessonKey) return [] as ProgressRow[];
     const [trackId, slug] = lessonKey.split("/");
     await assertLessonAccess(context.userId, trackId, slug);
+    // Graded, require-pass quizzes on this lesson must be passed first.
+    const { assertLessonQuizzesPassed } = await import("@/lib/quizzes");
+    await assertLessonQuizzesPassed(context.userId, slug);
     const sql = await getSql();
     await sql`
       insert into lesson_progress (user_id, lesson_key, started_at, last_viewed_at, completed_at)

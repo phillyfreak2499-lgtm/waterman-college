@@ -5,7 +5,7 @@ import {
   deleteQuiz,
   listHireProgress,
   listQuizInbox,
-  listQuizzes,
+  listQuizzesForAuthor,
   markQuizReviewed,
   saveQuiz,
   type HireProgressRow,
@@ -23,12 +23,15 @@ export function QuizEditor() {
     intro: "",
     questions: [{ id: globalThis.crypto.randomUUID(), prompt: "", type: "short" }],
     sortOrder: 0,
+    graded: false,
+    passMark: 80,
+    requirePass: false,
   };
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [form, setForm] = useState<Quiz>(blank);
 
   useEffect(() => {
-    listQuizzes()
+    listQuizzesForAuthor()
       .then(setQuizzes)
       .catch((error) => {
         setQuizzes([]);
@@ -98,6 +101,43 @@ export function QuizEditor() {
             onChange={(e) => setForm({ ...form, intro: e.target.value })}
           />
         </Field>
+        <div className="rounded-md border border-line bg-paper px-4 py-3">
+          <label className="flex items-center gap-2 text-sm font-medium">
+            <input
+              type="checkbox"
+              checked={form.graded}
+              onChange={(e) => setForm({ ...form, graded: e.target.checked })}
+            />
+            Graded quiz (score with a pass mark)
+          </label>
+          {form.graded && (
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <label className="text-sm">
+                <span className="mb-1 block text-xs uppercase tracking-[0.12em] text-muted">Pass mark %</span>
+                <input
+                  className={field}
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={form.passMark}
+                  onChange={(e) => setForm({ ...form, passMark: Number(e.target.value) })}
+                />
+              </label>
+              <label className="flex items-end gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={form.requirePass}
+                  onChange={(e) => setForm({ ...form, requirePass: e.target.checked })}
+                />
+                <span className="pb-2">Must pass to complete the lesson</span>
+              </label>
+              <p className="text-xs text-muted sm:col-span-2">
+                Set the correct answer on each Short and Multiple-choice question below. Long-answer
+                questions stay human-reviewed and don&apos;t count toward the score.
+              </p>
+            </div>
+          )}
+        </div>
         <div>
           <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted">Questions</p>
           <div className="mt-3 space-y-4">
@@ -144,6 +184,45 @@ export function QuizEditor() {
                     />
                   )}
                 </div>
+                {form.graded && question.type === "choice" && (question.choices?.length ?? 0) > 0 && (
+                  <label className="text-sm">
+                    <span className="mb-1 block text-xs uppercase tracking-[0.12em] text-muted">Correct choice</span>
+                    <select
+                      className={field}
+                      value={question.correctIndex ?? ""}
+                      onChange={(e) => {
+                        const questions = [...form.questions];
+                        const v = e.target.value;
+                        questions[i] = { ...question, correctIndex: v === "" ? undefined : Number(v) };
+                        setForm({ ...form, questions });
+                      }}
+                    >
+                      <option value="">No correct answer (not scored)</option>
+                      {(question.choices ?? []).map((choice, ci) => (
+                        <option key={ci} value={ci}>
+                          {choice}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+                {form.graded && question.type === "short" && (
+                  <label className="text-sm">
+                    <span className="mb-1 block text-xs uppercase tracking-[0.12em] text-muted">
+                      Accepted answer (use | for alternatives)
+                    </span>
+                    <input
+                      className={field}
+                      placeholder="e.g. two | 2"
+                      value={question.answer ?? ""}
+                      onChange={(e) => {
+                        const questions = [...form.questions];
+                        questions[i] = { ...question, answer: e.target.value || undefined };
+                        setForm({ ...form, questions });
+                      }}
+                    />
+                  </label>
+                )}
               </div>
             ))}
           </div>

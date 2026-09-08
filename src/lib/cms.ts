@@ -401,7 +401,7 @@ async function refreshSlideTracks() {
 async function refreshBuilderTraining() {
   const sql = await getSql();
   const flag = await sql<{ value: string }>`
-    select value from cms_settings where key = 'builder_training_v1'
+    select value from cms_settings where key = 'builder_training_v2'
   `;
   if (flag.length) return;
 
@@ -447,7 +447,7 @@ async function refreshBuilderTraining() {
   }
 
   await sql`
-    insert into cms_settings (key, value) values ('builder_training_v1', '1')
+    insert into cms_settings (key, value) values ('builder_training_v2', '1')
     on conflict (key) do nothing
   `;
 }

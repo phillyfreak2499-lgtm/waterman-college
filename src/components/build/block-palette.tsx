@@ -28,6 +28,12 @@ export function BlockPalette({
 
   return (
     <div className="space-y-3">
+      <p className="text-xs text-muted">
+        Paragraphs accept simple formatting: <code>**bold**</code>, <code>*italic*</code>,{" "}
+        <code># Heading</code>, <code>- bullet</code>, <code>[link](https://…)</code>, and{" "}
+        <code>![caption](/media/…)</code> for an image. A <strong>VIDEO</strong> line with a
+        YouTube or Vimeo link plays in-page. The live preview shows exactly what learners see.
+      </p>
       {blocks.length === 0 && (
         <p className="rounded-md border border-dashed border-line bg-paper-2 px-4 py-6 text-center text-sm text-muted">
           No content yet. Add a paragraph to begin.

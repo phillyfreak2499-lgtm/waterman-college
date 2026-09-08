@@ -80,8 +80,20 @@ function QuizForm({
         toast.error("Answer every question before you send it.");
         return;
       }
-      onSaved(await submitQuiz({ data: { quizId: quiz.id, answers } }));
-      toast.success("Sent to the training office");
+      const rows = await submitQuiz({ data: { quizId: quiz.id, answers } });
+      onSaved(rows);
+      if (quiz.graded) {
+        const result = rows.find((r) => r.quizId === quiz.id);
+        if (result && result.score != null) {
+          const msg = `You scored ${result.score}% — ${result.passed ? "passed" : "not passed yet"}`;
+          if (result.passed) toast.success(msg);
+          else toast.error(msg);
+        } else {
+          toast.success("Submitted");
+        }
+      } else {
+        toast.success("Sent to the training office");
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not send");
     } finally {
@@ -91,14 +103,29 @@ function QuizForm({
 
   return (
     <section className="rounded-lg border border-line bg-surface p-5">
-      <p className="text-xs font-medium uppercase tracking-[0.16em] text-brass">Check-in</p>
+      <p className="text-xs font-medium uppercase tracking-[0.16em] text-brass">
+        {quiz.graded ? "Quiz" : "Check-in"}
+      </p>
       <h2 className="mt-1 font-display text-3xl leading-none">{quiz.title}</h2>
       {quiz.intro && <p className="mt-3 text-sm text-muted">{quiz.intro}</p>}
-      {prior && (
+      {quiz.graded && (
+        <p className="mt-2 text-xs uppercase tracking-[0.12em] text-muted">Pass mark {quiz.passMark}%</p>
+      )}
+      {quiz.graded && prior && prior.score != null ? (
+        <p
+          className={
+            prior.passed
+              ? "mt-2 inline-block rounded-sm bg-navy px-2.5 py-1 text-xs font-medium text-paper"
+              : "mt-2 inline-block rounded-sm border border-danger px-2.5 py-1 text-xs font-medium text-danger"
+          }
+        >
+          You scored {prior.score}% — {prior.passed ? "Passed" : "Not passed yet"}
+        </p>
+      ) : prior ? (
         <p className="mt-2 text-xs uppercase tracking-[0.12em] text-navy">
           Submitted — you can update it
         </p>
-      )}
+      ) : null}
       <div className="mt-5 space-y-4">
         {quiz.questions.map((question) => (
           <label key={question.id} className="block">
@@ -127,7 +154,15 @@ function QuizForm({
         ))}
       </div>
       <Button type="button" className="mt-5" disabled={busy} onClick={() => void submit()}>
-        {busy ? "Sending…" : prior ? "Update answers" : "Send to the office"}
+        {busy
+          ? "Sending…"
+          : quiz.graded
+            ? prior
+              ? "Retake quiz"
+              : "Submit quiz"
+            : prior
+              ? "Update answers"
+              : "Send to the office"}
       </Button>
     </section>
   );

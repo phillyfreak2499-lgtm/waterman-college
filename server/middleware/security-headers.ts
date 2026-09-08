@@ -44,7 +44,10 @@ const CONTENT_SECURITY_POLICY = [
   "font-src 'self' https://fonts.gstatic.com",
   "form-action 'self'",
   "frame-ancestors 'none'",
-  "frame-src 'self'",
+  // 'self' for the same-origin Quad game iframe; the two video hosts let lesson
+  // `VIDEO ·` lines embed YouTube/Vimeo players in-page (fixed embed src built
+  // in src/lib/video-embed.ts — no arbitrary URL is ever framed).
+  "frame-src 'self' https://www.youtube-nocookie.com https://player.vimeo.com",
   "img-src 'self' data: blob:",
   "manifest-src 'self'",
   "object-src 'none'",

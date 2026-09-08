@@ -208,5 +208,20 @@ export const BUILDER_TRACK: Track = {
       ],
       takeaway: "Train with people, not at them. Build every course like the next Client is counting on it.",
     },
+    {
+      slug: "rich-pages-video-graded-quizzes",
+      title: "Rich pages, video, and graded quizzes",
+      minutes: 8,
+      kicker: "The full kit",
+      body: [
+        "Lesson pages take simple formatting. In a paragraph, wrap words in **double stars** for bold, *single stars* for italic, start a line with # for a heading or - for a bullet, and write [link text](https://example.com) for a link.",
+        "Add a picture inside the page with ![a short caption](/media/your-image.png) — upload it first from the image picker, then paste the path.",
+        "VIDEO · Add a VIDEO line, attach a YouTube or Vimeo link, and it plays right on the page — no leaving the lesson.",
+        "Quizzes can be simple check-ins (the office reads the answers) or graded. Turn on 'Graded quiz' to set a pass mark and mark the correct answer on each multiple-choice and short-answer question.",
+        "Tick 'Must pass to complete the lesson' when a learner should not move on until they pass. Long-answer questions stay for the office to read and don't count toward the score.",
+        "PRACTICE · Add a graded 3-question quiz to a lesson, set the pass mark to 80%, and take it yourself as a test.",
+      ],
+      takeaway: "Format the page, drop in a video, and grade what matters — all without leaving the builder.",
+    },
   ],
 };
