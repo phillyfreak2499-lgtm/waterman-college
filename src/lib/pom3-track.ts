@@ -1,0 +1,116 @@
+import type { Track } from "@/lib/content";
+
+export const POM3_ID = "peace-of-mind-3";
+
+export const POM3_TRACK: Track = {
+  id: POM3_ID,
+  role: "specialist",
+  visibleToAll: true,
+  title: "Peace of Mind 3",
+  nav: "Peace of Mind 3",
+  href: "/training/peace-of-mind-3",
+  image: "/media/classroom.jpg",
+  audience: "Every position",
+  summary:
+    "After the Maintainer walk. Before the Relaxer. Lifetime, Guided, and Guaranteed — a conversation the Client can use. Official wearing guide in the hand. A nod is not understanding.",
+  lessons: [
+    {
+      slug: "start-here",
+      title: "Start here",
+      minutes: 5,
+      kicker: "The standard",
+      body: [
+        "When: after the Maintainer walk. Before we talk about the Relaxers. Every Client — not only when they look unsure.",
+        "The performance goal: explain Lifetime, Guided, and Guaranteed accurately. Help the Client use the official wearing guide. Check what they understood. Agree on the next step. Own words.",
+        "A nod is not understanding. Ask them to show the starting example and the stop line.",
+        "Classroom is 35 minutes. The habit is the next three fittings.",
+        "Client — never customer.",
+      ],
+      takeaway: "After Maintainer. Before Relaxer. Then check they can explain it.",
+    },
+    {
+      slug: "what-do-you-know",
+      title: "What do you know?",
+      minutes: 5,
+      kicker: "Mental Aerobics",
+      body: [
+        "Choose the best NEXT move. Do not diagnose how they feel.",
+        "L Lifetime. G Guided. Q Guaranteed. A Ask first. S Safety. R Sequence.",
+        "\u201cThis is a lot.\u201d Ask first — it might be supports, price, or time.",
+        "A polite smile or a hand on the keys is a reason to ask, not a reason to guess all three points.",
+        "\u201cI have numbness when I wear this.\u201d Safety. Stop use. Do not diagnose. Do not push more wear time.",
+        "PRACTICE \u00b7 Complete the Mental Aerobics sheet before you open the key.",
+      ],
+      takeaway: "A cue is a reason to listen. Then respond to what they actually said.",
+    },
+    {
+      slug: "the-map",
+      title: "The map and the guide",
+      minutes: 8,
+      kicker: "Reading",
+      body: [
+        "Lifetime: limited lifetime warranty against breaking, cracking, or splitting. That is the product. It is not a promise of a particular pain outcome. Warranty help is a local Good Feet Store with the product and the receipt.",
+        "Guided: pick up the official wearing guide. \u201cI want to go over something with you.\u201d Glance three columns — Strengthener ramp, Maintainer opens up, Relaxer anytime. The chart is an example, not a deadline. Fill color, cushion, lifestyle, footwear. Hand it.",
+        "Then check: \u201cShow me where you would look for your starting plan, and what would make you stop.\u201d",
+        "Guaranteed: show the written 90-day terms. 60-day adjustment + wearing instructions + in-person follow-up. Return to the original purchase store by day 90 with the receipt. Do not invent an any-store refund.",
+        "Pointing at the Relaxer column on the paper is allowed. Picking up the physical Relaxer is not — not yet.",
+        "GFA \u00b7 Official Wearing & Care trifold — this is the Guided prop.",
+      ],
+      takeaway: "Paper first. Three columns. Understanding check. Then the check-ins.",
+    },
+    {
+      slug: "settled-game",
+      title: "SETTLED \u2014 Don\u2019t Touch the Relaxer",
+      minutes: 4,
+      kicker: "Game",
+      body: [
+        "Two short rounds. Name the best next response. Then build the talk in order.",
+        "Tags: Lifetime, Guided, Guaranteed, Ask first, Safety, Too soon.",
+        "Grab the physical Relaxer early and the round dies.",
+        "GFA \u00b7 Play SETTLED \u00b7 /games/settled-dont-touch-the-relaxer.html",
+      ],
+      takeaway: "Ask first when the cue is fuzzy. Leave the Relaxer alone until they are settled.",
+    },
+    {
+      slug: "practice-the-unexpected",
+      title: "Practice the unexpected",
+      minutes: 14,
+      kicker: "Roleplays",
+      body: [
+        "Pairs. Two attempts each. Client hides the private detail and reveals it only when asked.",
+        "ROLEPLAY \u00b7 Card A or B first. Card C, D, E, or F second. Every learner says card F out loud if it was not their scenario.",
+        "Card F is numbness. Stop-use on the guide. No diagnosis. No push to keep wearing.",
+        "Score 2 / 1 / 0. Critical errors cannot be averaged away: a promised health outcome, wrong policy terms, or advice to continue through stop-use symptoms.",
+        "Coach the missing point only. Then retry.",
+      ],
+      takeaway: "You handed me the guide, but did not ask me to use it. That is the gap. Repair it.",
+    },
+    {
+      slug: "next-3-fittings",
+      title: "Next three fittings",
+      minutes: 10,
+      kicker: "Exercises",
+      body: [
+        "Classroom does not make this stick. The next three Maintainer walks do.",
+        "After every Maintainer walk: run Lifetime, Guided, and Guaranteed. Walk the official guide. Check understanding. Agree the next step. Then \u2014 and only then \u2014 the Relaxer.",
+        "Day 3, day 10, day 21, and an in-person visit around day 30 are an operating commitment. They are not extra refund conditions.",
+        "Pass = three live reflections + one practice recording + a manager heard one live Client + every observed skill at 2 + no critical error.",
+      ],
+      takeaway: "Pass the course on the floor. Not by opening the reading.",
+    },
+    {
+      slug: "manager-policy",
+      title: "Manager guide and the written policy",
+      minutes: 8,
+      kicker: "Managers",
+      body: [
+        "Two-minute coaching conversation: What did the Client understand? What is still uncertain? Name one behavior. Repair only that gap. Recheck.",
+        "SOLUTION \u00b7 Satisfaction policy: eligible supports, 90 days, 60-day adjustment, wearing instructions, one in-person follow-up, original purchase store, receipt, original payment method, no restocking fee. A refit resets the window.",
+        "SOLUTION \u00b7 Warranty is a different path. Breaking, cracking, or splitting. Local store + product + receipt. Not a pain promise.",
+        "Safety: discontinue if pain, numbness, or irritation occurs. Specialists are not licensed healthcare providers.",
+        "The supplied trifold is a training proof. Confirm release status before a live Client takes that edition home.",
+      ],
+      takeaway: "Show the written terms. Do not improvise an exception.",
+    },
+  ],
+};
