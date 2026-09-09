@@ -5,8 +5,435 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
 <title>SETTLED — Don't Touch the Relaxer</title>
 <script src="/games/quad-bridge.js"></script>
+<style>
+  :root {
+    --navy: #1B2A4A;
+    --gold: #C4A35A;
+    --cream: #F7F3EA;
+    --teal: #2A6F6F;
+    --gray: #4A5568;
+    --white: #FFFFFF;
+    --warm: #E4DCC8;
+    --ink: #15233D;
+    --bad: #8B3A3A;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: var(--cream); color: var(--navy); }
+  body { font-family: "Trebuchet MS", "Segoe UI", Calibri, sans-serif; }
+  .screen { display: none; min-height: 100%; padding: 20px 18px 32px; max-width: 880px; margin: 0 auto; }
+  .screen.on { display: block; }
+  header.bar {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    background: var(--navy); color: #fff; padding: 10px 14px;
+    border-radius: 14px; margin-bottom: 18px;
+  }
+  header.bar .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  header.bar img.cogs { width: 36px; height: 36px; flex-shrink: 0; }
+  header.bar img.wm { height: 26px; max-width: 160px; object-fit: contain; flex-shrink: 0; }
+  header.bar .meta { font-size: 11px; color: var(--gold); letter-spacing: .08em; text-transform: uppercase; }
+  header.bar .right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+  .mute {
+    background: transparent; border: 1px solid rgba(196,163,90,.55); color: var(--gold);
+    border-radius: 999px; padding: 6px 10px; font-size: 12px; font-weight: 700;
+    cursor: pointer; font-family: inherit; letter-spacing: .04em;
+  }
+  .mute[aria-pressed="true"] { opacity: .55; }
+  h1 { font-size: clamp(34px, 8vw, 48px); letter-spacing: .04em; line-height: 1; }
+  h1 span { color: var(--gold); }
+  .sub { color: var(--gray); margin: 10px 0 20px; font-size: 16px; line-height: 1.4; }
+  .card {
+    background: #fff; border: 1px solid var(--warm); border-radius: 16px;
+    padding: 18px 18px 16px; margin-bottom: 14px;
+  }
+  .goldcap { height: 6px; background: var(--gold); border-radius: 16px 16px 0 0; margin: -18px -18px 14px; }
+  .btn {
+    display: block; width: 100%; border: 0; border-radius: 12px;
+    padding: 14px 16px; font-size: 16px; font-weight: 700; cursor: pointer;
+    font-family: inherit;
+  }
+  .btn.primary { background: var(--navy); color: #fff; }
+  .btn.gold { background: var(--gold); color: var(--navy); }
+  .btn.ghost { background: #fff; color: var(--navy); border: 1.5px solid var(--warm); }
+  .btn.choice { background: #fff; color: var(--navy); border: 1.5px solid var(--warm); text-align: left; }
+  #choices { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  @media (max-width: 560px) { #choices { grid-template-columns: 1fr; } header.bar img.wm { display: none; } }
+  .btn.choice:hover, .btn.primary:hover { transform: translateY(-1px); }
+  .btn.choice.good { background: var(--teal); color: #fff; border-color: var(--teal); }
+  .btn.choice.bad { background: var(--bad); color: #fff; border-color: var(--bad); }
+  .btn:disabled { opacity: .55; cursor: default; transform: none; }
+  .row { display: flex; gap: 10px; }
+  .row .btn { flex: 1; }
+  .hud { display: flex; gap: 8px; margin-bottom: 14px; }
+  .pill {
+    flex: 1; background: var(--navy); color: #fff; border-radius: 12px;
+    padding: 10px 12px; text-align: center;
+  }
+  .pill b { display: block; color: var(--gold); font-size: 20px; }
+  .pill span { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--warm); }
+  .prompt { font-size: 22px; line-height: 1.35; margin-bottom: 6px; }
+  .hint { font-size: 13px; color: var(--teal); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; margin-bottom: 14px; }
+  .flash { min-height: 28px; font-weight: 700; margin: 8px 0 8px; font-size: 15px; line-height: 1.35; }
+  .flash.good { color: var(--teal); }
+  .flash.bad { color: var(--bad); }
+  .stars { font-size: 28px; letter-spacing: 6px; margin: 8px 0 16px; color: var(--gold); }
+  .tiny { font-size: 13px; color: var(--gray); line-height: 1.45; }
+  .seq { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 16px; min-height: 0; }
+  .chip {
+    background: var(--navy); color: var(--gold); border-radius: 999px;
+    padding: 6px 10px; font-size: 12px; font-weight: 700;
+  }
+  footer.note { margin-top: 18px; font-size: 12px; color: var(--gray); text-align: center; }
+  #boot-error { display: none; padding: 28px 20px; max-width: 640px; margin: 40px auto; }
+  #boot-error.on { display: block; }
+</style>
 </head>
 <body>
-<p>placeholder</p>
+<div id="boot-error">
+  <h1>SETTLED<span style="color:#C4A35A">.</span></h1>
+  <p class="sub">The preview hiccuped. Reload this page — the game itself is fine.</p>
+  <button class="btn primary" type="button" onclick="location.reload()">Reload</button>
+</div>
+<div class="screen on" id="s-start">
+  <header class="bar">
+    <div class="brand">
+      <img class="cogs" alt="COGS" />
+      <div>
+        <div class="meta">COGS · Peace of Mind 3</div>
+        <div style="font-weight:700;font-size:13px">Waterman Arch Supports</div>
+      </div>
+    </div>
+    <div class="right">
+      <button class="mute" type="button" data-mute aria-pressed="false">SOUND ON</button>
+      <img class="wm" alt="Waterman" />
+    </div>
+  </header>
+  <h1>SETTLED<span>.</span></h1>
+  <p class="sub">Don’t touch the Relaxer. Name the open fear. Hit the point. Pause. Then — and only then — go on.</p>
+  <div class="card">
+    <div class="goldcap"></div>
+    <p style="margin-bottom:10px"><b>Two short rounds. About four minutes.</b></p>
+    <p class="tiny">Round 1 — Fear Call. A client moment hits. Tag it Lifetime, Guided, Guaranteed, Ask first, Safety, or Too Soon.</p>
+    <p class="tiny" style="margin-top:8px">Round 2 — Build the Talk. Official wearing guide first. Walk three columns. Check they can show you. Grab the Relaxer early and the round dies.</p>
+  </div>
+  <button class="btn primary" id="playBtn" type="button">Play</button>
+  <footer class="note">Client language. After the Maintainer walk. Before the Relaxer.</footer>
+</div>
+<div class="screen" id="s-play">
+  <header class="bar">
+    <div class="brand">
+      <img class="cogs" alt="COGS" />
+      <div class="meta" id="roundLabel">Round 1 · Fear Call</div>
+    </div>
+    <div class="right">
+      <div class="meta" id="qCount">1 / 10</div>
+      <button class="mute" type="button" data-mute aria-pressed="false">SOUND ON</button>
+    </div>
+  </header>
+  <div class="hud">
+    <div class="pill"><b id="score">0</b><span>Score</span></div>
+    <div class="pill"><b id="streak">0</b><span>Streak</span></div>
+    <div class="pill"><b id="lives">0</b><span>Open fears</span></div>
+  </div>
+  <div class="hint" id="hint">What fear is still open?</div>
+  <div class="prompt" id="prompt"></div>
+  <div class="flash" id="flash"></div>
+  <div class="seq" id="built"></div>
+  <div id="choices"></div>
+</div>
+<div class="screen" id="s-end">
+  <header class="bar">
+    <div class="brand">
+      <img class="cogs" alt="COGS" />
+      <div><div class="meta">COGS · Peace of Mind 3</div></div>
+    </div>
+    <div class="right">
+      <button class="mute" type="button" data-mute aria-pressed="false">SOUND ON</button>
+    </div>
+  </header>
+  <h1 id="endTitle">Settled.</h1>
+  <div class="stars" id="stars"></div>
+  <div class="card">
+    <div class="goldcap"></div>
+    <p><b id="endScore"></b></p>
+    <p class="tiny" id="endNote" style="margin-top:8px"></p>
+  </div>
+  <div class="row">
+    <button class="btn gold" id="againBtn" type="button">Play again</button>
+    <button class="btn ghost" id="homeBtn" type="button">Home</button>
+  </div>
+  <footer class="note">Best on this device: <span id="best">0</span>. The real game is the next three fittings.</footer>
+</div>
+<script>
+(function () {
+  "use strict";
+  window.onerror = function () {
+    try { var boot = document.getElementById("boot-error"); if (boot) boot.classList.add("on"); } catch (e) {}
+    return true;
+  };
+  var COGS = "/media/seal.png";
+  var WM = "/media/waterman-logo.png";
+  function safeGet(key, fallback) { try { return localStorage.getItem(key) || fallback; } catch (e) { return fallback; } }
+  function safeSet(key, val) { try { localStorage.setItem(key, val); } catch (e) {} }
+  var muted = safeGet("pom3_settled_mute", "0") === "1";
+  var audio = {
+    ctx: null, unlocked: false,
+    unlock: function () {
+      if (this.unlocked) return;
+      try {
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        this.ctx = this.ctx || new AC();
+        if (this.ctx.state === "suspended") this.ctx.resume();
+        var b = this.ctx.createBuffer(1, 1, 22050);
+        var s = this.ctx.createBufferSource();
+        s.buffer = b; s.connect(this.ctx.destination); s.start(0);
+        this.unlocked = true;
+      } catch (e) {}
+    },
+    tone: function (freq, dur, type, gain, at) {
+      if (muted || !this.ctx) return;
+      try {
+        var t = this.ctx.currentTime + (at || 0);
+        var o = this.ctx.createOscillator(); var g = this.ctx.createGain();
+        o.type = type || "sine"; o.frequency.setValueAtTime(freq, t);
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(gain || 0.08, t + 0.015);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        o.connect(g); g.connect(this.ctx.destination);
+        o.start(t); o.stop(t + dur + 0.02);
+      } catch (e) {}
+    },
+    noise: function (dur, gain, at) {
+      if (muted || !this.ctx) return;
+      try {
+        var t = this.ctx.currentTime + (at || 0);
+        var n = this.ctx.createBuffer(1, Math.floor(this.ctx.sampleRate * dur), this.ctx.sampleRate);
+        var d = n.getChannelData(0);
+        for (var i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+        var s = this.ctx.createBufferSource(); s.buffer = n;
+        var g = this.ctx.createGain(); var f = this.ctx.createBiquadFilter();
+        f.type = "lowpass"; f.frequency.value = 1400;
+        g.gain.setValueAtTime(gain || 0.04, t);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+        s.connect(f); f.connect(g); g.connect(this.ctx.destination);
+        s.start(t); s.stop(t + dur + 0.02);
+      } catch (e) {}
+    },
+    click: function () { this.tone(880, 0.05, "triangle", 0.04); },
+    correct: function () {
+      this.tone(523.25, 0.10, "triangle", 0.07, 0);
+      this.tone(659.25, 0.12, "triangle", 0.07, 0.08);
+      this.tone(783.99, 0.18, "sine", 0.08, 0.16);
+    },
+    wrong: function () { this.tone(196, 0.22, "sawtooth", 0.05); this.tone(155, 0.28, "square", 0.03, 0.05); },
+    trap: function () {
+      this.tone(311, 0.12, "square", 0.06, 0);
+      this.tone(233, 0.14, "square", 0.06, 0.12);
+      this.tone(174, 0.28, "sawtooth", 0.05, 0.24);
+      this.noise(0.22, 0.03, 0.08);
+    },
+    handoff: function () { this.noise(0.12, 0.035); this.tone(440, 0.10, "triangle", 0.05, 0.04); this.tone(659, 0.14, "sine", 0.05, 0.12); },
+    win: function () {
+      this.tone(523, 0.12, "triangle", 0.07, 0);
+      this.tone(659, 0.12, "triangle", 0.07, 0.10);
+      this.tone(784, 0.12, "triangle", 0.07, 0.20);
+      this.tone(1046, 0.28, "sine", 0.08, 0.32);
+    },
+    start: function () { this.tone(392, 0.12, "sine", 0.05, 0); this.tone(523, 0.16, "sine", 0.06, 0.10); }
+  };
+  function paintMute() {
+    document.querySelectorAll("[data-mute]").forEach(function (b) {
+      b.textContent = muted ? "SOUND OFF" : "SOUND ON";
+      b.setAttribute("aria-pressed", muted ? "true" : "false");
+    });
+  }
+  function toggleMute() {
+    muted = !muted;
+    safeSet("pom3_settled_mute", muted ? "1" : "0");
+    paintMute();
+    if (!muted) { audio.unlock(); audio.click(); }
+  }
+  var FEARS = [
+    { q: "\u201cThis is a lot.\u201d", a: "A", why: "Ask first. Do not guess." },
+    { q: "\u201cI cannot remember which support is which.\u201d", a: "G", why: "Guided. Match the supports to the wearing guide." },
+    { q: "\u201cIf a support cracks, what do I do?\u201d", a: "L", why: "Lifetime. Breaking, cracking, or splitting. Product coverage \u2014 not a pain promise." },
+    { q: "\u201cSo I can bring them back next week for a refund?\u201d", a: "Q", why: "Show the written 90-day terms. 30 + 30. Then refund the supports." },
+    { q: "The client smiles politely but says nothing.", a: "A", why: "Ask first. A nod is not understanding." },
+    { q: "The client reaches for their keys.", a: "A", why: "Ask first. Respect the time. Agree on a next step." },
+    { q: "\u201cSo my pain is gone for life?\u201d", a: "L", why: "Warranty is the product. Do not confirm a health outcome." },
+    { q: "\u201cI have numbness when I wear this.\u201d", a: "S", why: "Safety. Stop use. Do not diagnose." },
+    { q: "Specialist starts the Relaxer while they are still asking about the guide.", a: "R", why: "Too soon. Set the Relaxer down." },
+    { q: "Official wearing card is still folded on the counter.", a: "G", why: "Empty hands = skipped Guided. Pick up the trifold." },
+    { q: "Hands a blank trifold and keeps talking.", a: "G", why: "Walk three columns. Then hand it." },
+    { q: "Reads Day 1\u20132, Day 3\u20134, Day 5\u20136 out loud down the grid.", a: "G", why: "The chart is an example. Do not recite rows." },
+    { q: "Points at the Relaxer column on the wearing card.", a: "G", why: "Allowed. The paper is the review. The physical Relaxer is the trap." },
+    { q: "Picks up the physical Relaxer to explain the third column.", a: "R", why: "Too soon. Point at the paper." },
+    { q: "After you start the schedule they say they meant the price.", a: "A", why: "You guessed. Ask first next time." },
+    { q: "\u201cAre these only good here, with you?\u201d", a: "L", why: "Any Good Feet store in the United States makes it right." },
+    { q: "\u201cWho checks on me after I leave?\u201d", a: "G", why: "Day three, day ten, day twenty-one. Put day thirty on the calendar." },
+    { q: "Keeps talking after the three points. Client already nodded.", a: "R", why: "Pause. Let them nod. Don\u2019t pile on." }
+  ];
+  var SEQ = [
+    { id: "open", label: "Frame it \u2014 Strengthener, Maintainer, break-in. Three things so they leave settled." },
+    { id: "before", label: "Before we talk about the Relaxers" },
+    { id: "life", label: "Lifetime \u2014 breaking, cracking, or splitting. Any Good Feet store. Not a pain promise." },
+    { id: "hand", label: "HAND THE TRIFOLD \u2014 \u201cI\u2019m sending this home with you.\u201d", special: "hand" },
+    { id: "walk", label: "Walk three columns \u2014 example only. Comfort-based. Don\u2019t recite rows." },
+    { id: "guide", label: "Guided journey \u2014 day 3 / 10 / 21 check-ins + day-30 visit" },
+    { id: "gtee", label: "Guaranteed \u2014 90-day client satisfaction. 30 + 30. Then refund the supports." },
+    { id: "pause", label: "Pause. Let them nod. Don\u2019t pile on." },
+    { id: "relax", label: "Now you may talk about the Relaxers" }
+  ];
+  var LABELS = { L: "Lifetime", G: "Guided", Q: "Guaranteed", A: "Ask first", S: "Safety", R: "Too soon \u2014 Relaxer" };
+  var state = null;
+  function $(id) { return document.getElementById(id); }
+  function setLogos() {
+    try {
+      document.querySelectorAll("img.cogs").forEach(function (i) { i.src = COGS; });
+      document.querySelectorAll("img.wm").forEach(function (i) { i.src = WM; });
+    } catch (e) {}
+  }
+  function show(id) {
+    document.querySelectorAll(".screen").forEach(function (s) { s.classList.remove("on"); });
+    $(id).classList.add("on");
+    try { window.scrollTo(0, 0); } catch (e) {}
+  }
+  function shuffle(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+  function paintHud() {
+    $("score").textContent = state.score;
+    $("streak").textContent = state.streak;
+    $("lives").textContent = state.misses;
+  }
+  function startGame() {
+    audio.unlock(); audio.start();
+    state = { mode: "fear", score: 0, streak: 0, misses: 0, i: 0, deck: shuffle(FEARS).slice(0, 10), seqI: 0, locked: false };
+    $("built").innerHTML = ""; paintHud(); show("s-play"); renderFear();
+  }
+  function renderFear() {
+    var s = state;
+    $("roundLabel").textContent = "Round 1 \u00b7 Fear Call";
+    $("hint").textContent = "What is the best next response?";
+    $("qCount").textContent = (s.i + 1) + " / " + s.deck.length;
+    $("flash").textContent = ""; $("flash").className = "flash"; $("built").innerHTML = "";
+    $("prompt").textContent = s.deck[s.i].q;
+    var box = $("choices"); box.innerHTML = "";
+    ["L", "G", "Q", "A", "S", "R"].forEach(function (k) {
+      var b = document.createElement("button");
+      b.className = "btn choice"; b.type = "button"; b.textContent = LABELS[k];
+      b.addEventListener("click", function () { answerFear(k, b); });
+      box.appendChild(b);
+    });
+  }
+  function answerFear(choice, btn) {
+    if (!state || state.locked) return;
+    state.locked = true;
+    var item = state.deck[state.i];
+    var ok = choice === item.a;
+    document.querySelectorAll("#choices .btn").forEach(function (b) { b.disabled = true; });
+    if (ok) {
+      audio.correct(); btn.classList.add("good"); state.streak += 1;
+      var add = 100 * Math.min(state.streak, 5); state.score += add;
+      $("flash").textContent = "+" + add + "  \u00b7  " + item.why; $("flash").className = "flash good";
+    } else {
+      if (choice === "R") audio.trap(); else audio.wrong();
+      btn.classList.add("bad"); state.streak = 0; state.misses += 1;
+      $("flash").textContent = "Open fear. " + item.why; $("flash").className = "flash bad";
+    }
+    paintHud();
+    setTimeout(function () {
+      state.i += 1; state.locked = false;
+      if (state.i >= state.deck.length) startSeq(); else renderFear();
+    }, ok ? 900 : 1400);
+  }
+  function startSeq() {
+    state.mode = "seq"; state.seqI = 0;
+    $("roundLabel").textContent = "Round 2 \u00b7 Build the Talk";
+    $("hint").textContent = "Tap the next beat. Touch the Relaxer early and you bust.";
+    $("prompt").textContent = "Put the talk in order. Guide in the hand. Three points. Pause. Then Relaxers.";
+    $("flash").textContent = ""; $("flash").className = "flash"; $("built").innerHTML = "";
+    renderSeq();
+  }
+  function renderSeq() {
+    $("qCount").textContent = Math.min(state.seqI + 1, SEQ.length) + " / " + SEQ.length;
+    var remaining = SEQ.slice(state.seqI);
+    var correct = remaining[0];
+    var decoys = shuffle(remaining.slice(1)).slice(0, 2);
+    var options = [correct].concat(decoys);
+    if (correct.id !== "relax") options.push({ id: "trap", label: "Pick up the Relaxer", trap: true });
+    options = shuffle(options);
+    var box = $("choices"); box.innerHTML = "";
+    options.forEach(function (opt) {
+      var b = document.createElement("button");
+      b.className = "btn choice"; b.type = "button"; b.textContent = opt.label;
+      b.addEventListener("click", function () { answerSeq(opt, b); });
+      box.appendChild(b);
+    });
+  }
+  function answerSeq(opt, btn) {
+    if (!state || state.locked) return;
+    state.locked = true;
+    var correct = SEQ[state.seqI];
+    document.querySelectorAll("#choices .btn").forEach(function (b) { b.disabled = true; });
+    if (opt.trap || opt.id !== correct.id) {
+      if (opt.trap) audio.trap(); else audio.wrong();
+      btn.classList.add("bad"); state.streak = 0; state.misses += 1;
+      $("flash").textContent = opt.trap ? "Busted. Relaxer comes after the nod." : "Wrong beat. " + correct.label;
+      $("flash").className = "flash bad"; paintHud();
+      setTimeout(function () { state.locked = false; renderSeq(); }, 1100);
+      return;
+    }
+    if (correct.special === "hand") audio.handoff();
+    else if (correct.id === "relax") audio.win();
+    else audio.correct();
+    btn.classList.add("good"); state.streak += 1;
+    var add = 150 * Math.min(state.streak, 4); state.score += add;
+    $("flash").textContent = "+" + add; $("flash").className = "flash good";
+    var chip = document.createElement("div"); chip.className = "chip";
+    chip.textContent = correct.label.split("\u2014")[0].trim(); $("built").appendChild(chip);
+    paintHud();
+    setTimeout(function () {
+      state.seqI += 1; state.locked = false;
+      if (state.seqI >= SEQ.length) finish(); else renderSeq();
+    }, 700);
+  }
+  function finish() {
+    try { if (window.QuadScore && typeof window.QuadScore.report === "function") window.QuadScore.report(state.score); } catch (e) {}
+    audio.win();
+    var prev = parseInt(safeGet("pom3_settled_best", "0"), 10) || 0;
+    var best = Math.max(state.score, prev);
+    safeSet("pom3_settled_best", String(best));
+    $("best").textContent = best;
+    var stars = "\u2605\u2606\u2606"; var title = "Almost settled.";
+    var note = "Play it again, then run the talk on the next Maintainer walk. Before the Relaxer.";
+    if (state.misses <= 3 && state.score >= 1400) {
+      stars = "\u2605\u2605\u2605"; title = "Settled.";
+      note = "You named the fear, you used the guide, and you left the Relaxer alone. Now do it with a real client.";
+    } else if (state.misses <= 5 && state.score >= 900) {
+      stars = "\u2605\u2605\u2606"; title = "Getting settled.";
+      note = "The miss is the lesson. Coach that one point. Don\u2019t re-teach the paragraph.";
+    }
+    $("stars").textContent = stars; $("endTitle").textContent = title;
+    $("endScore").textContent = "Score " + state.score + "  \u00b7  Open fears " + state.misses;
+    $("endNote").textContent = note; show("s-end");
+  }
+  function bind() {
+    setLogos(); paintMute();
+    $("best").textContent = safeGet("pom3_settled_best", "0");
+    $("playBtn").addEventListener("click", startGame);
+    $("againBtn").addEventListener("click", startGame);
+    $("homeBtn").addEventListener("click", function () { show("s-start"); });
+    document.querySelectorAll("[data-mute]").forEach(function (b) { b.addEventListener("click", toggleMute); });
+  }
+  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bind);
+  else bind();
+})();
+</script>
 </body>
 </html>
