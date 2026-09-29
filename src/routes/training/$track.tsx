@@ -8,7 +8,7 @@ import { LockedPath } from "@/components/locked-path";
 import { SiteShell } from "@/components/site-shell";
 import { TrainingTabs } from "@/components/training-tabs";
 import { useProgress } from "@/components/progress-provider";
-import { ONBOARDING_WEEKS, dayFromSlug, weekOfDay } from "@/lib/onboarding";
+import { ONBOARDING_WEEKS } from "@/lib/onboarding";
 import type { Lesson, Track } from "@/lib/content";
 import type { ProgressRow } from "@/lib/progress";
 import { lessonKey, lessonStatus, trackStats } from "@/lib/progress-stats";
@@ -119,7 +119,7 @@ function TrackBody({ track }: { track: Track }) {
         </div>
       </div>
       <div className="mx-auto max-w-3xl px-5 py-12 sm:px-8">
-        {track.id === "onboarding" ? (
+        {isOnboardingTrack(track) ? (
           <OnboardingWeeks track={track} rows={rows} ready={ready} />
         ) : (
           <ol className="space-y-3">
@@ -143,6 +143,20 @@ function TrackBody({ track }: { track: Track }) {
   );
 }
 
+function isOnboardingTrack(track: Track) {
+  return track.id === "onboarding" || /onboard/i.test(`${track.id} ${track.title} ${track.nav}`);
+}
+
+function weekForIndex(index: number) {
+  const week = Math.floor(index / 5) + 1;
+  return ONBOARDING_WEEKS.find((item) => item.week === week) ?? {
+    week,
+    title: `Week ${week}`,
+    summary: "",
+    days: [],
+  };
+}
+
 function OnboardingWeeks({
   track,
   rows,
@@ -152,21 +166,14 @@ function OnboardingWeeks({
   rows: ProgressRow[];
   ready: boolean;
 }) {
-  const groups: { week: number; title: string; summary: string; lessons: Lesson[] }[] = [];
-  for (const lesson of track.lessons) {
-    const day = dayFromSlug(lesson.slug);
-    const week = day != null ? weekOfDay(day) : groups.at(-1)?.week ?? 0;
-    const last = groups.at(-1);
-    if (last && last.week === week) {
-      last.lessons.push(lesson);
-      continue;
-    }
-    const meta = ONBOARDING_WEEKS.find((item) => item.week === week);
+  const groups = [];
+  for (let i = 0; i < track.lessons.length; i += 5) {
+    const week = weekForIndex(i);
     groups.push({
-      week,
-      title: meta?.title ?? (week ? `Week ${week}` : "Course lessons"),
-      summary: meta?.summary ?? "",
-      lessons: [lesson],
+      week: week.week,
+      title: week.title,
+      summary: week.summary,
+      lessons: track.lessons.slice(i, i + 5),
     });
   }
 
@@ -174,18 +181,16 @@ function OnboardingWeeks({
     <div className="space-y-10">
       {groups.map((group, groupIndex) => {
         const done = group.lessons.filter((l) => lessonStatus(rows, lessonKey(track.id, l.slug)) === "completed").length;
-        const startIndex = groups.slice(0, groupIndex).reduce((sum, item) => sum + item.lessons.length, 0);
+        const startIndex = groupIndex * 5;
         return (
-          <section key={`${group.week}-${groupIndex}`}>
-            {group.week > 0 && (
-              <p className="text-xs font-medium uppercase tracking-[0.18em] text-brass">
-                Week {group.week}
-              </p>
-            )}
+          <section key={group.week}>
+            <p className="text-xs font-medium uppercase tracking-[0.18em] text-brass">
+              Week {group.week}
+            </p>
             <h2 className="mt-1 font-display text-3xl leading-none">{group.title}</h2>
             {group.summary ? <p className="mt-2 text-sm text-muted">{group.summary}</p> : null}
             <p className="mt-1 text-xs tabular-nums text-muted">
-              {ready ? `${done}/${group.lessons.length} lessons` : "—"}
+              {ready ? `${done}/${group.lessons.length} days` : "—"}
             </p>
             <ol className="mt-4 space-y-3">
               {group.lessons.map((lesson, i) => (
@@ -236,7 +241,7 @@ function DayRow({
           {status === "completed" ? (
             <Check className="size-4" />
           ) : (
-            String(dayFromSlug(lesson.slug) ?? index + 1).padStart(2, "0")
+            String(index + 1).padStart(2, "0")
           )}
         </span>
         <span className="min-w-0 flex-1">
