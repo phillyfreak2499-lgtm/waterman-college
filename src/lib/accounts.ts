@@ -317,6 +317,40 @@ export const createAccount = createServerFn({ method: "POST" })
     return fetchPeople();
   });
 
+async function ignoreMissingTable(work: () => Promise<unknown>) {
+  try {
+    await work();
+  } catch (reason) {
+    const message = reason instanceof Error ? reason.message : String(reason);
+    if (/does not exist|undefined_table|no such table/i.test(message)) return;
+    throw reason;
+  }
+}
+
+async function removePersonRecords(tx: Sql, id: string) {
+  await ignoreMissingTable(() => tx`delete from session where "userId" = ${id}`);
+  await ignoreMissingTable(() => tx`delete from account where "userId" = ${id}`);
+  await ignoreMissingTable(() => tx`delete from training_assignments where user_id = ${id}`);
+  await ignoreMissingTable(() => tx`delete from lesson_progress where user_id = ${id}`);
+  await ignoreMissingTable(() => tx`delete from quiz_responses where user_id = ${id}`);
+  await ignoreMissingTable(() => tx`delete from trainer_notes where user_id = ${id}`);
+  await ignoreMissingTable(() => tx`delete from admin_unlocks where user_id = ${id}`);
+  await ignoreMissingTable(() => tx`delete from password_reset_requests where user_id = ${id}`);
+  await ignoreMissingTable(() => tx`delete from user_favorites where user_id = ${id}`);
+  await ignoreMissingTable(() => tx`delete from user_locker_notes where user_id = ${id}`);
+  await ignoreMissingTable(() => tx`delete from user_activity_days where user_id = ${id}`);
+  await ignoreMissingTable(() => tx`delete from user_game_scores where user_id = ${id}`);
+  await ignoreMissingTable(() => tx`delete from push_subscriptions where user_id = ${id}`);
+  await ignoreMissingTable(() => tx`delete from notifications where user_id = ${id}`);
+  await ignoreMissingTable(() => tx`delete from notification_prefs where user_id = ${id}`);
+  await ignoreMissingTable(
+    () => tx`delete from presentation_evaluations where presenter_id = ${id} or observer_id = ${id}`,
+  );
+  await ignoreMissingTable(() => tx`update user_profiles set reports_to = null where reports_to = ${id}`);
+  await ignoreMissingTable(() => tx`delete from user_profiles where user_id = ${id}`);
+  await ignoreMissingTable(() => tx`delete from "user" where id = ${id}`);
+}
+
 export const deleteAccount = createServerFn({ method: "POST" })
   .validator(userId)
   .middleware([authMiddleware])
@@ -327,18 +361,97 @@ export const deleteAccount = createServerFn({ method: "POST" })
     if (await isChancellorId(id)) throw new Error("The Chancellor account cannot be deleted here.");
     const sql = await getSql();
     await sql.transaction(async (tx) => {
-      await tx`delete from session where "userId" = ${id}`;
-      await tx`delete from account where "userId" = ${id}`;
-      await tx`delete from training_assignments where user_id = ${id}`;
-      await tx`delete from lesson_progress where user_id = ${id}`;
-      await tx`delete from quiz_responses where user_id = ${id}`;
-      await tx`delete from trainer_notes where user_id = ${id}`;
-      await tx`delete from admin_unlocks where user_id = ${id}`;
-      await tx`delete from password_reset_requests where user_id = ${id}`;
-      await tx`update user_profiles set reports_to = null where reports_to = ${id}`;
-      await tx`delete from user_profiles where user_id = ${id}`;
-      await tx`delete from "user" where id = ${id}`;
+      await removePersonRecords(tx, id);
     });
+    return fetchPeople();
+  });
+
+export const purgeDeactivatedAccounts = createServerFn({ method: "POST" })
+  .middleware([authMiddleware])
+  .handler(async ({ context }) => {
+    await requireAdmin(context.userId);
+    const { isChancellorId } = await import("@/lib/rbac");
+    const sql = await getSql();
+    const rows = await sql<{ user_id: string }>`
+      select user_id from user_profiles
+      where account_status = 'deactivated'
+      limit ${MAX_USERS}
+    `;
+    let removed = 0;
+    for (const row of rows) {
+      if (row.user_id === context.userId) continue;
+      if (await isChancellorId(row.user_id)) continue;
+      await sql.transaction(async (tx) => {
+        await removePersonRecords(tx, row.user_id);
+      });
+      removed += 1;
+    }
+    return { people: await fetchPeople(), removed };
+  });
+
+type UpdateAccountDetailsInput = {
+  userId: string;
+  firstName: string;
+  lastName: string;
+  username: string;
+  store: string;
+  title: string;
+  role: AccessRole;
+};
+
+export const updateAccountDetails = createServerFn({ method: "POST" })
+  .validator((input: UpdateAccountDetailsInput) => ({
+    userId: userId(input?.userId),
+    firstName: text(input?.firstName, "First name", 80),
+    lastName: text(input?.lastName, "Last name", 80),
+    username: text(input?.username, "Username", 32),
+    store: text(input?.store ?? "", "Store", 120, false),
+    title: text(input?.title ?? "", "Title", 120, false),
+    role: accessRole(input?.role),
+  }))
+  .middleware([authMiddleware])
+  .handler(async ({ context, data }) => {
+    await requireAdmin(context.userId);
+    if (data.role === "admin") throw new Error("Administrator access is managed in Roles.");
+    const { isChancellorId } = await import("@/lib/rbac");
+    if (await isChancellorId(data.userId) && data.userId !== context.userId) {
+      throw new Error("The Chancellor account is edited in the Chancellor’s Office.");
+    }
+    const username = normalizeUsername(data.username);
+    if (!isValidUsername(username)) {
+      throw new Error("Usernames start with a letter and use letters, numbers, dots, dashes, or underscores.");
+    }
+    if (await reservedUsername(username)) throw new Error("That username is reserved.");
+    const sql = await getSql();
+    const taken = await sql<{ user_id: string }>`
+      select user_id from user_profiles
+      where lower(username) = ${username} and user_id <> ${data.userId}
+      limit 1
+    `;
+    if (taken.length) throw new Error("That username is already taken.");
+    const email = usernameToEmail(username);
+    const emailTaken = await sql<{ id: string }>`
+      select id from "user" where lower(email) = ${email} and id <> ${data.userId} limit 1
+    `;
+    if (emailTaken.length) throw new Error("That username is already taken.");
+    const displayName = `${data.firstName} ${data.lastName}`.trim();
+    if (data.role !== "pending") {
+      await writeAccessRole(data.userId, data.role, { assignedBy: context.userId, store: data.store || null });
+    }
+    await sql`
+      update user_profiles
+      set username = ${username},
+          first_name = ${data.firstName},
+          last_name = ${data.lastName},
+          store = ${data.store || null},
+          title = ${data.title || null}
+      where user_id = ${data.userId}
+    `;
+    await sql`
+      update "user"
+      set name = ${displayName}, email = ${email}, "updatedAt" = now()
+      where id = ${data.userId}
+    `;
     return fetchPeople();
   });
 
@@ -406,6 +519,9 @@ export const officeApproveUser = createServerFn({ method: "POST" })
 
 type OfficeUpdateInput = {
   userId: string;
+  firstName?: string;
+  lastName?: string;
+  username?: string;
   store: string;
   title: string;
   status: AccountStatus;
@@ -421,6 +537,9 @@ export const officeUpdateUser = createServerFn({ method: "POST" })
     }
     return {
       userId: userId(input?.userId),
+      firstName: text(input?.firstName ?? "", "First name", 80, false),
+      lastName: text(input?.lastName ?? "", "Last name", 80, false),
+      username: text(input?.username ?? "", "Username", 32, false),
       store: text(input?.store ?? "", "Store", 120, false),
       title: text(input?.title ?? "", "Title", 120, false),
       status,
@@ -439,12 +558,47 @@ export const officeUpdateUser = createServerFn({ method: "POST" })
     }
     await writeAccessRole(data.userId, rbac.accessRole, { assignedBy: context.userId });
     const sql = await getSql();
+    let username = data.username ? normalizeUsername(data.username) : "";
+    if (username) {
+      if (!isValidUsername(username)) {
+        throw new Error("Usernames start with a letter and use letters, numbers, dots, dashes, or underscores.");
+      }
+      if (await reservedUsername(username)) throw new Error("That username is reserved.");
+      const taken = await sql<{ user_id: string }>`
+        select user_id from user_profiles
+        where lower(username) = ${username} and user_id <> ${data.userId}
+        limit 1
+      `;
+      if (taken.length) throw new Error("That username is already taken.");
+    }
+    const firstName = data.firstName || null;
+    const lastName = data.lastName || null;
     await sql`
       update user_profiles
       set store = ${data.store || null}, title = ${data.title || null},
-          account_status = ${data.status}, rbac_role = ${rbac.id}
+          account_status = ${data.status}, rbac_role = ${rbac.id},
+          username = coalesce(${username || null}, username),
+          first_name = coalesce(${firstName}, first_name),
+          last_name = coalesce(${lastName}, last_name)
       where user_id = ${data.userId}
     `;
+    if (firstName || lastName || username) {
+      const current = await sql<{ name: string; email: string }>`
+        select name, email from "user" where id = ${data.userId} limit 1
+      `;
+      const displayName =
+        firstName || lastName
+          ? `${firstName || current[0]?.name.split(" ")[0] || ""} ${lastName || current[0]?.name.split(" ").slice(1).join(" ") || ""}`.trim()
+          : current[0]?.name;
+      const email = username ? usernameToEmail(username) : current[0]?.email;
+      await sql`
+        update "user"
+        set name = ${displayName || current[0]?.name || "Staff"},
+            email = ${email || current[0]?.email},
+            "updatedAt" = now()
+        where id = ${data.userId}
+      `;
+    }
     if (data.status === "deactivated" || data.status === "denied") await wipeSessions(data.userId);
     await writeAudit(context.userId, "", "user.updated", `${data.userId} → ${data.status}`);
     return fetchPeople();

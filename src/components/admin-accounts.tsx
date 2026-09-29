@@ -14,7 +14,9 @@ import {
   denyAccount,
   listAccounts,
   listPasswordResetRequests,
+  purgeDeactivatedAccounts,
   resolvePasswordReset,
+  updateAccountDetails,
   updateAccountRole,
   type PasswordResetRequest,
 } from "@/lib/accounts";
@@ -53,6 +55,7 @@ export function AccountsEditor() {
 
   const queue = people.filter((p) => p.accountStatus === "pending");
   const denied = people.filter((p) => p.accountStatus === "denied");
+  const deactivated = people.filter((p) => p.accountStatus === "deactivated");
   const active = people.filter((p) => p.accountStatus === "approved");
 
   async function run(id: string, work: () => Promise<DirectoryPerson[]>, ok: string) {
@@ -152,7 +155,7 @@ export function AccountsEditor() {
       <section>
         <h2 className="font-display text-3xl">Accounts</h2>
         <p className="mt-1 text-sm text-muted">
-          Change a position or remove someone from the college.
+          Edit a person’s name, username, store, title, or position. Delete removes them from the college.
         </p>
         <ul className="mt-5 divide-y divide-line border-t border-line">
           {active.map((person) => (
@@ -160,6 +163,13 @@ export function AccountsEditor() {
               key={person.id}
               person={person}
               busy={busy === person.id}
+              onSave={(patch) =>
+                run(
+                  person.id,
+                  () => updateAccountDetails({ data: { userId: person.id, ...patch } }),
+                  `${patch.firstName} ${patch.lastName} was updated.`,
+                )
+              }
               onRole={(role) =>
                 run(
                   person.id,
@@ -176,6 +186,70 @@ export function AccountsEditor() {
         </ul>
         {!active.length && <p className="mt-6 text-sm text-muted">No approved accounts yet.</p>}
       </section>
+
+      {deactivated.length > 0 && (
+        <section>
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="font-display text-3xl">Deactivated</h2>
+              <p className="mt-1 text-sm text-muted">
+                {deactivated.length} account{deactivated.length === 1 ? "" : "s"} can no longer sign in. Remove them from the college.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              disabled={busy === "purge-deactivated"}
+              onClick={() => {
+                if (
+                  !confirm(
+                    `Permanently delete ${deactivated.length} deactivated account${deactivated.length === 1 ? "" : "s"}? This cannot be undone.`,
+                  )
+                ) {
+                  return;
+                }
+                setBusy("purge-deactivated");
+                purgeDeactivatedAccounts()
+                  .then((result) => {
+                    setPeople(result.people);
+                    toast.success(
+                      result.removed
+                        ? `Removed ${result.removed} deactivated account${result.removed === 1 ? "" : "s"}.`
+                        : "No deactivated accounts were removed.",
+                    );
+                  })
+                  .catch((err) => {
+                    toast.error(err instanceof Error ? err.message : "Could not remove deactivated accounts");
+                  })
+                  .finally(() => setBusy(null));
+              }}
+            >
+              {busy === "purge-deactivated" ? "Removing…" : "Delete all deactivated"}
+            </Button>
+          </div>
+          <ul className="mt-5 divide-y divide-line border-t border-line">
+            {deactivated.map((person) => (
+              <li key={person.id} className="flex flex-wrap items-center justify-between gap-3 py-4">
+                <div>
+                  <p className="font-medium">{person.name}</p>
+                  <p className="text-sm text-muted">
+                    @{person.username || "—"} · {person.store || "No store"}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  disabled={busy === person.id}
+                  onClick={() => {
+                    if (!confirm(`Delete ${person.name}? This cannot be undone.`)) return;
+                    void run(person.id, () => deleteAccount({ data: person.id }), `${person.name} was removed.`);
+                  }}
+                >
+                  Delete
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {denied.length > 0 && (
         <section>
@@ -312,45 +386,123 @@ function QueueRow({
 function ActiveRow({
   person,
   busy,
+  onSave,
   onRole,
   onDelete,
 }: {
   person: DirectoryPerson;
   busy: boolean;
+  onSave: (patch: {
+    firstName: string;
+    lastName: string;
+    username: string;
+    store: string;
+    title: string;
+    role: AccessRole;
+  }) => Promise<boolean>;
   onRole: (role: AccessRole) => void;
   onDelete: () => void;
 }) {
+  const [open, setOpen] = useState(false);
   const [role, setRole] = useState<AccessRole>(person.role);
-  useEffect(() => setRole(person.role), [person.role]);
+  const [firstName, setFirstName] = useState(person.firstName);
+  const [lastName, setLastName] = useState(person.lastName);
+  const [username, setUsername] = useState(person.username);
+  const [store, setStore] = useState(person.store ?? "");
+  const [title, setTitle] = useState(person.title);
+
+  useEffect(() => {
+    setRole(person.role);
+    setFirstName(person.firstName);
+    setLastName(person.lastName);
+    setUsername(person.username);
+    setStore(person.store ?? "");
+    setTitle(person.title);
+  }, [person]);
+
+  async function save(event: FormEvent) {
+    event.preventDefault();
+    const ok = await onSave({ firstName, lastName, username, store, title, role });
+    if (ok) setOpen(false);
+  }
+
   return (
-    <li className="grid gap-3 py-4 lg:grid-cols-[1.2fr_12rem_auto] lg:items-center">
-      <div>
-        <p className="font-medium">{person.name}</p>
-        <p className="text-sm text-muted">@{person.username || "—"}</p>
-      </div>
-      <select
-        className={inputClass}
-        value={role}
-        onChange={(e) => setRole(e.target.value as AccessRole)}
-      >
-        {ACCESS_ROLES.map((item) => (
-          <option key={item.id} value={item.id}>
-            {item.label}
-          </option>
-        ))}
-      </select>
-      <div className="flex flex-wrap gap-2">
-        <Button
-          variant="outline"
-          disabled={busy || role === person.role}
-          onClick={() => onRole(role)}
+    <li className="py-4">
+      <div className="grid gap-3 lg:grid-cols-[1.2fr_12rem_auto] lg:items-center">
+        <div>
+          <p className="font-medium">{person.name}</p>
+          <p className="text-sm text-muted">
+            @{person.username || "—"}
+            {person.store ? ` · ${person.store}` : ""}
+            {person.title ? ` · ${person.title}` : ""}
+          </p>
+        </div>
+        <select
+          className={inputClass}
+          value={role}
+          onChange={(e) => setRole(e.target.value as AccessRole)}
         >
-          Save position
-        </Button>
-        <Button variant="ghost" disabled={busy} onClick={onDelete}>
-          Delete
-        </Button>
+          {ACCESS_ROLES.map((item) => (
+            <option key={item.id} value={item.id}>
+              {item.label}
+            </option>
+          ))}
+        </select>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant="outline"
+            disabled={busy || role === person.role}
+            onClick={() => onRole(role)}
+          >
+            Save position
+          </Button>
+          <Button variant="outline" disabled={busy} onClick={() => setOpen((value) => !value)}>
+            {open ? "Close" : "Edit"}
+          </Button>
+          <Button variant="ghost" disabled={busy} onClick={onDelete}>
+            Delete
+          </Button>
+        </div>
       </div>
+      {open && (
+        <form onSubmit={(event) => void save(event)} className="mt-4 grid gap-3 rounded-md border border-line bg-paper p-4 sm:grid-cols-2">
+          <label>
+            <span className="mb-1.5 block text-xs font-medium uppercase tracking-[0.14em] text-muted">
+              First name
+            </span>
+            <input required className={inputClass} value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+          </label>
+          <label>
+            <span className="mb-1.5 block text-xs font-medium uppercase tracking-[0.14em] text-muted">
+              Last name
+            </span>
+            <input required className={inputClass} value={lastName} onChange={(e) => setLastName(e.target.value)} />
+          </label>
+          <label>
+            <span className="mb-1.5 block text-xs font-medium uppercase tracking-[0.14em] text-muted">
+              Username
+            </span>
+            <input required className={inputClass} value={username} onChange={(e) => setUsername(e.target.value)} />
+          </label>
+          <label>
+            <span className="mb-1.5 block text-xs font-medium uppercase tracking-[0.14em] text-muted">
+              Store
+            </span>
+            <input className={inputClass} value={store} onChange={(e) => setStore(e.target.value)} />
+          </label>
+          <label className="sm:col-span-2">
+            <span className="mb-1.5 block text-xs font-medium uppercase tracking-[0.14em] text-muted">
+              Title
+            </span>
+            <input className={inputClass} value={title} onChange={(e) => setTitle(e.target.value)} />
+          </label>
+          <div className="sm:col-span-2">
+            <Button type="submit" disabled={busy}>
+              {busy ? "Saving…" : "Save info"}
+            </Button>
+          </div>
+        </form>
+      )}
     </li>
   );
 }

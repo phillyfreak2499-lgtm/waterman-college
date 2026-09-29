@@ -12,10 +12,12 @@ import {
   type DirectoryPerson,
 } from "@/lib/access";
 import {
+  deleteAccount,
   officeAddUser,
   officeApproveUser,
   officeListUsers,
   officeUpdateUser,
+  purgeDeactivatedAccounts,
 } from "@/lib/accounts";
 import { signOut } from "@/lib/auth/client";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
@@ -257,6 +259,28 @@ function PeopleDesk() {
           <option value="denied">Denied</option>
           <option value="deactivated">Deactivated</option>
         </select>
+        {people.some((p) => p.accountStatus === "deactivated") && (
+          <Button
+            variant="invert"
+            disabled={busy === "purge-deactivated"}
+            onClick={() => {
+              const count = people.filter((p) => p.accountStatus === "deactivated").length;
+              if (!confirm(`Permanently delete ${count} deactivated account${count === 1 ? "" : "s"}? This cannot be undone.`)) {
+                return;
+              }
+              setBusy("purge-deactivated");
+              purgeDeactivatedAccounts()
+                .then((result) => {
+                  setPeople(result.people);
+                  toast.success(`Removed ${result.removed} deactivated account${result.removed === 1 ? "" : "s"}.`);
+                })
+                .catch((err) => toast.error(err instanceof Error ? err.message : "Could not remove deactivated accounts"))
+                .finally(() => setBusy(null));
+            }}
+          >
+            {busy === "purge-deactivated" ? "Removing…" : "Delete all deactivated"}
+          </Button>
+        )}
       </div>
       <ul className="divide-y divide-paper/10 border-t border-paper/10">
         {shown.map((person) => (
@@ -291,6 +315,18 @@ function PeopleDesk() {
                 setBusy(null);
               }
             }}
+            onDelete={async () => {
+              if (!confirm(`Delete ${person.name}? This cannot be undone.`)) return;
+              setBusy(person.id);
+              try {
+                setPeople(await deleteAccount({ data: person.id }));
+                toast.success(`${person.name} was removed.`);
+              } catch (err) {
+                toast.error(err instanceof Error ? err.message : "Could not delete");
+              } finally {
+                setBusy(null);
+              }
+            }}
           />
         ))}
       </ul>
@@ -305,11 +341,15 @@ function UserRow({
   busy,
   onSave,
   onApprove,
+  onDelete,
 }: {
   person: DirectoryPerson;
   roles: RbacRole[];
   busy: boolean;
   onSave: (patch: {
+    firstName: string;
+    lastName: string;
+    username: string;
     store: string;
     title: string;
     status: DirectoryPerson["accountStatus"];
@@ -317,28 +357,36 @@ function UserRow({
     accessRole: AccessRole;
   }) => Promise<void>;
   onApprove: (rbacRole: string) => Promise<void>;
+  onDelete: () => Promise<void>;
 }) {
+  const [firstName, setFirstName] = useState(person.firstName);
+  const [lastName, setLastName] = useState(person.lastName);
+  const [username, setUsername] = useState(person.username);
   const [store, setStore] = useState(person.store ?? "");
   const [title, setTitle] = useState(person.title);
   const [status, setStatus] = useState(person.accountStatus);
   const [rbacRole, setRbacRole] = useState(person.rbacRoleId || "sales-associate");
   useEffect(() => {
+    setFirstName(person.firstName);
+    setLastName(person.lastName);
+    setUsername(person.username);
     setStore(person.store ?? "");
     setTitle(person.title);
     setStatus(person.accountStatus);
     setRbacRole(person.rbacRoleId || "sales-associate");
-  }, [person.store, person.title, person.accountStatus, person.rbacRoleId]);
+  }, [person]);
   return (
     <li className="grid gap-3 py-4 lg:grid-cols-[1.3fr_1fr_1fr] lg:items-start">
-      <div>
+      <div className="grid gap-2">
         <p className="font-medium">{person.name}</p>
-        <p className="text-sm text-paper/55">
-          @{person.username} · never shows a password
-        </p>
-        <p className="mt-1 text-xs text-paper/40">
+        <p className="text-sm text-paper/55">@{person.username || "—"}</p>
+        <p className="text-xs text-paper/40">
           Created {person.createdAt.slice(0, 10) || "—"} · Last login{" "}
           {person.lastLogin ? person.lastLogin.slice(0, 16).replace("T", " ") : "never"}
         </p>
+        <input className={darkInput} value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First name" />
+        <input className={darkInput} value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Last name" />
+        <input className={darkInput} value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Username" />
       </div>
       <div className="grid gap-2">
         <input className={darkInput} value={store} onChange={(e) => setStore(e.target.value)} placeholder="Store" />
@@ -370,6 +418,9 @@ function UserRow({
             disabled={busy}
             onClick={() =>
               void onSave({
+                firstName,
+                lastName,
+                username,
                 store,
                 title,
                 status,
@@ -379,6 +430,9 @@ function UserRow({
             }
           >
             Save
+          </Button>
+          <Button size="sm" variant="ghost" disabled={busy} onClick={() => void onDelete()}>
+            Delete
           </Button>
         </div>
       </div>
