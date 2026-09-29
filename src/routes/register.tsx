@@ -119,11 +119,11 @@ function Register() {
                   minLength={3}
                 />
               </Field>
-              <Field label="Password" hint="At least 12 characters.">
+              <Field label="Password" hint="At least 6 characters.">
                 <input
                   required
                   type="password"
-                  minLength={12}
+                  minLength={6}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="field-input"
@@ -134,7 +134,7 @@ function Register() {
                 <input
                   required
                   type="password"
-                  minLength={12}
+                  minLength={6}
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
                   className="field-input"

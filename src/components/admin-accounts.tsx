@@ -325,14 +325,14 @@ function PasswordResetRow({
           <input
             required
             type="password"
-            minLength={12}
+            minLength={6}
             autoComplete="new-password"
             className={inputClass}
             value={password}
             onChange={(event) => setPassword(event.target.value)}
           />
         </label>
-        <Button type="submit" disabled={busy || password.length < 12}>
+        <Button type="submit" disabled={busy || password.length < 6}>
           {busy ? "Resetting…" : "Issue password"}
         </Button>
       </form>
@@ -569,7 +569,7 @@ function AddAccountForm({
           <input
             required
             type="password"
-            minLength={12}
+            minLength={6}
             autoComplete="new-password"
             className={inputClass}
             value={password}

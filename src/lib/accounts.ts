@@ -41,8 +41,8 @@ function userId(value: unknown) {
 }
 
 function password(value: unknown) {
-  if (typeof value !== "string" || value.length < 12 || value.length > 256) {
-    throw new Error("Password must be between 12 and 256 characters.");
+  if (typeof value !== "string" || value.length < 6 || value.length > 256) {
+    throw new Error("Password must be between 6 and 256 characters.");
   }
   return value;
 }

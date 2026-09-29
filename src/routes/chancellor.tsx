@@ -484,7 +484,7 @@ function AddUserForm({
           <input required className={darkInput} value={username} onChange={(e) => setUsername(e.target.value)} />
         </Field>
         <Field label="Temporary password">
-          <input required type="password" minLength={12} autoComplete="new-password" className={darkInput} value={password} onChange={(e) => setPassword(e.target.value)} />
+          <input required type="password" minLength={6} autoComplete="new-password" className={darkInput} value={password} onChange={(e) => setPassword(e.target.value)} />
         </Field>
         <Field label="Store">
           <input required className={darkInput} value={store} onChange={(e) => setStore(e.target.value)} />

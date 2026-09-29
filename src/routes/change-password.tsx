@@ -31,8 +31,8 @@ function ChangePasswordForm() {
 
   async function submit(event: FormEvent) {
     event.preventDefault();
-    if (newPassword.length < 12) {
-      toast.error("Use at least 12 characters for the new password.");
+    if (newPassword.length < 6) {
+      toast.error("Use at least 6 characters for the new password.");
       return;
     }
     if (newPassword !== confirm) {
@@ -75,11 +75,11 @@ function ChangePasswordForm() {
             onChange={(event) => setCurrentPassword(event.target.value)}
           />
         </Field>
-        <Field label="New password" hint="At least 12 characters.">
+        <Field label="New password" hint="At least 6 characters.">
           <input
             required
             type="password"
-            minLength={12}
+            minLength={6}
             autoComplete="new-password"
             className="field-input"
             value={newPassword}
@@ -90,7 +90,7 @@ function ChangePasswordForm() {
           <input
             required
             type="password"
-            minLength={12}
+            minLength={6}
             autoComplete="new-password"
             className="field-input"
             value={confirm}
