@@ -25,17 +25,31 @@ export const ONBOARDING_WEEKS = [
     summary: "Work the floor on your own. Professor and Sales Manager pull you for half-day sessions.",
     days: [16, 17, 18, 19, 20],
   },
+  {
+    week: 5,
+    title: "On your own",
+    summary: "Keep the presentation tight. Ask for help when a fit or close gets hard.",
+    days: [21, 22, 23, 24, 25],
+  },
+  {
+    week: 6,
+    title: "Close the 30 days",
+    summary: "Finish the month ready for the floor — not perfect, ready.",
+    days: [26, 27, 28, 29, 30],
+  },
 ] as const;
 
 export function weekOfDay(day: number) {
   if (day <= 5) return 1;
   if (day <= 10) return 2;
   if (day <= 15) return 3;
-  return 4;
+  if (day <= 20) return 4;
+  if (day <= 25) return 5;
+  return 6;
 }
 
 export function dayFromSlug(slug: string) {
-  const match = /^day-(\d+)$/.exec(slug);
+  const match = /(?:^|-)day-?0*(\d+)$/i.exec(slug.trim());
   return match ? Number(match[1]) : null;
 }
 

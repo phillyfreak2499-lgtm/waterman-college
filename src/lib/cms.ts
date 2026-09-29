@@ -529,10 +529,11 @@ export async function readCatalog(): Promise<Catalog> {
     takeaway: string | null;
     eval_phases: string[] | null;
     slides: string | null;
+    sort_order: number;
   }>`
-    select track_id, slug, title, minutes, kicker, body, takeaway, eval_phases, slides
+    select track_id, slug, title, minutes, kicker, body, takeaway, eval_phases, slides, sort_order
     from cms_lessons
-    order by sort_order asc, title asc
+    order by track_id asc, sort_order asc, slug asc
     limit 10000
   `;
 
@@ -549,6 +550,11 @@ export async function readCatalog(): Promise<Catalog> {
     visibleToAll: track.visible_to_all === true,
     lessons: lessonRows
       .filter((l) => l.track_id === track.id)
+      .sort((a, b) => {
+        const left = Number(a.sort_order) || 0;
+        const right = Number(b.sort_order) || 0;
+        return left - right || a.slug.localeCompare(b.slug);
+      })
       .map((l) => ({
         slug: l.slug,
         title: l.title,
@@ -968,9 +974,10 @@ export const saveLesson = createServerFn({ method: "POST" })
     const sql = await getSql();
     const slug = lesson.slug || slugify(lesson.title);
     const id = `${lesson.trackId}:${slug}`;
-    const count = await sql<{ n: number }>`
-      select count(*)::int as n from cms_lessons where track_id = ${lesson.trackId}
+    const last = await sql<{ n: number }>`
+      select coalesce(max(sort_order), -1)::int + 1 as n from cms_lessons where track_id = ${lesson.trackId}
     `;
+    const nextOrder = last[0]?.n ?? 0;
     const phases = lesson.evalPhases ?? [];
     const slidesProvided = lesson.slides !== undefined;
     const slidesValue = lesson.slides ?? null;
@@ -980,7 +987,7 @@ export const saveLesson = createServerFn({ method: "POST" })
         values (
           ${id}, ${lesson.trackId}, ${slug}, ${lesson.title},
           ${lesson.minutes}, ${lesson.kicker || null},
-          ${lesson.body}, ${lesson.takeaway || null}, ${count[0]?.n ?? 0},
+          ${lesson.body}, ${lesson.takeaway || null}, ${nextOrder},
           ${phases}, ${slidesValue}
         )
         on conflict (id) do update set
@@ -1000,7 +1007,7 @@ export const saveLesson = createServerFn({ method: "POST" })
       values (
         ${id}, ${lesson.trackId}, ${slug}, ${lesson.title},
         ${lesson.minutes}, ${lesson.kicker || null},
-        ${lesson.body}, ${lesson.takeaway || null}, ${count[0]?.n ?? 0},
+        ${lesson.body}, ${lesson.takeaway || null}, ${nextOrder},
         ${phases}, ${null}
       )
       on conflict (id) do update set
@@ -1209,7 +1216,7 @@ async function readBuildCatalog(): Promise<BuildTrack[]> {
   }>`
     select track_id, slug, title, minutes, kicker, body, takeaway, eval_phases, slides, sort_order
     from cms_lessons
-    order by sort_order asc, title asc
+    order by track_id asc, sort_order asc, slug asc
     limit 10000
   `;
   return trackRows.map((track) => ({
@@ -1225,6 +1232,11 @@ async function readBuildCatalog(): Promise<BuildTrack[]> {
     sortOrder: Number(track.sort_order) || 0,
     lessons: lessonRows
       .filter((l) => l.track_id === track.id)
+      .sort((a, b) => {
+        const left = Number(a.sort_order) || 0;
+        const right = Number(b.sort_order) || 0;
+        return left - right || a.slug.localeCompare(b.slug);
+      })
       .map((l) => ({
         slug: l.slug,
         title: l.title,

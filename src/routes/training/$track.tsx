@@ -152,31 +152,48 @@ function OnboardingWeeks({
   rows: ProgressRow[];
   ready: boolean;
 }) {
+  const groups: { week: number; title: string; summary: string; lessons: Lesson[] }[] = [];
+  for (const lesson of track.lessons) {
+    const day = dayFromSlug(lesson.slug);
+    const week = day != null ? weekOfDay(day) : groups.at(-1)?.week ?? 0;
+    const last = groups.at(-1);
+    if (last && last.week === week) {
+      last.lessons.push(lesson);
+      continue;
+    }
+    const meta = ONBOARDING_WEEKS.find((item) => item.week === week);
+    groups.push({
+      week,
+      title: meta?.title ?? (week ? `Week ${week}` : "Course lessons"),
+      summary: meta?.summary ?? "",
+      lessons: [lesson],
+    });
+  }
+
   return (
     <div className="space-y-10">
-      {ONBOARDING_WEEKS.map((week) => {
-        const lessons = track.lessons.filter((lesson) => {
-          const day = dayFromSlug(lesson.slug);
-          return day != null && weekOfDay(day) === week.week;
-        });
-        const done = lessons.filter((l) => lessonStatus(rows, lessonKey(track.id, l.slug)) === "completed").length;
+      {groups.map((group, groupIndex) => {
+        const done = group.lessons.filter((l) => lessonStatus(rows, lessonKey(track.id, l.slug)) === "completed").length;
+        const startIndex = groups.slice(0, groupIndex).reduce((sum, item) => sum + item.lessons.length, 0);
         return (
-          <section key={week.week}>
-            <p className="text-xs font-medium uppercase tracking-[0.18em] text-brass">
-              Week {week.week}
-            </p>
-            <h2 className="mt-1 font-display text-3xl leading-none">{week.title}</h2>
-            <p className="mt-2 text-sm text-muted">{week.summary}</p>
+          <section key={`${group.week}-${groupIndex}`}>
+            {group.week > 0 && (
+              <p className="text-xs font-medium uppercase tracking-[0.18em] text-brass">
+                Week {group.week}
+              </p>
+            )}
+            <h2 className="mt-1 font-display text-3xl leading-none">{group.title}</h2>
+            {group.summary ? <p className="mt-2 text-sm text-muted">{group.summary}</p> : null}
             <p className="mt-1 text-xs tabular-nums text-muted">
-              {ready ? `${done}/${lessons.length} days` : "—"}
+              {ready ? `${done}/${group.lessons.length} lessons` : "—"}
             </p>
             <ol className="mt-4 space-y-3">
-              {lessons.map((lesson, i) => (
+              {group.lessons.map((lesson, i) => (
                 <DayRow
                   key={lesson.slug}
                   trackId={track.id}
                   lesson={lesson}
-                  index={i}
+                  index={startIndex + i}
                   status={lessonStatus(rows, lessonKey(track.id, lesson.slug))}
                 />
               ))}
