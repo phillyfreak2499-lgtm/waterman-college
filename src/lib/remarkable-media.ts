@@ -22,6 +22,10 @@ export type RemarkableMedia = {
   tags: string[];
 };
 
+export type VideoEmbed =
+  | { kind: "iframe"; src: string; original: string }
+  | { kind: "file"; src: string; original: string };
+
 function cleanUrl(value: unknown) {
   if (value == null || value === "") return null;
   if (typeof value !== "string") throw new Error("Video link must be text.");
@@ -52,16 +56,19 @@ export function parseTags(value: unknown): string[] {
   return tags;
 }
 
+function lastPath(parsed: URL) {
+  return parsed.pathname.split("/").filter(Boolean).pop() ?? "";
+}
+
 export function youtubeId(url: string) {
   try {
     const parsed = new URL(url);
-    if (parsed.hostname.includes("youtu.be")) return parsed.pathname.replace("/", "").slice(0, 20);
-    if (parsed.hostname.includes("youtube.com")) {
+    const host = parsed.hostname.replace(/^www\./, "");
+    if (host === "youtu.be" || host === "youtube.com" || host.endsWith(".youtube.com")) {
       if (parsed.searchParams.get("v")) return parsed.searchParams.get("v");
-      const embed = parsed.pathname.match(/\/embed\/([^/?]+)/);
-      if (embed) return embed[1];
-      const shorts = parsed.pathname.match(/\/shorts\/([^/?]+)/);
-      if (shorts) return shorts[1];
+      const match = parsed.pathname.match(/\/(embed|shorts|live|v)\/([^/?]+)/);
+      if (match) return match[2];
+      if (host === "youtu.be") return parsed.pathname.replace(/^\//, "").split("/")[0];
     }
   } catch {
     return null;
@@ -69,25 +76,57 @@ export function youtubeId(url: string) {
   return null;
 }
 
-export function embedVideo(url: string | null | undefined) {
+export function embedVideo(url: string | null | undefined): VideoEmbed | null {
   if (!url) return null;
+  const original = url;
   const yt = youtubeId(url);
-  if (yt) return { kind: "iframe" as const, src: `https://www.youtube-nocookie.com/embed/${yt}` };
+  if (yt) {
+    return { kind: "iframe", src: `https://www.youtube.com/embed/${yt}?rel=0`, original };
+  }
   try {
     const parsed = new URL(url);
-    if (parsed.hostname.includes("vimeo.com")) {
-      const id = parsed.pathname.split("/").filter(Boolean).pop();
-      if (id && /^\d+$/.test(id)) return { kind: "iframe" as const, src: `https://player.vimeo.com/video/${id}` };
+    const host = parsed.hostname.replace(/^www\./, "");
+
+    if (host.includes("vimeo.com")) {
+      const parts = parsed.pathname.split("/").filter(Boolean);
+      const id = [...parts].reverse().find((part) => /^\d+$/.test(part));
+      if (id) return { kind: "iframe", src: `https://player.vimeo.com/video/${id}`, original };
     }
-    if (parsed.hostname.includes("loom.com")) {
-      const id = parsed.pathname.split("/").filter(Boolean).pop();
-      if (id) return { kind: "iframe" as const, src: `https://www.loom.com/embed/${id}` };
+
+    if (host.includes("loom.com")) {
+      const id = lastPath(parsed).replace(/\?.*$/, "");
+      if (id) return { kind: "iframe", src: `https://www.loom.com/embed/${id}`, original };
+    }
+
+    if (host.includes("drive.google.com")) {
+      const file = parsed.pathname.match(/\/file\/d\/([^/]+)/);
+      const id = file?.[1] || parsed.searchParams.get("id");
+      if (id) return { kind: "iframe", src: `https://drive.google.com/file/d/${id}/preview`, original };
+    }
+
+    if (host.includes("dropbox.com")) {
+      parsed.searchParams.set("raw", "1");
+      parsed.searchParams.delete("dl");
+      return { kind: "file", src: parsed.toString(), original };
+    }
+
+    if (host.includes("streamable.com")) {
+      const id = lastPath(parsed);
+      if (id && id !== "e") return { kind: "iframe", src: `https://streamable.com/e/${id}`, original };
+    }
+
+    if (host.includes("wistia.com") || host.includes("wi.st")) {
+      const id = lastPath(parsed);
+      if (id) return { kind: "iframe", src: `https://fast.wistia.net/embed/iframe/${id}`, original };
     }
   } catch {
-    return { kind: "link" as const, href: url };
+    return { kind: "iframe", src: url, original };
   }
-  if (/\.(mp4|webm|ogg)(\?|$)/i.test(url)) return { kind: "file" as const, src: url };
-  return { kind: "link" as const, href: url };
+
+  if (/\.(mp4|webm|ogg|mov)(\?|#|$)/i.test(url)) {
+    return { kind: "file", src: url, original };
+  }
+  return { kind: "iframe", src: url, original };
 }
 
 function parseStoredTags(raw: string | null) {
