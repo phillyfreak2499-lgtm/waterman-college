@@ -29,23 +29,29 @@ export function SiteHeader({ inverted = false }: { inverted?: boolean }) {
     { to: "/remarkable", label: "Be Remarkable" },
   ];
   const p = access.perms;
-  const signedInLinks: { to: string; label: string }[] = [
-    { to: "/locker", label: "My Locker" },
-    { to: "/floor", label: "Floor" },
-    ...(p.viewWhy ? [{ to: "/why", label: "Why" }] : []),
-    ...(p.viewHow ? [{ to: "/how-it-works", label: "How" }] : []),
-    ...(p.viewTraining ? [{ to: "/training", label: "Training" }] : []),
-    ...(p.viewDirectory ? [{ to: "/directory", label: "Directory" }] : []),
-    ...(p.viewQuad ? [{ to: "/quad", label: "The Quad" }] : []),
-    ...(p.viewRemarkable ? [{ to: "/remarkable", label: "Be Remarkable" }] : []),
-    ...(access.canManagePeople || p.viewTeam ? [{ to: "/team", label: "Team" }] : []),
-    ...(p.manageTraining || access.isAdmin ? [{ to: "/build", label: "Builder" }] : []),
-    ...(isLeader(access.role) ? [{ to: "/metrics", label: "Team Metrics" }] : []),
-    ...(access.isChancellor ? [{ to: "/chancellor", label: "Chancellor" }] : []),
-    ...(!access.isChancellor && (access.isAdmin || access.canSeeCompany)
-      ? [{ to: "/admin", label: "Office" }]
-      : []),
-  ];
+  const newHireOnly = access.role === "new-hires" || access.rbacRoleId === "new-hire";
+  const signedInLinks: { to: string; label: string }[] = newHireOnly
+    ? [
+        { to: "/locker", label: "My Locker" },
+        { to: "/training", label: "Training" },
+      ]
+    : [
+        { to: "/locker", label: "My Locker" },
+        { to: "/floor", label: "Floor" },
+        ...(p.viewWhy ? [{ to: "/why", label: "Why" }] : []),
+        ...(p.viewHow ? [{ to: "/how-it-works", label: "How" }] : []),
+        ...(p.viewTraining ? [{ to: "/training", label: "Training" }] : []),
+        ...(p.viewDirectory ? [{ to: "/directory", label: "Directory" }] : []),
+        ...(p.viewQuad ? [{ to: "/quad", label: "The Quad" }] : []),
+        ...(p.viewRemarkable ? [{ to: "/remarkable", label: "Be Remarkable" }] : []),
+        ...(access.canManagePeople || p.viewTeam ? [{ to: "/team", label: "Team" }] : []),
+        ...(p.manageTraining || access.isAdmin ? [{ to: "/build", label: "Builder" }] : []),
+        ...(isLeader(access.role) ? [{ to: "/metrics", label: "Team Metrics" }] : []),
+        ...(access.isChancellor ? [{ to: "/chancellor", label: "Chancellor" }] : []),
+        ...(!access.isChancellor && (access.isAdmin || access.canSeeCompany)
+          ? [{ to: "/admin", label: "Office" }]
+          : []),
+      ];
   const links = !ready || !user ? publicLinks : signedInLinks;
 
   function isActive(to: string) {
