@@ -29,6 +29,7 @@ export type Track = {
   summary: string;
   lessons: Lesson[];
   visibleToAll?: boolean;
+  audienceRoles?: RoleId[];
 };
 
 export const SITE = {
