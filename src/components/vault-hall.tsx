@@ -1,6 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { playVaultSound, preloadVaultSounds, stopVaultSounds } from "@/lib/vault-sound";
+import { useAccess } from "@/components/access-provider";
 import type { RoleId } from "@/lib/content";
 import { cn } from "@/lib/utils";
 
@@ -57,6 +57,7 @@ function prefersReducedMotion() {
 
 export function VaultHall({ armed = true }: { armed?: boolean }) {
   const navigate = useNavigate();
+  const { access } = useAccess();
   const lock = useRef(false);
   const navigationTimer = useRef<number | null>(null);
   const [view, setView] = useState<{ w: number; h: number } | null>(null);
@@ -64,7 +65,6 @@ export function VaultHall({ armed = true }: { armed?: boolean }) {
   const [quiet, setQuiet] = useState(true);
 
   useEffect(() => {
-    const releasePreloads = preloadVaultSounds();
     const update = () => setView({ w: window.innerWidth, h: window.innerHeight });
     update();
     const html = document.documentElement;
@@ -85,15 +85,18 @@ export function VaultHall({ armed = true }: { armed?: boolean }) {
       window.removeEventListener("orientationchange", update);
       window.clearTimeout(timer);
       if (navigationTimer.current !== null) window.clearTimeout(navigationTimer.current);
-      releasePreloads();
-      stopVaultSounds();
     };
   }, []);
 
+  const openDoors =
+    access.allowedTabs.length === 0
+      ? DOORS
+      : DOORS.filter((door) => !door.role || access.allowedTabs.includes(door.role));
+
   function openDoor(door: Door) {
     if (!armed || !arrived || lock.current) return;
+    if (door.role && access.allowedTabs.length > 0 && !access.allowedTabs.includes(door.role)) return;
     lock.current = true;
-    playVaultSound(door.kind);
     navigationTimer.current = window.setTimeout(() => {
       if (door.role) {
         void navigate({ to: "/training", search: { role: door.role } });
@@ -102,7 +105,7 @@ export function VaultHall({ armed = true }: { armed?: boolean }) {
       }
       lock.current = false;
       navigationTimer.current = null;
-    }, 620);
+    }, 180);
   }
 
   const picker = Boolean(view && view.w < 760 && view.h > view.w);
@@ -155,7 +158,7 @@ export function VaultHall({ armed = true }: { armed?: boolean }) {
         )}
         {stage &&
           arrived &&
-          DOORS.map((door) => (
+          openDoors.map((door) => (
             <button
               key={door.id}
               type="button"
@@ -204,7 +207,7 @@ export function VaultHall({ armed = true }: { armed?: boolean }) {
       {portrait && arrived && (
         <div className="absolute inset-x-0 bottom-0 z-10 border-t border-paper/10 bg-navy-deep/95 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <div className="grid grid-cols-2 gap-2">
-            {DOORS.filter((d) => d.role).map((door) => (
+            {openDoors.filter((d) => d.role).map((door) => (
               <button
                 key={door.id}
                 type="button"
