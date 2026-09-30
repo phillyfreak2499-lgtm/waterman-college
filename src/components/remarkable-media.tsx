@@ -3,35 +3,29 @@ import { REMARKABLE_TAGS, embedVideo } from "@/lib/remarkable-media";
 export function RemarkableVideo({ url }: { url: string | null | undefined }) {
   const embed = embedVideo(url);
   if (!embed) return null;
-  if (embed.kind === "iframe") {
-    return (
-      <div className="mt-6 overflow-hidden rounded-md border border-line bg-navy shadow-card">
-        <div className="relative aspect-video">
+  return (
+    <div className="mt-6 overflow-hidden rounded-md border border-line bg-navy shadow-card">
+      {embed.kind === "file" ? (
+        <video
+          className="aspect-video w-full bg-black"
+          src={embed.src}
+          controls
+          playsInline
+          preload="metadata"
+        />
+      ) : (
+        <div className="relative aspect-video bg-black">
           <iframe
             src={embed.src}
             title="Be Remarkable video"
-            className="absolute inset-0 h-full w-full"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            className="absolute inset-0 h-full w-full border-0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
             allowFullScreen
+            referrerPolicy="strict-origin-when-cross-origin"
           />
         </div>
-      </div>
-    );
-  }
-  if (embed.kind === "file") {
-    return (
-      <video className="mt-6 w-full rounded-md bg-navy shadow-card" src={embed.src} controls preload="metadata" />
-    );
-  }
-  return (
-    <a
-      href={embed.href}
-      target="_blank"
-      rel="noreferrer"
-      className="mt-6 inline-flex min-h-11 items-center rounded-sm border border-line bg-surface px-4 text-sm font-medium text-navy hover:border-navy"
-    >
-      Open video
-    </a>
+      )}
+    </div>
   );
 }
 
@@ -92,9 +86,10 @@ export function RemarkableMediaFields({
         <input
           className={inputClass}
           value={videoUrl}
-          placeholder="YouTube, Vimeo, Loom, or a direct .mp4 link"
+          placeholder="Paste a YouTube, Vimeo, Loom, Google Drive, or .mp4 link"
           onChange={(e) => onChange({ videoUrl: e.target.value, tags })}
         />
+        <span className="mt-1.5 block text-xs text-muted">The video plays on the Be Remarkable page. No download needed.</span>
       </label>
       <div>
         <span className="mb-1.5 block text-xs font-medium uppercase tracking-[0.14em] text-muted">Tags</span>
