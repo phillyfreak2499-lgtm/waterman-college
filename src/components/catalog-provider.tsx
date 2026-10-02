@@ -15,6 +15,7 @@ const fallback: Catalog = {
   site: DEFAULT_SITE,
   roles: defaultRoles,
   tracks: [],
+  categories: [],
   news: [],
   pages: DEFAULT_PAGES,
 };

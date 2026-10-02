@@ -2,6 +2,15 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
 import { LessonLinksEditor } from "@/components/admin-lesson-links";
+import {
+  AudienceFields,
+  CourseSettingsFields,
+  courseSettingsOf,
+  courseSettingsProblem,
+  NEW_COURSE_SETTINGS,
+  type CourseSettings,
+} from "@/components/audience-fields";
+import { CategoriesPanel } from "@/components/categories-panel";
 import { QuizEditor, QuizInbox } from "@/components/admin-quizzes";
 import { useAccess } from "@/components/access-provider";
 import { AuthGate } from "@/components/auth-gate";
@@ -19,6 +28,7 @@ import {
   deleteTrack,
   listMedia,
   listOfficeTracks,
+  patchTrack,
   saveLesson,
   saveNews,
   saveTrack,
@@ -29,7 +39,7 @@ import {
   type NewsItem,
   type TrackInput,
 } from "@/lib/cms";
-import { isRoleId } from "@/lib/content";
+import { audiencePaths } from "@/lib/course-audience";
 import { assignTraining, getTeam, revokeTraining, type TeamSnapshot } from "@/lib/org";
 import { pageHead } from "@/lib/page-title";
 import { QUAD_GAMES } from "@/lib/quad";
@@ -207,17 +217,18 @@ function Desk({ onJump }: { onJump: (tab: Tab) => void }) {
   );
 }
 
+type TrackForm = TrackInput & CourseSettings;
+
 function CoursesDesk() {
   const { catalog, replace } = useCatalog();
-  const emptyTrack = (): TrackInput => ({
+  const emptyTrack = (): TrackForm => ({
     id: "",
-    role: "specialist",
     title: "",
     nav: "",
     image: "/media/campus-cogs.jpg",
     audience: "",
     summary: "",
-    visibleToAll: false,
+    ...NEW_COURSE_SETTINGS,
   });
   const emptyLesson = (trackId: string): LessonInput => ({
     trackId,
@@ -229,7 +240,7 @@ function CoursesDesk() {
     takeaway: "",
     evalPhases: [],
   });
-  const [trackForm, setTrackForm] = useState<TrackInput>(emptyTrack());
+  const [trackForm, setTrackForm] = useState<TrackForm>(emptyTrack());
   const [lessonForm, setLessonForm] = useState<LessonInput>(emptyLesson(""));
   const [selected, setSelected] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -237,6 +248,11 @@ function CoursesDesk() {
 
   async function saveCurrentTrack(e: FormEvent) {
     e.preventDefault();
+    const problem = courseSettingsProblem(trackForm, !trackForm.id);
+    if (problem) {
+      toast.error(problem);
+      return;
+    }
     setBusy(true);
     try {
       const id = trackForm.id || slugify(trackForm.title);
@@ -299,13 +315,12 @@ function CoursesDesk() {
                   setSelected(track.id);
                   setTrackForm({
                     id: track.id,
-                    role: track.role,
                     title: track.title,
                     nav: track.nav,
                     image: track.image,
                     audience: track.audience,
                     summary: track.summary,
-                    visibleToAll: track.visibleToAll,
+                    ...courseSettingsOf(track),
                   });
                   setLessonForm(emptyLesson(track.id));
                 }}
@@ -331,27 +346,16 @@ function CoursesDesk() {
             <Field label="Audience">
               <input className={darkInput} value={trackForm.audience} onChange={(e) => setTrackForm({ ...trackForm, audience: e.target.value })} placeholder="Every Specialist" />
             </Field>
-            <Field label="Who sees it on campus">
-              <select
-                className={darkInput}
-                value={trackForm.visibleToAll ? "all" : trackForm.role}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === "all") setTrackForm({ ...trackForm, visibleToAll: true });
-                  else if (isRoleId(value)) setTrackForm({ ...trackForm, role: value, visibleToAll: false });
-                }}
-              >
-                <option value="new-hires">New Hires only</option>
-                <option value="specialist">Specialists (and above)</option>
-                <option value="mit">MIT path</option>
-                <option value="managers">Managers</option>
-                <option value="all">Every position</option>
-              </select>
-            </Field>
             <Field label="Short nav name">
               <input className={darkInput} value={trackForm.nav} onChange={(e) => setTrackForm({ ...trackForm, nav: e.target.value })} />
             </Field>
           </div>
+          <CourseSettingsFields
+            dark
+            categories={catalog.categories}
+            value={trackForm}
+            onChange={(next) => setTrackForm({ ...trackForm, ...next })}
+          />
           <Field label="Summary — this is what they read in the hall">
             <textarea className={`${darkInput} min-h-20 py-2`} value={trackForm.summary} onChange={(e) => setTrackForm({ ...trackForm, summary: e.target.value })} />
           </Field>
@@ -808,30 +812,25 @@ function DoorsDesk() {
         </p>
         <ul className="mt-6 divide-y divide-paper/10 border-t border-paper/10">
           {rows.map((track) => (
-            <li key={track.id} className="grid gap-3 py-4 sm:grid-cols-[1fr_12rem_auto] sm:items-center">
+            <li key={track.id} className="grid gap-3 py-4 sm:grid-cols-[1fr_auto_auto] sm:items-center">
               <div>
                 <p className="font-medium">{track.title}</p>
                 <p className="text-sm text-paper/55">
                   {track.lessons} lessons · {track.archived ? "draft" : "live"} · updated {track.updatedAt}
                 </p>
               </div>
-              <select
-                className={darkInput}
-                value={track.visibleToAll ? "all" : track.role}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  void saveTrack({
-                    data: {
-                      id: track.id,
-                      role: value === "all" ? "specialist" : isRoleId(value) ? value : "specialist",
-                      title: track.title,
-                      nav: track.title,
-                      image: "/media/campus-cogs.jpg",
-                      audience: "",
-                      summary: track.summary,
-                      visibleToAll: value === "all",
-                    },
-                  })
+              <AudienceFields
+                dark
+                compact
+                role={track.role}
+                visibleToAll={track.visibleToAll}
+                audienceRoles={audiencePaths(track)}
+                onChange={(audience) => {
+                  if (!audience.visibleToAll && !audience.audienceRoles.length) {
+                    toast.error("Leave at least one path, or tick Everyone.");
+                    return;
+                  }
+                  void patchTrack({ data: { id: track.id, audience } })
                     .then((next) => {
                       replace(next);
                       return listOfficeTracks().then(setRows);
@@ -839,13 +838,7 @@ function DoorsDesk() {
                     .then(() => toast.success("Door updated."))
                     .catch((error) => toast.error(error instanceof Error ? error.message : "Could not update"));
                 }}
-              >
-                <option value="new-hires">New Hires</option>
-                <option value="specialist">Specialists</option>
-                <option value="mit">MIT</option>
-                <option value="managers">Managers</option>
-                <option value="all">Every position</option>
-              </select>
+              />
               <Button
                 size="sm"
                 variant={track.archived ? "brass" : "invert"}
@@ -862,6 +855,7 @@ function DoorsDesk() {
           ))}
         </ul>
       </section>
+      <CategoriesPanel />
 
       {canFlipOffice && (
         <section>

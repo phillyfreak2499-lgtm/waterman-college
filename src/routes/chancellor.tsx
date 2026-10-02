@@ -5,7 +5,16 @@ import { useAccess } from "@/components/access-provider";
 import { AuthGate } from "@/components/auth-gate";
 import { Redirect } from "@/lib/auth/gates";
 import { useCatalog } from "@/components/catalog-provider";
+import {
+  AUDIENCE_LABELS,
+  CourseSettingsFields,
+  courseSettingsProblem,
+  NEW_COURSE_SETTINGS,
+  type CourseSettings,
+} from "@/components/audience-fields";
+import { CategoriesPanel } from "@/components/categories-panel";
 import { Button } from "@/components/ui/button";
+import { audienceLabel, formatLabel } from "@/lib/course-audience";
 import {
   ACCESS_ROLES,
   type AccessRole,
@@ -26,6 +35,7 @@ import {
   deleteNews,
   deleteTrack,
   listOfficeTracks,
+  patchTrack,
   saveLesson,
   saveNews,
   savePages,
@@ -663,8 +673,7 @@ function TrainingDesk() {
   const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
   const [body, setBody] = useState("");
-  const [role, setRole] = useState<AccessRole>("specialist");
-  const [visibleToAll, setVisibleToAll] = useState(false);
+  const [settings, setSettings] = useState<CourseSettings>(NEW_COURSE_SETTINGS);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -673,19 +682,23 @@ function TrainingDesk() {
 
   async function add(e: FormEvent) {
     e.preventDefault();
+    const problem = courseSettingsProblem(settings, true);
+    if (problem) {
+      toast.error(problem);
+      return;
+    }
     setBusy(true);
     try {
       const id = slugify(title);
       const next = await saveTrack({
         data: {
           id,
-          role: role === "pending" || role === "admin" || role === "regional" || role === "trainer" || role === "sales-manager" || role === "ceo" ? "specialist" : role,
           title,
           nav: title,
           image: "/media/campus-cogs.jpg",
           audience: "Chancellor",
           summary,
-          visibleToAll,
+          ...settings,
         },
       });
       replace(next);
@@ -705,7 +718,7 @@ function TrainingDesk() {
       setTitle("");
       setSummary("");
       setBody("");
-      setVisibleToAll(false);
+      setSettings(NEW_COURSE_SETTINGS);
       toast.success("Training added.");
       setRows(await listOfficeTracks());
     } catch (err) {
@@ -724,24 +737,7 @@ function TrainingDesk() {
           <input className={darkInput} required value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title" />
           <textarea className={`${darkInput} min-h-20 py-2`} required value={summary} onChange={(e) => setSummary(e.target.value)} placeholder="Description" />
           <textarea className={`${darkInput} min-h-28 py-2`} value={body} onChange={(e) => setBody(e.target.value)} placeholder="Content — text, steps, links" />
-          <select
-            className={darkInput}
-            value={visibleToAll ? "all" : role}
-            onChange={(e) => {
-              const value = e.target.value;
-              if (value === "all") setVisibleToAll(true);
-              else {
-                setRole(value as AccessRole);
-                setVisibleToAll(false);
-              }
-            }}
-          >
-            <option value="new-hires">Who can view: New Hires</option>
-            <option value="specialist">Who can view: Arch Support Specialists</option>
-            <option value="mit">Who can view: MIT</option>
-            <option value="managers">Who can view: Managers</option>
-            <option value="all">Who can view: All (everyone)</option>
-          </select>
+          <CourseSettingsFields dark categories={catalog.categories} value={settings} onChange={setSettings} />
         </div>
         <Button type="submit" className="mt-4" variant="invert" disabled={busy}>
           {busy ? "Saving…" : "Add training"}
@@ -756,7 +752,8 @@ function TrainingDesk() {
               <div>
                 <p className="font-medium">{track.title}</p>
                 <p className="text-sm text-paper/55">
-                  {track.summary} · {track.role} · {track.lessons} lessons ·{" "}
+                  {track.summary} · {audienceLabel(track, AUDIENCE_LABELS)} · {formatLabel(track.format)} ·{" "}
+                  {track.lessons} lessons ·{" "}
                   {track.archived ? "draft / archived" : "active"} · updated {track.updatedAt}
                 </p>
               </div>
@@ -767,18 +764,7 @@ function TrainingDesk() {
                   onClick={() => {
                     const next = window.prompt("New title", track.title);
                     if (!next) return;
-                    void saveTrack({
-                      data: {
-                        id: track.id,
-                        role: track.role,
-                        title: next,
-                        nav: next,
-                        image: "/media/campus-cogs.jpg",
-                        audience: "",
-                        summary: track.summary,
-                        visibleToAll: track.visibleToAll,
-                      },
-                    }).then((c) => {
+                    void patchTrack({ data: { id: track.id, title: next } }).then((c) => {
                       replace(c);
                       return listOfficeTracks().then(setRows);
                     }).catch((error) => toast.error(error instanceof Error ? error.message : "Could not update training"));
@@ -817,6 +803,8 @@ function TrainingDesk() {
           ))}
         </ul>
       </section>
+
+      <CategoriesPanel />
     </div>
   );
 }

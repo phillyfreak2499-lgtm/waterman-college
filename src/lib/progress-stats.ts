@@ -6,6 +6,7 @@ import {
 } from "@/lib/content";
 import { dayFromSlug, weekOfDay } from "@/lib/onboarding";
 import type { ProgressRow } from "@/lib/progress";
+import { inAudience } from "@/lib/course-audience";
 
 export type LessonStatus = "not-started" | "in-progress" | "completed";
 
@@ -54,7 +55,7 @@ export function trackStats(rows: ProgressRow[], track: Track) {
 }
 
 export function roleStats(rows: ProgressRow[], role: RoleId, list: Track[] = defaultTracks) {
-  const filtered = list.filter((t) => t.role === role);
+  const filtered = list.filter((t) => inAudience(t, role));
   const stats = filtered.map((track) => trackStats(rows, track));
   const total = filtered.reduce((n, t) => n + t.lessons.length, 0);
   const done = stats.reduce((n, item) => n + item.done, 0);
@@ -181,7 +182,10 @@ export function continueLesson(
   }
 
   const pool = preferredRole
-    ? [...list.filter((t) => t.role === preferredRole), ...list.filter((t) => t.role !== preferredRole)]
+    ? [
+        ...list.filter((t) => inAudience(t, preferredRole)),
+        ...list.filter((t) => !inAudience(t, preferredRole)),
+      ]
     : list;
 
   for (const track of pool) {

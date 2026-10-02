@@ -11,6 +11,7 @@ import {
   type AccessRole,
 } from "@/lib/access";
 import { readCatalog } from "@/lib/cms";
+import { canSeeTrack } from "@/lib/course-audience";
 import { getSql } from "@/lib/db";
 import { overallStats } from "@/lib/progress-stats";
 import type { ProgressRow } from "@/lib/progress";
@@ -209,9 +210,7 @@ export const listStoreHealth = createServerFn({ method: "GET" })
       const personAssigns = assignAll.filter((a) => a.user_id === person.id);
       const assignedIds = new Set(personAssigns.map((a) => a.track_id));
       const tabs = allowedTabs(person.role);
-      const allowed = catalog.tracks.filter(
-        (t) => tabs.includes(t.role) || assignedIds.has(t.id),
-      );
+      const allowed = catalog.tracks.filter((t) => canSeeTrack(t, tabs, assignedIds));
       const stats = overallStats(rows, allowed);
       const overdueCount = personAssigns.filter((a) => {
         const d = daysUntil(a.due_on);

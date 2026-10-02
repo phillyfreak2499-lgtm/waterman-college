@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { allowedTabs, isAccessRole, type AccessRole } from "@/lib/access";
+import { canSeeTrack } from "@/lib/course-audience";
 import { readCatalog } from "@/lib/cms";
 import { getSql } from "@/lib/db";
 import { trackStats } from "@/lib/progress-stats";
@@ -162,9 +163,7 @@ export const getWeeklyDigest = createServerFn({ method: "GET" })
       const rows = byUser.get(id) ?? [];
       const assignmentsForUser = assignedByUser.get(id) ?? new Set<string>();
       const tabs = allowedTabs(person.role);
-      const allowed = catalog.tracks.filter(
-        (track) => track.visibleToAll || tabs.includes(track.role) || assignmentsForUser.has(track.id),
-      );
+      const allowed = catalog.tracks.filter((track) => canSeeTrack(track, tabs, assignmentsForUser));
       const stats = allowed.reduce(
         (total, track) => {
           const current = trackStats(rows, track);

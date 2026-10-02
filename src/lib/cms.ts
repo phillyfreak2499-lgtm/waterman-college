@@ -9,6 +9,14 @@ import {
   type RoleId,
   type Track,
 } from "@/lib/content";
+import {
+  canSeeTrack,
+  DEFAULT_FORMAT,
+  isCourseFormat,
+  normaliseAudience,
+  type CourseCategory,
+  type CourseFormat,
+} from "@/lib/course-audience";
 import { getSql } from "@/lib/db";
 import { getDeckSlides, type DeckSlide } from "@/lib/decks";
 import { parseSlides } from "@/lib/decks-schema";
@@ -72,6 +80,7 @@ export type Catalog = {
   site: SiteSettings;
   roles: RoleCopy[];
   tracks: Track[];
+  categories: CourseCategory[];
   news: NewsItem[];
   pages: PageContent;
 };
@@ -511,8 +520,10 @@ export async function readCatalog(): Promise<Catalog> {
     audience: string;
     summary: string;
     visible_to_all: boolean;
+    audience_roles: string[] | null;
+    format: string | null;
   }>`
-    select id, role, title, nav, image, audience, summary, visible_to_all
+    select id, role, title, nav, image, audience, summary, visible_to_all, audience_roles, format
     from cms_tracks
     where archived = false
     order by sort_order asc, title asc
@@ -544,10 +555,15 @@ export async function readCatalog(): Promise<Catalog> {
     limit 500
   `;
 
-  const tracks: Track[] = trackRows.map((track) => ({
+  const { categories, byTrack } = await readCategories();
+
+  const tracks: Track[] = trackRows.map(({ visible_to_all, audience_roles, format, ...track }) => ({
     ...track,
     href: `/training/${track.id}`,
-    visibleToAll: track.visible_to_all === true,
+    visibleToAll: visible_to_all === true,
+    audienceRoles: (audience_roles ?? []).filter(isRoleId),
+    format: isCourseFormat(format) ? format : DEFAULT_FORMAT,
+    categoryIds: byTrack.get(track.id) ?? [],
     lessons: lessonRows
       .filter((l) => l.track_id === track.id)
       .sort((a, b) => {
@@ -573,9 +589,42 @@ export async function readCatalog(): Promise<Catalog> {
     site: withSiteDefaults(parseJson(map.site, DEFAULT_SITE)),
     roles: roleRows.length ? roleRows.map(({ ...r }) => r) : defaultRoles,
     tracks,
+    categories,
     news: newsRows,
     pages: withPageDefaults(parseJson(map.pages, DEFAULT_PAGES)),
   };
+}
+
+/** The managed category list plus each course's category ids, in list order. */
+async function readCategories(): Promise<{
+  categories: CourseCategory[];
+  byTrack: Map<string, string[]>;
+}> {
+  const sql = await getSql();
+  const categoryRows = await sql<{ id: string; label: string; sort_order: number }>`
+    select id, label, sort_order from cms_categories
+    order by sort_order asc, label asc
+    limit 500
+  `;
+  const linkRows = await sql<{ track_id: string; category_id: string }>`
+    select track_id, category_id from cms_track_categories limit 20000
+  `;
+  const categories = categoryRows.map((row) => ({
+    id: row.id,
+    label: row.label,
+    sortOrder: Number(row.sort_order) || 0,
+  }));
+  const rank = new Map(categories.map((c, i) => [c.id, i]));
+  const byTrack = new Map<string, string[]>();
+  for (const link of linkRows) {
+    const list = byTrack.get(link.track_id) ?? [];
+    list.push(link.category_id);
+    byTrack.set(link.track_id, list);
+  }
+  for (const list of byTrack.values()) {
+    list.sort((a, b) => (rank.get(a) ?? 0) - (rank.get(b) ?? 0));
+  }
+  return { categories, byTrack };
 }
 
 export const getPublicCatalog = createServerFn({ method: "GET" }).handler(async () => {
@@ -597,11 +646,8 @@ export const getCatalog = createServerFn({ method: "GET" })
     const assigned = new Set(profile.assignedTrackIds);
     return {
       ...catalog,
-      tracks: catalog.tracks.filter(
-        (track) =>
-          track.visibleToAll ||
-          profile.allowedTabs.includes(track.role) ||
-          assigned.has(track.id),
+      tracks: catalog.tracks.filter((track) =>
+        canSeeTrack(track, profile.allowedTabs, assigned),
       ),
     };
   });
@@ -804,6 +850,7 @@ export const deleteNews = createServerFn({ method: "POST" })
 
 export type TrackInput = {
   id: string;
+  /** Home path: drives sort order and the series label, not visibility. */
   role: RoleId;
   title: string;
   nav: string;
@@ -811,22 +858,62 @@ export type TrackInput = {
   audience: string;
   summary: string;
   visibleToAll?: boolean;
+  /** Paths that see the course. At least one, unless visibleToAll. */
+  audienceRoles: RoleId[];
+  format: CourseFormat;
+  categoryIds: string[];
 };
+
+function cleanFormat(value: unknown): CourseFormat {
+  if (!isCourseFormat(value)) throw new Error("Choose a format: Mastery, Read & Respond or Audio.");
+  return value;
+}
+
+function cleanCategoryIds(value: unknown): string[] {
+  if (!Array.isArray(value) || value.length > 50) throw new Error("Invalid categories.");
+  return [...new Set(value.map((id) => cleanId(id, "Category")))];
+}
+
+/** Reject category ids that are not on the managed list. */
+async function assertKnownCategories(sql: Awaited<ReturnType<typeof getSql>>, ids: string[]) {
+  if (!ids.length) return;
+  const rows = await sql<{ id: string }>`
+    select id from cms_categories where id = any(${ids}) limit 500
+  `;
+  const known = new Set(rows.map((r) => r.id));
+  const missing = ids.filter((id) => !known.has(id));
+  if (missing.length) throw new Error("That category no longer exists. Reload and try again.");
+}
+
+async function writeTrackCategories(
+  tx: Awaited<ReturnType<typeof getSql>>,
+  trackId: string,
+  categoryIds: string[],
+) {
+  await tx`delete from cms_track_categories where track_id = ${trackId}`;
+  for (const categoryId of categoryIds) {
+    await tx`
+      insert into cms_track_categories (track_id, category_id)
+      values (${trackId}, ${categoryId})
+      on conflict do nothing
+    `;
+  }
+}
 
 export const saveTrack = createServerFn({ method: "POST" })
   .validator((track: TrackInput) => {
     if (!track || typeof track !== "object") throw new Error("Course details are required.");
-    if (!isRoleId(track.role)) throw new Error("Choose a valid training path.");
     const title = cleanText(track.title, "Course title", 240);
     return {
       id: track.id ? cleanId(track.id, "Course") : "",
-      role: track.role,
+      ...normaliseAudience(track),
       title,
       nav: cleanText(track.nav || title, "Navigation label", 120),
       image: safeImage(track.image, "/media/3-step-open.jpg")!,
       audience: cleanText(track.audience ?? "", "Audience", 500, false),
       summary: cleanText(track.summary ?? "", "Summary", 5_000, false),
-      visibleToAll: track.visibleToAll === true,
+      format: cleanFormat(track.format),
+      categoryIds: cleanCategoryIds(track.categoryIds),
     };
   })
   .middleware([authMiddleware])
@@ -834,23 +921,185 @@ export const saveTrack = createServerFn({ method: "POST" })
     await assertCanBuild(context.userId);
     const sql = await getSql();
     const id = track.id || slugify(track.title);
+    const existing = await sql<{ id: string }>`select id from cms_tracks where id = ${id} limit 1`;
+    if (!existing.length && !track.categoryIds.length) {
+      throw new Error("Pick at least one category for a new course.");
+    }
+    await assertKnownCategories(sql, track.categoryIds);
     const count = await sql<{ n: number }>`select count(*)::int as n from cms_tracks`;
-    await sql`
-      insert into cms_tracks (id, role, title, nav, image, audience, summary, sort_order, updated_at, visible_to_all)
-      values (
-        ${id}, ${track.role}, ${track.title}, ${track.nav},
-        ${track.image}, ${track.audience}, ${track.summary}, ${count[0]?.n ?? 0}, now(), ${track.visibleToAll}
-      )
-      on conflict (id) do update set
-        role = excluded.role,
-        title = excluded.title,
-        nav = excluded.nav,
-        image = excluded.image,
-        audience = excluded.audience,
-        summary = excluded.summary,
-        visible_to_all = excluded.visible_to_all,
-        updated_at = now()
+    await sql.transaction(async (tx) => {
+      await tx`
+        insert into cms_tracks (
+          id, role, title, nav, image, audience, summary, sort_order, updated_at,
+          visible_to_all, audience_roles, format
+        )
+        values (
+          ${id}, ${track.role}, ${track.title}, ${track.nav},
+          ${track.image}, ${track.audience}, ${track.summary}, ${count[0]?.n ?? 0}, now(),
+          ${track.visibleToAll}, ${track.audienceRoles}, ${track.format}
+        )
+        on conflict (id) do update set
+          role = excluded.role,
+          title = excluded.title,
+          nav = excluded.nav,
+          image = excluded.image,
+          audience = excluded.audience,
+          summary = excluded.summary,
+          visible_to_all = excluded.visible_to_all,
+          audience_roles = excluded.audience_roles,
+          format = excluded.format,
+          updated_at = now()
+      `;
+      await writeTrackCategories(tx, id, track.categoryIds);
+    });
+    return readCatalog();
+  });
+
+/**
+ * Change only some of a course's settings — the inline audience picker on a
+ * course row and the quick rename. Fields left out stay exactly as they are,
+ * so these quick edits never wipe the image, summary, format or categories.
+ */
+export type TrackPatch = {
+  id: string;
+  title?: string;
+  audience?: { role: RoleId; visibleToAll: boolean; audienceRoles: RoleId[] };
+  format?: CourseFormat;
+  categoryIds?: string[];
+};
+
+export const patchTrack = createServerFn({ method: "POST" })
+  .validator((patch: TrackPatch) => {
+    if (!patch || typeof patch !== "object") throw new Error("Course details are required.");
+    return {
+      id: cleanId(patch.id, "Course"),
+      title: patch.title === undefined ? undefined : cleanText(patch.title, "Course title", 240),
+      audience: patch.audience === undefined ? undefined : normaliseAudience(patch.audience),
+      format: patch.format === undefined ? undefined : cleanFormat(patch.format),
+      categoryIds: patch.categoryIds === undefined ? undefined : cleanCategoryIds(patch.categoryIds),
+    };
+  })
+  .middleware([authMiddleware])
+  .handler(async ({ context, data: patch }) => {
+    await assertCanBuild(context.userId);
+    const sql = await getSql();
+    const found = await sql<{ id: string }>`select id from cms_tracks where id = ${patch.id} limit 1`;
+    if (!found.length) throw new Error("That course no longer exists.");
+    if (patch.categoryIds) await assertKnownCategories(sql, patch.categoryIds);
+    await sql.transaction(async (tx) => {
+      if (patch.title !== undefined) {
+        await tx`
+          update cms_tracks set title = ${patch.title}, nav = ${patch.title}, updated_at = now()
+          where id = ${patch.id}
+        `;
+      }
+      if (patch.audience) {
+        await tx`
+          update cms_tracks set
+            role = ${patch.audience.role},
+            visible_to_all = ${patch.audience.visibleToAll},
+            audience_roles = ${patch.audience.audienceRoles},
+            updated_at = now()
+          where id = ${patch.id}
+        `;
+      }
+      if (patch.format) {
+        await tx`update cms_tracks set format = ${patch.format}, updated_at = now() where id = ${patch.id}`;
+      }
+      if (patch.categoryIds) await writeTrackCategories(tx, patch.id, patch.categoryIds);
+    });
+    return readCatalog();
+  });
+
+// ── Categories ──────────────────────────────────────────────────────────────
+// One managed list so "Leadership" never splits into three spellings. Anyone
+// who can build training manages it. A category in use can't be deleted —
+// merge it into another instead.
+
+export const saveCategory = createServerFn({ method: "POST" })
+  .validator((input: { id?: string; label: string }) => ({
+    id: input?.id ? cleanId(input.id, "Category") : "",
+    label: cleanText(input?.label, "Category name", 60),
+  }))
+  .middleware([authMiddleware])
+  .handler(async ({ context, data }) => {
+    await assertCanBuild(context.userId);
+    const sql = await getSql();
+    const clash = await sql<{ id: string }>`
+      select id from cms_categories
+      where lower(label) = lower(${data.label}) and id <> ${data.id}
+      limit 1
     `;
+    if (clash.length) throw new Error(`“${data.label}” is already on the list.`);
+    if (data.id) {
+      // Courses point at the id, so a rename shows on every course at once.
+      const updated = await sql<{ id: string }>`
+        update cms_categories set label = ${data.label} where id = ${data.id} returning id
+      `;
+      if (!updated.length) throw new Error("That category no longer exists.");
+    } else {
+      const taken = new Set(
+        (await sql<{ id: string }>`select id from cms_categories limit 500`).map((r) => r.id),
+      );
+      const base = slugify(data.label);
+      let id = base;
+      let n = 2;
+      while (taken.has(id)) id = `${base}-${n++}`;
+      const count = await sql<{ n: number }>`select count(*)::int as n from cms_categories`;
+      await sql`
+        insert into cms_categories (id, label, sort_order)
+        values (${id}, ${data.label}, ${count[0]?.n ?? 0})
+      `;
+    }
+    const { writeAudit } = await import("@/lib/rbac");
+    await writeAudit(context.userId, "Builder", data.id ? "category.renamed" : "category.added", data.label);
+    return readCatalog();
+  });
+
+export const deleteCategory = createServerFn({ method: "POST" })
+  .validator((id: string) => cleanId(id, "Category"))
+  .middleware([authMiddleware])
+  .handler(async ({ context, data: id }) => {
+    await assertCanBuild(context.userId);
+    const sql = await getSql();
+    const used = await sql<{ n: number }>`
+      select count(*)::int as n from cms_track_categories where category_id = ${id}
+    `;
+    const n = used[0]?.n ?? 0;
+    if (n > 0) {
+      throw new Error(
+        `${n} course${n === 1 ? " still uses" : "s still use"} this category. Merge it into another instead.`,
+      );
+    }
+    await sql`delete from cms_categories where id = ${id}`;
+    const { writeAudit } = await import("@/lib/rbac");
+    await writeAudit(context.userId, "Builder", "category.removed", id);
+    return readCatalog();
+  });
+
+export const mergeCategory = createServerFn({ method: "POST" })
+  .validator((input: { fromId: string; intoId: string }) => {
+    const fromId = cleanId(input?.fromId, "Category");
+    const intoId = cleanId(input?.intoId, "Category");
+    if (fromId === intoId) throw new Error("Pick a different category to merge into.");
+    return { fromId, intoId };
+  })
+  .middleware([authMiddleware])
+  .handler(async ({ context, data }) => {
+    await assertCanBuild(context.userId);
+    const sql = await getSql();
+    await assertKnownCategories(sql, [data.fromId, data.intoId]);
+    await sql.transaction(async (tx) => {
+      await tx`
+        insert into cms_track_categories (track_id, category_id)
+        select track_id, ${data.intoId} from cms_track_categories where category_id = ${data.fromId}
+        on conflict do nothing
+      `;
+      await tx`delete from cms_track_categories where category_id = ${data.fromId}`;
+      await tx`delete from cms_categories where id = ${data.fromId}`;
+    });
+    const { writeAudit } = await import("@/lib/rbac");
+    await writeAudit(context.userId, "Builder", "category.merged", `${data.fromId} → ${data.intoId}`);
     return readCatalog();
   });
 
@@ -900,14 +1149,18 @@ export const listOfficeTracks = createServerFn({ method: "GET" })
       updated_at: string | Date | null;
       lessons: number;
       visible_to_all: boolean;
+      audience_roles: string[] | null;
+      format: string | null;
     }>`
       select
         t.id, t.role, t.title, t.summary, t.archived, t.updated_at, t.visible_to_all,
+        t.audience_roles, t.format,
         (select count(*)::int from cms_lessons l where l.track_id = t.id) as lessons
       from cms_tracks t
       order by t.archived asc, t.sort_order asc, t.title asc
       limit 1000
     `;
+    const { byTrack } = await readCategories();
     return rows.map((row) => ({
       id: row.id,
       role: row.role,
@@ -917,6 +1170,9 @@ export const listOfficeTracks = createServerFn({ method: "GET" })
       updatedAt: row.updated_at ? String(row.updated_at).slice(0, 10) : "",
       lessons: row.lessons,
       visibleToAll: row.visible_to_all === true,
+      audienceRoles: (row.audience_roles ?? []).filter(isRoleId),
+      format: isCourseFormat(row.format) ? row.format : DEFAULT_FORMAT,
+      categoryIds: byTrack.get(row.id) ?? [],
     }));
   });
 
@@ -1178,6 +1434,9 @@ export type BuildTrack = {
   audience: string;
   summary: string;
   visibleToAll: boolean;
+  audienceRoles: RoleId[];
+  format: CourseFormat;
+  categoryIds: string[];
   archived: boolean;
   sortOrder: number;
   lessons: BuildLesson[];
@@ -1194,10 +1453,13 @@ async function readBuildCatalog(): Promise<BuildTrack[]> {
     audience: string;
     summary: string;
     visible_to_all: boolean;
+    audience_roles: string[] | null;
+    format: string | null;
     archived: boolean;
     sort_order: number;
   }>`
-    select id, role, title, nav, image, audience, summary, visible_to_all, archived, sort_order
+    select id, role, title, nav, image, audience, summary, visible_to_all, audience_roles, format,
+      archived, sort_order
     from cms_tracks
     order by archived asc, sort_order asc, title asc
     limit 1000
@@ -1219,6 +1481,7 @@ async function readBuildCatalog(): Promise<BuildTrack[]> {
     order by track_id asc, sort_order asc, slug asc
     limit 10000
   `;
+  const { byTrack } = await readCategories();
   return trackRows.map((track) => ({
     id: track.id,
     role: track.role,
@@ -1228,6 +1491,9 @@ async function readBuildCatalog(): Promise<BuildTrack[]> {
     audience: track.audience,
     summary: track.summary,
     visibleToAll: track.visible_to_all === true,
+    audienceRoles: (track.audience_roles ?? []).filter(isRoleId),
+    format: isCourseFormat(track.format) ? track.format : DEFAULT_FORMAT,
+    categoryIds: byTrack.get(track.id) ?? [],
     archived: track.archived === true,
     sortOrder: Number(track.sort_order) || 0,
     lessons: lessonRows
@@ -1361,8 +1627,10 @@ export const duplicateTrack = createServerFn({ method: "POST" })
       audience: string;
       summary: string;
       visible_to_all: boolean;
+      audience_roles: string[] | null;
+      format: string;
     }>`
-      select role, title, nav, image, audience, summary, visible_to_all
+      select role, title, nav, image, audience, summary, visible_to_all, audience_roles, format
       from cms_tracks where id = ${id} limit 1
     `;
     const src = trackRows[0];
@@ -1389,11 +1657,20 @@ export const duplicateTrack = createServerFn({ method: "POST" })
     `;
     await sql.transaction(async (tx) => {
       await tx`
-        insert into cms_tracks (id, role, title, nav, image, audience, summary, sort_order, updated_at, visible_to_all, archived)
+        insert into cms_tracks (
+          id, role, title, nav, image, audience, summary, sort_order, updated_at,
+          visible_to_all, audience_roles, format, archived
+        )
         values (
           ${newId}, ${src.role}, ${`${src.title} (copy)`}, ${src.nav}, ${src.image},
-          ${src.audience}, ${src.summary}, ${count[0]?.n ?? 0}, now(), ${src.visible_to_all}, true
+          ${src.audience}, ${src.summary}, ${count[0]?.n ?? 0}, now(),
+          ${src.visible_to_all}, ${src.audience_roles ?? []}, ${src.format}, true
         )
+      `;
+      await tx`
+        insert into cms_track_categories (track_id, category_id)
+        select ${newId}, category_id from cms_track_categories where track_id = ${id}
+        on conflict do nothing
       `;
       for (const l of lessons) {
         await tx`
@@ -1449,7 +1726,13 @@ export const publishTrack = createServerFn({ method: "POST" })
 export type TrackBundle = {
   format: "cogs-course";
   version: 1;
-  track: Omit<TrackInput, "id">;
+  /**
+   * audienceRoles/format/categoryIds are optional so files exported before
+   * they existed still import: audience falls back to the home path, format to
+   * Read & Respond, and unknown categories are dropped.
+   */
+  track: Omit<TrackInput, "id" | "audienceRoles" | "format" | "categoryIds"> &
+    Partial<Pick<TrackInput, "audienceRoles" | "format" | "categoryIds">>;
   lessons: {
     slug: string;
     title: string;
@@ -1481,6 +1764,9 @@ export const exportTrack = createServerFn({ method: "GET" })
         audience: track.audience,
         summary: track.summary,
         visibleToAll: track.visibleToAll,
+        audienceRoles: track.audienceRoles,
+        format: track.format,
+        categoryIds: track.categoryIds,
       },
       lessons: track.lessons.map((l) => ({
         slug: l.slug,
@@ -1499,19 +1785,26 @@ export const importTrack = createServerFn({ method: "POST" })
   .validator((bundle: TrackBundle) => {
     if (!bundle || bundle.format !== "cogs-course") throw new Error("Not a COGS course file.");
     if (!isRoleId(bundle.track?.role)) throw new Error("The course has an unknown path.");
+    const storedAudience = Array.isArray(bundle.track.audienceRoles) ? bundle.track.audienceRoles : [];
     if (!Array.isArray(bundle.lessons) || bundle.lessons.length > 200) {
       throw new Error("The course has too many lessons.");
     }
     const title = cleanText(bundle.track.title, "Course title", 240);
     return {
       track: {
-        role: bundle.track.role,
         title,
         nav: cleanText(bundle.track.nav || title, "Navigation label", 120),
         image: safeImage(bundle.track.image, "/media/3-step-open.jpg")!,
         audience: cleanText(bundle.track.audience ?? "", "Audience", 500, false),
         summary: cleanText(bundle.track.summary ?? "", "Summary", 5_000, false),
-        visibleToAll: bundle.track.visibleToAll === true,
+        ...normaliseAudience({
+          role: bundle.track.role,
+          visibleToAll: bundle.track.visibleToAll,
+          audienceRoles: storedAudience.length ? storedAudience : [bundle.track.role],
+        }),
+        format: bundle.track.format === undefined ? DEFAULT_FORMAT : cleanFormat(bundle.track.format),
+        categoryIds:
+          bundle.track.categoryIds === undefined ? [] : cleanCategoryIds(bundle.track.categoryIds),
       },
       lessons: bundle.lessons.map((l) => ({
         slug: l.slug ? cleanId(l.slug, "Lesson slug") : slugify(cleanText(l.title, "Lesson title", 240)),
@@ -1544,14 +1837,33 @@ export const importTrack = createServerFn({ method: "POST" })
     let n = 2;
     while (taken.has(id)) id = `${slugify(data.track.title)}-${n++}`;
     const count = await sql<{ n: number }>`select count(*)::int as n from cms_tracks`;
+    // A file from another campus may name categories this one doesn't have.
+    const knownCategories = data.track.categoryIds.length
+      ? new Set(
+          (
+            await sql<{ id: string }>`
+              select id from cms_categories where id = any(${data.track.categoryIds}) limit 500
+            `
+          ).map((r) => r.id),
+        )
+      : new Set<string>();
     await sql.transaction(async (tx) => {
       await tx`
-        insert into cms_tracks (id, role, title, nav, image, audience, summary, sort_order, updated_at, visible_to_all, archived)
+        insert into cms_tracks (
+          id, role, title, nav, image, audience, summary, sort_order, updated_at,
+          visible_to_all, audience_roles, format, archived
+        )
         values (
           ${id}, ${data.track.role}, ${data.track.title}, ${data.track.nav}, ${data.track.image},
-          ${data.track.audience}, ${data.track.summary}, ${count[0]?.n ?? 0}, now(), ${data.track.visibleToAll}, true
+          ${data.track.audience}, ${data.track.summary}, ${count[0]?.n ?? 0}, now(),
+          ${data.track.visibleToAll}, ${data.track.audienceRoles}, ${data.track.format}, true
         )
       `;
+      await writeTrackCategories(
+        tx,
+        id,
+        data.track.categoryIds.filter((categoryId) => knownCategories.has(categoryId)),
+      );
       const seen = new Set<string>();
       for (const [j, l] of data.lessons.entries()) {
         let slug = l.slug;

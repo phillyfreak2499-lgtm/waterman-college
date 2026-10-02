@@ -4,6 +4,7 @@ import { useAccess } from "@/components/access-provider";
 import { useCatalog } from "@/components/catalog-provider";
 import { useProgress } from "@/components/progress-provider";
 import type { RoleId } from "@/lib/content";
+import { inAudience } from "@/lib/course-audience";
 import { continueLesson, ledgerProgress } from "@/lib/progress-stats";
 import { cn } from "@/lib/utils";
 
@@ -12,7 +13,7 @@ export function ProgressPanel({ role }: { role: RoleId }) {
   const { catalog } = useCatalog();
   const { access } = useAccess();
   const path = catalog.tracks.filter(
-    (t) => t.role === role || access.assignedTrackIds.includes(t.id),
+    (t) => inAudience(t, role) || access.assignedTrackIds.includes(t.id),
   );
   const ledger = ledgerProgress(rows, path);
   const next = continueLesson(rows, role, path);

@@ -1,3 +1,4 @@
+import type { CourseFormat } from "@/lib/course-audience";
 import type { DeckSlide } from "@/lib/decks";
 import { ONBOARDING_LESSONS } from "./onboarding";
 import { POM3_TRACK } from "./peace-of-mind-3";
@@ -29,7 +30,10 @@ export type Track = {
   summary: string;
   lessons: Lesson[];
   visibleToAll?: boolean;
+  /** Paths this course is aimed at. Empty means "home path only". */
   audienceRoles?: RoleId[];
+  format?: CourseFormat;
+  categoryIds?: string[];
 };
 
 export const SITE = {

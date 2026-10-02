@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { Check, Download } from "lucide-react";
 import { AuthGate } from "@/components/auth-gate";
 import { FavoriteButton } from "@/components/favorite-button";
@@ -10,6 +10,8 @@ import { TrainingTabs } from "@/components/training-tabs";
 import { useProgress } from "@/components/progress-provider";
 import { ONBOARDING_WEEKS } from "@/lib/onboarding";
 import type { Lesson, Track } from "@/lib/content";
+import { FormatBadge } from "@/components/audience-fields";
+import { audiencePaths, canSeeTrack } from "@/lib/course-audience";
 import type { ProgressRow } from "@/lib/progress";
 import { lessonKey, lessonStatus, trackStats } from "@/lib/progress-stats";
 import { cn } from "@/lib/utils";
@@ -37,12 +39,10 @@ function TrackGate() {
   if ((!track && !ready) || !accessReady) {
     return <div className="mx-auto max-w-3xl px-5 py-24"><div className="h-40 animate-pulse rounded-md bg-navy/5" /></div>;
   }
-  if (!track) throw notFound();
-  if (
-    !track.visibleToAll &&
-    !access.allowedTabs.includes(track.role) &&
-    !access.assignedTrackIds.includes(track.id)
-  ) {
+  // The catalog is filtered on the server, so a course outside the viewer's
+  // audience is simply absent. Say so without revealing whether it exists.
+  if (!track) return <LockedPath role={access.role} title="This course is not on your path." />;
+  if (!canSeeTrack(track, access.allowedTabs, access.assignedTrackIds)) {
     return <LockedPath role={access.role} title="This course is not on your path." />;
   }
   return <TrackBody track={track} />;
@@ -52,14 +52,19 @@ function TrackBody({ track }: { track: Track }) {
   const { catalog } = useCatalog();
   const { rows, ready } = useProgress();
   const stats = trackStats(rows, track);
-  const roleLabel = catalog.roles.find((r) => r.id === track.role)?.label ?? "Training";
+  const { access } = useAccess();
+  // The tab to return to: the home path when it's one of the viewer's paths,
+  // otherwise the first of their paths this course is aimed at.
+  const homeTab =
+    [track.role, ...audiencePaths(track)].find((path) => access.allowedTabs.includes(path)) ?? track.role;
+  const roleLabel = catalog.roles.find((r) => r.id === homeTab)?.label ?? "Training";
   const deck = trackDeck(track.id);
 
   return (
     <div>
       <div className="border-b border-line bg-paper">
         <div className="mx-auto max-w-6xl px-5 pt-6 sm:px-8">
-          <TrainingTabs active={track.role} />
+          <TrainingTabs active={homeTab} />
         </div>
       </div>
       <div className="relative isolate overflow-hidden bg-navy text-paper">
@@ -74,7 +79,7 @@ function TrackBody({ track }: { track: Track }) {
         <div className="relative mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-20">
           <Link
             to="/training"
-            search={{ role: track.role }}
+            search={{ role: homeTab }}
             className="text-xs uppercase tracking-[0.18em] text-brass-soft hover:text-paper"
           >
             Back to {roleLabel}
@@ -84,6 +89,7 @@ function TrackBody({ track }: { track: Track }) {
             <h1 className="font-display text-4xl leading-none sm:text-6xl">{track.title}</h1>
             <FavoriteButton targetType="track" targetId={track.id} invert className="mt-2 sm:mt-3" />
           </div>
+          <FormatBadge format={track.format} className="mt-4 bg-paper/10" />
           <p className="mt-5 max-w-2xl text-base leading-relaxed text-paper/80">{track.summary}</p>
           {deck && (
             <a

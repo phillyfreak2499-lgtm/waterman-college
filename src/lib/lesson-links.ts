@@ -42,6 +42,10 @@ export function normalizeResourceUrl(raw: string): string {
   const value = String(raw ?? "").trim();
   if (!value) throw new Error("Add a link first.");
   if (value.length > 2048) throw new Error("That link is too long.");
+  // Audio committed to the repo under public/audio/ is linked by its site path.
+  if (/^\/audio\/[a-z0-9][a-z0-9_.\-/]*\.(mp3|m4a|aac|ogg|oga|wav)$/i.test(value) && !value.includes("..")) {
+    return value;
+  }
   let parsed: URL;
   try {
     parsed = new URL(value);

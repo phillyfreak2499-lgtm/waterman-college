@@ -2,6 +2,8 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Archive, ArchiveRestore, Copy, Download, FilePlus2, Pencil, Upload } from "lucide-react";
+import { AUDIENCE_LABELS, NEW_COURSE_SETTINGS } from "@/components/audience-fields";
+import { useCatalog } from "@/components/catalog-provider";
 import { Button } from "@/components/ui/button";
 import { BuilderGate } from "@/components/build/builder-gate";
 import { BuilderHelpButton } from "@/components/build/builder-help";
@@ -20,6 +22,7 @@ import {
   type BuildTrack,
   type TrackBundle,
 } from "@/lib/cms";
+import { audienceLabel, formatLabel } from "@/lib/course-audience";
 import { pageHead } from "@/lib/page-title";
 import { cn } from "@/lib/utils";
 
@@ -32,17 +35,12 @@ export const Route = createFileRoute("/build")({
   head: () => pageHead("Training Building Center", "Build and publish trainings for the college."),
 });
 
-const ROLE_LABEL: Record<string, string> = {
-  "new-hires": "New Hires",
-  specialist: "Specialist",
-  mit: "MIT",
-  managers: "Managers",
-};
-
 function BuildIndex() {
   const router = useRouter();
   const [tracks, setTracks] = useState<BuildTrack[] | null>(null);
   const [busy, setBusy] = useState(false);
+  const { catalog } = useCatalog();
+  const [templateCategory, setTemplateCategory] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -70,11 +68,24 @@ function BuildIndex() {
   async function startTemplate(templateId: string) {
     const template = COURSE_TEMPLATES.find((t) => t.id === templateId);
     if (!template || busy) return;
+    if (!templateCategory) {
+      toast.error("Pick a category for the new course first.");
+      return;
+    }
     setBusy(true);
     try {
       const title = template.name;
       await saveTrack({
-        data: { id: "", role: "specialist", title, nav: title, image: "/media/campus-cogs.jpg", audience: "", summary: template.blurb, visibleToAll: false },
+        data: {
+          id: "",
+          title,
+          nav: title,
+          image: "/media/campus-cogs.jpg",
+          audience: "",
+          summary: template.blurb,
+          ...NEW_COURSE_SETTINGS,
+          categoryIds: [templateCategory],
+        },
       });
       const id = slugify(title);
       for (const lesson of template.lessons) {
@@ -164,7 +175,27 @@ function BuildIndex() {
       </div>
 
       <div className="mt-8 rounded-lg border border-line bg-surface p-4">
-        <p className="text-sm font-medium">Start from a template</p>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm font-medium">Start from a template</p>
+          <label className="flex items-center gap-2 text-sm text-muted">
+            Category
+            <select
+              className="h-9 rounded-sm border border-line bg-paper px-2 text-sm text-ink"
+              value={templateCategory}
+              onChange={(e) => setTemplateCategory(e.target.value)}
+            >
+              <option value="">Choose…</option>
+              {catalog.categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <p className="mt-1 text-xs text-muted">
+          New courses start on the Specialist path as Read &amp; Respond. Change both on the next screen.
+        </p>
         <div className="mt-3 flex flex-wrap gap-2">
           {COURSE_TEMPLATES.map((template) => (
             <button
@@ -197,7 +228,7 @@ function BuildIndex() {
               <div className="min-w-0 flex-1">
                 <p className="truncate font-display text-xl leading-tight">{track.title}</p>
                 <p className="mt-0.5 text-xs text-muted">
-                  {track.visibleToAll ? "Everyone" : ROLE_LABEL[track.role] ?? track.role} · {track.lessons.length} lesson
+                  {audienceLabel(track, AUDIENCE_LABELS)} · {formatLabel(track.format)} · {track.lessons.length} lesson
                   {track.lessons.length === 1 ? "" : "s"}
                   {track.archived ? " · Archived (draft)" : ""}
                 </p>

@@ -13,6 +13,7 @@ import {
   type AccessRole,
 } from "@/lib/access";
 import { readCatalog } from "@/lib/cms";
+import { canSeeTrack } from "@/lib/course-audience";
 import { getSql } from "@/lib/db";
 import { continueLesson, overallStats, type ContinueTarget } from "@/lib/progress-stats";
 import type { ProgressRow } from "@/lib/progress";
@@ -141,7 +142,7 @@ async function buildTeam(actorId: string, actorRole: AccessRole): Promise<TeamSn
       assignments.filter((a) => a.userId === person.id).map((a) => a.trackId),
     );
     const tabs = allowedTabs(person.role);
-    const allowed = catalog.tracks.filter((t) => tabs.includes(t.role) || assignedIds.has(t.id));
+    const allowed = catalog.tracks.filter((t) => canSeeTrack(t, tabs, assignedIds));
     const stats = overallStats(rows, allowed);
     return {
       id: person.id,

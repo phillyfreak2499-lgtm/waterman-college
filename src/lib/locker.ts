@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
 import { readAccessProfile } from "@/lib/access";
 import { readCatalog } from "@/lib/cms";
+import { canSeeTrack, inAudience } from "@/lib/course-audience";
 import { getSql } from "@/lib/db";
 import type { ProgressRow } from "@/lib/progress";
 import {
@@ -213,7 +214,7 @@ export const listLockerContinue = createServerFn({ method: "GET" })
         : undefined;
     const path = catalog.tracks.filter(
       (t) =>
-        (preferred && t.role === preferred) ||
+        (preferred && inAudience(t, preferred)) ||
         profile.assignedTrackIds.includes(t.id),
     );
     return continueLesson(progress, preferred, path.length ? path : catalog.tracks);
@@ -226,10 +227,8 @@ export const listLockerProgress = createServerFn({ method: "GET" })
     const profile = await readAccessProfile(context.userId);
     const catalog = await readCatalog();
     const progress = await loadProgressRows(context.userId);
-    const path = catalog.tracks.filter(
-      (t) =>
-        profile.allowedTabs.includes(t.role) ||
-        profile.assignedTrackIds.includes(t.id),
+    const path = catalog.tracks.filter((t) =>
+      canSeeTrack(t, profile.allowedTabs, profile.assignedTrackIds),
     );
     let done = 0;
     let total = 0;

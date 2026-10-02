@@ -6,6 +6,8 @@ import {
   isLeader,
   readAccessRole,
 } from "@/lib/access";
+import type { Track } from "@/lib/content";
+import { audiencePaths } from "@/lib/course-audience";
 import { getSql } from "@/lib/db";
 
 /** One checklist / scale / text field on the evaluation form. */
@@ -709,10 +711,17 @@ export const SUGGESTION_THRESHOLD = 7;
 /** Max lessons shown in Locker suggestions. */
 export const SUGGESTION_LIMIT = 5;
 
+/** Paths a course's lessons may be suggested on. */
+function trackPathsOf(track: Track): string[] {
+  return track.visibleToAll ? ["new-hires", "specialist", "mit", "managers"] : audiencePaths(track);
+}
+
 /** A catalog lesson eligible for phase-based suggestions. */
 export type CatalogLessonRef = {
   trackId: string;
   trackRole: string;
+  /** Every path the course is on (all four when it is set to Everyone). */
+  trackPaths?: string[];
   lessonSlug: string;
   title: string;
   evalPhases: string[];
@@ -751,7 +760,7 @@ export function suggestLessonsFromScores(
       const matches = catalog.filter(
         (l) =>
           l.evalPhases.includes(phase.id) &&
-          (allowed.size === 0 || allowed.has(l.trackRole)),
+          (allowed.size === 0 || (l.trackPaths ?? [l.trackRole]).some((r) => allowed.has(r))),
       );
       for (const lesson of matches) {
         const key = `${lesson.trackId}/${lesson.lessonSlug}`;
@@ -1027,6 +1036,7 @@ export const listMyEvalScores = createServerFn({ method: "GET" })
       track.lessons.map((lesson) => ({
         trackId: track.id,
         trackRole: track.role,
+        trackPaths: trackPathsOf(track),
         lessonSlug: lesson.slug,
         title: lesson.title,
         evalPhases: lesson.evalPhases || [],
@@ -1354,6 +1364,7 @@ export const getStoreHuddlePack = createServerFn({ method: "GET" })
       track.lessons.map((lesson) => ({
         trackId: track.id,
         trackRole: track.role,
+        trackPaths: trackPathsOf(track),
         lessonSlug: lesson.slug,
         title: lesson.title,
         evalPhases: lesson.evalPhases || [],

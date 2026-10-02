@@ -39,5 +39,6 @@ test("catalog has separate public and authenticated endpoints", () => {
   assert.match(source, /getPublicCatalog/);
   assert.match(source, /getCatalog[\s\S]+authMiddleware/);
   assert.match(source, /tracks: catalog\.tracks\.map\(\(track\) => \(\{ \.\.\.track, lessons: \[\] \}\)\)/);
-  assert.match(source, /profile\.allowedTabs\.includes\(track\.role\)/);
+  // The authenticated catalog is filtered by the shared audience rule.
+  assert.match(source, /canSeeTrack\(track, profile\.allowedTabs, assigned\)/);
 });

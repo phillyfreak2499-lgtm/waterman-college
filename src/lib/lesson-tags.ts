@@ -1,7 +1,8 @@
 /**
  * Lesson line tags — the single source of truth.
  *
- * Lesson bodies carry tagged lines — `GFA · …`, `ROLEPLAY · …`, `VIDEO · …` —
+ * Lesson bodies carry tagged lines — `GFA · …`, `ROLEPLAY · …`, `VIDEO · …`,
+ * `AUDIO · …` —
  * that render as a small brass label and can be turned into a real link by the
  * training office. Historically two separate lists existed (one in the lesson
  * route for rendering, one in lesson-links.ts for linking) and they drifted
@@ -15,6 +16,7 @@
  */
 export const LESSON_TAGS = [
   "VIDEO",
+  "AUDIO",
   "GFA",
   "PRACTICE",
   "ROLEPLAY",
@@ -32,6 +34,7 @@ export type LessonTag = (typeof LESSON_TAGS)[number];
 /** Human hint shown in the builder for what each tag is for. */
 export const LESSON_TAG_HINTS: Record<LessonTag, string> = {
   VIDEO: "A video to watch. Attach the link in the builder.",
+  AUDIO: "Audio to play in the lesson. Attach an https:// link or a /audio/… file; put the transcript underneath.",
   GFA: "Guided Field Activity — something to do on the floor.",
   PRACTICE: "A practice rep the learner runs before moving on.",
   ROLEPLAY: "A roleplay scenario, usually with a partner.",

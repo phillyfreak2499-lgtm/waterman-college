@@ -7,6 +7,13 @@ import { AccountsEditor } from "@/components/admin-accounts";
 import { LessonLinksEditor } from "@/components/admin-lesson-links";
 import { useAccess } from "@/components/access-provider";
 import { AuthGate } from "@/components/auth-gate";
+import {
+  CourseSettingsFields,
+  courseSettingsOf,
+  courseSettingsProblem,
+  NEW_COURSE_SETTINGS,
+  type CourseSettings,
+} from "@/components/audience-fields";
 import { useCatalog } from "@/components/catalog-provider";
 import { SiteShell } from "@/components/site-shell";
 import { Button } from "@/components/ui/button";
@@ -44,7 +51,6 @@ import {
   type SiteSettings,
   type TrackInput,
 } from "@/lib/cms";
-import { isRoleId } from "@/lib/content";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/admin")({ component: AdminPage });
@@ -690,6 +696,8 @@ function NewsEditor({
   );
 }
 
+type TrackForm = TrackInput & CourseSettings;
+
 function TrainingEditor({
   tracks,
   onSave,
@@ -697,14 +705,15 @@ function TrainingEditor({
   tracks: Awaited<ReturnType<typeof saveTrack>>["tracks"];
   onSave: (c: Awaited<ReturnType<typeof saveTrack>>) => void;
 }) {
-  const emptyTrack = (): TrackInput => ({
+  const { catalog } = useCatalog();
+  const emptyTrack = (): TrackForm => ({
     id: "",
-    role: "specialist",
     title: "",
     nav: "",
     image: "/media/campus-cogs.jpg",
     audience: "",
     summary: "",
+    ...NEW_COURSE_SETTINGS,
   });
   const emptyLesson = (trackId: string): LessonInput => ({
     trackId,
@@ -717,7 +726,7 @@ function TrainingEditor({
     evalPhases: [],
   });
 
-  const [trackForm, setTrackForm] = useState<TrackInput>(emptyTrack());
+  const [trackForm, setTrackForm] = useState<TrackForm>(emptyTrack());
   const [lessonForm, setLessonForm] = useState<LessonInput>(emptyLesson(""));
   const [selected, setSelected] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -725,6 +734,11 @@ function TrainingEditor({
 
   async function saveCurrentTrack(e: FormEvent) {
     e.preventDefault();
+    const problem = courseSettingsProblem(trackForm, !trackForm.id);
+    if (problem) {
+      toast.error(problem);
+      return;
+    }
     setBusy(true);
     try {
       const next = await saveTrack({
@@ -791,13 +805,12 @@ function TrainingEditor({
                   setSelected(t.id);
                   setTrackForm({
                     id: t.id,
-                    role: t.role,
                     title: t.title,
                     nav: t.nav,
                     image: t.image,
                     audience: t.audience,
                     summary: t.summary,
-                    visibleToAll: t.visibleToAll,
+                    ...courseSettingsOf(t),
                   });
                   setLessonForm(emptyLesson(t.id));
                 }}
@@ -824,28 +837,15 @@ function TrainingEditor({
             <Field label="Audience">
               <input className={inputClass} value={trackForm.audience} onChange={(e) => setTrackForm({ ...trackForm, audience: e.target.value })} placeholder="Every Specialist" />
             </Field>
-            <Field label="Who can view">
-              <select
-                className={inputClass}
-                value={trackForm.visibleToAll ? "all" : trackForm.role}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  if (value === "all") setTrackForm({ ...trackForm, visibleToAll: true });
-                  else if (isRoleId(value))
-                    setTrackForm({ ...trackForm, role: value, visibleToAll: false });
-                }}
-              >
-                <option value="new-hires">New Hires</option>
-                <option value="specialist">Arch Support Specialist</option>
-                <option value="mit">MIT</option>
-                <option value="managers">Managers</option>
-                <option value="all">All (everyone)</option>
-              </select>
-            </Field>
             <Field label="Short nav name">
               <input className={inputClass} value={trackForm.nav} onChange={(e) => setTrackForm({ ...trackForm, nav: e.target.value })} />
             </Field>
           </div>
+          <CourseSettingsFields
+            categories={catalog.categories}
+            value={trackForm}
+            onChange={(next) => setTrackForm({ ...trackForm, ...next })}
+          />
           <Field label="Summary">
             <textarea className={areaClass} value={trackForm.summary} onChange={(e) => setTrackForm({ ...trackForm, summary: e.target.value })} />
           </Field>

@@ -49,6 +49,9 @@ const CONTENT_SECURITY_POLICY = [
   // in src/lib/video-embed.ts — no arbitrary URL is ever framed).
   "frame-src 'self' https://www.youtube-nocookie.com https://player.vimeo.com",
   "img-src 'self' data: blob:",
+  // `AUDIO ·` lesson lines play a /audio/… file or any https:// link
+  // (validated in src/lib/audio-src.ts).
+  "media-src 'self' https:",
   "manifest-src 'self'",
   "object-src 'none'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval'",

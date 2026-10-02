@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { Search } from "lucide-react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useAccess } from "@/components/access-provider";
+import { FormatBadge } from "@/components/audience-fields";
 import { AuthGate } from "@/components/auth-gate";
 import { useCatalog } from "@/components/catalog-provider";
 import { LockedPath } from "@/components/locked-path";
@@ -13,14 +15,32 @@ import { RedirectToSignIn } from "@/lib/auth/gates";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { accessLabel } from "@/lib/access";
 import { isRoleId, type RoleId, type Track } from "@/lib/content";
+import {
+  COURSE_FORMATS,
+  formatRank,
+  isCourseFormat,
+  onPathTab,
+  searchText,
+  type CourseFormat,
+} from "@/lib/course-audience";
 import { trackDeck } from "@/lib/decks";
 import { ledgerProgress, trackStats } from "@/lib/progress-stats";
 import type { ProgressRow } from "@/lib/progress";
 import { pageHead } from "@/lib/page-title";
+import { cn } from "@/lib/utils";
+
+type CampusSearch = { role?: RoleId; format?: CourseFormat; category?: string };
 
 export const Route = createFileRoute("/training/")({
-  validateSearch: (search: Record<string, unknown>): { role?: RoleId } => ({
+  // format and category ride in the URL like ?role= so a manager can text a
+  // link such as "Specialist → Mastery → Product Knowledge".
+  validateSearch: (search: Record<string, unknown>): CampusSearch => ({
     role: isRoleId(search.role) ? search.role : undefined,
+    format: isCourseFormat(search.format) ? search.format : undefined,
+    category:
+      typeof search.category === "string" && /^[a-z0-9][a-z0-9:_-]{0,119}$/i.test(search.category)
+        ? search.category
+        : undefined,
   }),
   component: TrainingHome,
   head: () => pageHead("Training", "Open the vault. Choose your door. The lessons have not moved."),
@@ -50,10 +70,41 @@ function VaultEntry() {
 }
 
 function Campus() {
-  const { role: roleParam } = Route.useSearch();
+  const { role: roleParam, format, category } = Route.useSearch();
+  const navigate = Route.useNavigate();
   const { catalog } = useCatalog();
   const { access, ready: accessReady } = useAccess();
   const { rows, ready } = useProgress();
+  const [query, setQuery] = useState("");
+  const role = roleParam && access.allowedTabs.includes(roleParam) ? roleParam : access.allowedTabs[0];
+
+  // Step 1: the path tab — every course whose audience includes it, plus Everyone.
+  const onTab = useMemo(
+    () => (role ? catalog.tracks.filter((t) => onPathTab(t, role)) : []),
+    [catalog.tracks, role],
+  );
+  // Step 2: format. Step 3: category, or a search across the whole path.
+  const byFormat = format ? onTab.filter((t) => (t.format ?? "read-respond") === format) : onTab;
+  const categoryCounts = new Map<string, number>();
+  for (const t of byFormat) {
+    for (const id of t.categoryIds ?? []) categoryCounts.set(id, (categoryCounts.get(id) ?? 0) + 1);
+  }
+  const chips = catalog.categories.filter((c) => categoryCounts.has(c.id));
+  const activeCategory = category && categoryCounts.has(category) ? category : undefined;
+  const needle = query.trim().toLowerCase();
+  const shown = needle
+    ? onTab.filter((t) => searchText(t, catalog.categories).includes(needle))
+    : activeCategory
+      ? byFormat.filter((t) => t.categoryIds?.includes(activeCategory))
+      : byFormat;
+  const groups = COURSE_FORMATS.map((f) => ({
+    ...f,
+    tracks: shown.filter((t) => formatRank(t.format) === formatRank(f.id)),
+  })).filter((group) => group.tracks.length > 0);
+
+  function setFilter(next: Partial<CampusSearch>) {
+    void navigate({ search: (prev: CampusSearch) => ({ ...prev, ...next }), replace: true });
+  }
 
   if (!accessReady) {
     return (
@@ -67,15 +118,10 @@ function Campus() {
     return <LockedPath role={access.role} />;
   }
 
-  const role = roleParam && access.allowedTabs.includes(roleParam) ? roleParam : access.allowedTabs[0];
   const meta = catalog.roles.find((r) => r.id === role) ?? catalog.roles[0];
-  const visible = catalog.tracks.filter((t) => t.role === role || t.visibleToAll);
-  const slideTracks = visible.filter((t) => trackDeck(t.id));
-  const coreTracks = visible.filter((t) => !trackDeck(t.id));
   const assignedExtra = catalog.tracks.filter(
-    (t) => access.assignedTrackIds.includes(t.id) && t.role !== role && !t.visibleToAll,
+    (t) => access.assignedTrackIds.includes(t.id) && !onPathTab(t, role),
   );
-  const seriesLabel = role === "managers" ? "Burgundy Track" : role === "specialist" ? "Blue Track" : null;
 
   return (
     <div className="mx-auto max-w-6xl px-5 py-10 sm:px-8 sm:py-14">
@@ -96,18 +142,61 @@ function Campus() {
         {access.store ? ` · ${access.store}` : ""}
       </p>
 
-      {slideTracks.length > 0 && (
-        <section className="mt-10">
-          {seriesLabel && <p className="kicker mb-4">{seriesLabel}</p>}
-          <TrackGrid tracks={slideTracks} rows={rows} ready={ready} />
-        </section>
+      {onTab.length > 0 && (
+        <div className="mt-10 space-y-3">
+          <ChipRow label="Format">
+            <Chip active={!format} onClick={() => setFilter({ format: undefined, category: undefined })}>
+              All
+            </Chip>
+            {COURSE_FORMATS.map((f) => (
+              <Chip
+                key={f.id}
+                active={format === f.id}
+                onClick={() => setFilter({ format: f.id, category: undefined })}
+              >
+                {f.label}
+              </Chip>
+            ))}
+          </ChipRow>
+          {chips.length > 0 && (
+            <ChipRow label="Category">
+              {chips.map((c) => (
+                <Chip
+                  key={c.id}
+                  active={activeCategory === c.id}
+                  onClick={() => setFilter({ category: activeCategory === c.id ? undefined : c.id })}
+                >
+                  {c.label}
+                  <span className="tabular-nums opacity-70">{categoryCounts.get(c.id)}</span>
+                </Chip>
+              ))}
+            </ChipRow>
+          )}
+          <label className="relative block max-w-md">
+            <span className="sr-only">Search this path</span>
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted" aria-hidden />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={`Search all of ${meta.label}`}
+              className="h-11 w-full rounded-sm border border-line bg-paper pl-9 pr-3 text-sm text-ink focus:outline-2 focus:outline-offset-1 focus:outline-navy"
+            />
+          </label>
+        </div>
       )}
 
-      {coreTracks.length > 0 && (
-        <section className={slideTracks.length ? "mt-14" : "mt-10"}>
-          {slideTracks.length > 0 && <p className="kicker mb-4">Campus courses</p>}
-          <TrackGrid tracks={coreTracks} rows={rows} ready={ready} />
+      {groups.map((group, index) => (
+        <section key={group.id} className={index === 0 ? "mt-8" : "mt-14"}>
+          {(!format || needle) && <p className="kicker mb-4">{group.label}</p>}
+          <TrackGrid tracks={group.tracks} rows={rows} ready={ready} />
         </section>
+      ))}
+
+      {onTab.length > 0 && groups.length === 0 && (
+        <p className="mt-8 text-sm text-muted">
+          {needle ? `Nothing on this path matches “${query.trim()}”.` : "No courses match these filters yet."}
+        </p>
       )}
 
       {assignedExtra.length > 0 && (
@@ -167,11 +256,14 @@ function TrackGrid({
                 alt=""
                 className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
               />
-              {deck && (
-                <span className="absolute left-3 top-3 rounded-sm bg-navy/85 px-2.5 py-1 text-[0.65rem] font-medium uppercase tracking-[0.16em] text-brass-soft">
-                  {deck.label}
-                </span>
-              )}
+              <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
+                <FormatBadge format={t.format} />
+                {deck && (
+                  <span className="rounded-sm bg-navy/85 px-2.5 py-1 text-[0.65rem] font-medium uppercase tracking-[0.16em] text-brass-soft">
+                    {deck.label}
+                  </span>
+                )}
+              </div>
             </div>
             <div className="p-6">
               <div className="flex items-center justify-between gap-3">
@@ -199,5 +291,37 @@ function TrackGrid({
         );
       })}
     </div>
+  );
+}
+
+/** A labelled chip row that scrolls sideways inside itself, never the page. */
+function ChipRow({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex min-w-0 items-center gap-3">
+      <span className="w-16 shrink-0 text-[0.65rem] font-medium uppercase tracking-[0.16em] text-muted">
+        {label}
+      </span>
+      <div className="min-w-0 flex-1 overflow-x-auto overscroll-x-contain [scrollbar-width:none]">
+        <div className="flex w-max gap-2 py-1" role="group" aria-label={label}>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Chip({ active, onClick, children }: { active: boolean; onClick: () => void; children: ReactNode }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={cn(
+        "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3.5 text-xs font-medium",
+        active ? "border-navy bg-navy text-paper" : "border-line bg-paper text-ink hover:border-navy/40",
+      )}
+    >
+      {children}
+    </button>
   );
 }

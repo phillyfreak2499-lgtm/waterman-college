@@ -352,7 +352,7 @@ function LinkRow({
         </label>
         <input
           id={`url-${rowId(row.trackId, row.lessonSlug, row.lineKey)}`}
-          type="url"
+          type="text"
           inputMode="url"
           value={draft}
           onChange={(event) => setDraft(event.target.value)}

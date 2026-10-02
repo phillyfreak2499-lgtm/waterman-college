@@ -21,7 +21,14 @@ import {
   slugify,
   type BuildTrack,
 } from "@/lib/cms";
-import { isRoleId, type RoleId } from "@/lib/content";
+import {
+  CourseSettingsFields,
+  courseSettingsOf,
+  courseSettingsProblem,
+  NEW_COURSE_SETTINGS,
+  type CourseSettings,
+} from "@/components/audience-fields";
+import { useCatalog } from "@/components/catalog-provider";
 import { pageHead } from "@/lib/page-title";
 
 export const Route = createFileRoute("/build_/$track")({
@@ -33,24 +40,21 @@ export const Route = createFileRoute("/build_/$track")({
   head: () => pageHead("Edit course · Builder"),
 });
 
-type TrackForm = {
-  role: RoleId;
+type TrackForm = CourseSettings & {
   title: string;
   nav: string;
   image: string;
   audience: string;
   summary: string;
-  visibleToAll: boolean;
 };
 
 const BLANK: TrackForm = {
-  role: "specialist",
   title: "",
   nav: "",
   image: "/media/campus-cogs.jpg",
   audience: "",
   summary: "",
-  visibleToAll: false,
+  ...NEW_COURSE_SETTINGS,
 };
 
 function TrackEditor() {
@@ -58,6 +62,7 @@ function TrackEditor() {
   const router = useRouter();
   const isNew = trackId === "new";
   const [catalog, setCatalog] = useState<BuildTrack[] | null>(isNew ? [] : null);
+  const { catalog: campus } = useCatalog();
   const [form, setForm] = useState<TrackForm>(BLANK);
   const [busy, setBusy] = useState(false);
 
@@ -73,13 +78,12 @@ function TrackEditor() {
         const found = next.find((t) => t.id === trackId);
         if (found) {
           setForm({
-            role: found.role,
             title: found.title,
             nav: found.nav,
             image: found.image,
             audience: found.audience,
             summary: found.summary,
-            visibleToAll: found.visibleToAll,
+            ...courseSettingsOf(found),
           });
         }
       })
@@ -95,18 +99,18 @@ function TrackEditor() {
 
   async function saveMeta(e: FormEvent) {
     e.preventDefault();
+    const problem = courseSettingsProblem(form, isNew);
+    if (problem) {
+      toast.error(problem);
+      return;
+    }
     setBusy(true);
     try {
       await saveTrack({
         data: {
+          ...form,
           id: isNew ? "" : trackId,
-          role: form.role,
-          title: form.title,
           nav: form.nav || form.title,
-          image: form.image,
-          audience: form.audience,
-          summary: form.summary,
-          visibleToAll: form.visibleToAll,
         },
       });
       toast.success("Course saved");
@@ -155,27 +159,15 @@ function TrackEditor() {
           <Field label="Audience">
             <input className={buildInputClass} value={form.audience} placeholder="Every Specialist" onChange={(e) => setForm({ ...form, audience: e.target.value })} />
           </Field>
-          <Field label="Who can view">
-            <select
-              className={buildInputClass}
-              value={form.visibleToAll ? "all" : form.role}
-              onChange={(e) => {
-                const value = e.target.value;
-                if (value === "all") setForm({ ...form, visibleToAll: true });
-                else if (isRoleId(value)) setForm({ ...form, role: value, visibleToAll: false });
-              }}
-            >
-              <option value="new-hires">New Hires</option>
-              <option value="specialist">Specialist</option>
-              <option value="mit">MIT</option>
-              <option value="managers">Managers</option>
-              <option value="all">All (everyone)</option>
-            </select>
-          </Field>
           <Field label="Short nav name">
             <input className={buildInputClass} value={form.nav} onChange={(e) => setForm({ ...form, nav: e.target.value })} />
           </Field>
         </div>
+        <CourseSettingsFields
+          categories={campus.categories}
+          value={form}
+          onChange={(next) => setForm({ ...form, ...next })}
+        />
         <Field label="Summary" hint="The first line a learner reads. Write it to a person.">
           <textarea className={buildAreaClass} value={form.summary} onChange={(e) => setForm({ ...form, summary: e.target.value })} />
         </Field>

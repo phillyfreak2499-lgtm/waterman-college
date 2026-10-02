@@ -15,6 +15,7 @@ import { SiteShell } from "@/components/site-shell";
 import { SlideDeck } from "@/components/slide-deck";
 import { Button } from "@/components/ui/button";
 import type { Lesson, Track } from "@/lib/content";
+import { canSeeTrack } from "@/lib/course-audience";
 import { trackDeck } from "@/lib/decks";
 import { markComplete, markIncomplete, markViewed } from "@/lib/progress";
 import { lessonKey, lessonStatus } from "@/lib/progress-stats";
@@ -45,12 +46,9 @@ function LessonGate() {
   if (((!track || !lesson) && !ready) || !accessReady) {
     return <div className="mx-auto max-w-2xl px-5 py-24"><div className="h-40 animate-pulse rounded-md bg-navy/5" /></div>;
   }
-  if (!track || !lesson) throw notFound();
-  if (
-    !track.visibleToAll &&
-    !access.allowedTabs.includes(track.role) &&
-    !access.assignedTrackIds.includes(track.id)
-  ) {
+  if (!track) return <LockedPath role={access.role} title="This lesson is not on your path." />;
+  if (!lesson) throw notFound();
+  if (!canSeeTrack(track, access.allowedTabs, access.assignedTrackIds)) {
     return <LockedPath role={access.role} title="This lesson is not on your path." />;
   }
   return <LessonBody track={track} lesson={lesson} />;

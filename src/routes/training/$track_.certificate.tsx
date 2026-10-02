@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { AuthGate } from "@/components/auth-gate";
 import { useAccess } from "@/components/access-provider";
 import { useCatalog } from "@/components/catalog-provider";
@@ -6,6 +6,7 @@ import { LockedPath } from "@/components/locked-path";
 import { SiteShell } from "@/components/site-shell";
 import { useProgress } from "@/components/progress-provider";
 import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { canSeeTrack } from "@/lib/course-audience";
 import { trackStats } from "@/lib/progress-stats";
 import { Button } from "@/components/ui/button";
 
@@ -34,12 +35,8 @@ function CertificateGate() {
   if (!ready || !accessReady || !progressReady) {
     return <div className="mx-auto max-w-3xl px-5 py-24"><div className="h-40 animate-pulse rounded-md bg-navy/5" /></div>;
   }
-  if (!track) throw notFound();
-  if (
-    !track.visibleToAll &&
-    !access.allowedTabs.includes(track.role) &&
-    !access.assignedTrackIds.includes(track.id)
-  ) {
+  if (!track) return <LockedPath role={access.role} title="This course is not on your path." />;
+  if (!canSeeTrack(track, access.allowedTabs, access.assignedTrackIds)) {
     return <LockedPath role={access.role} title="This course is not on your path." />;
   }
   const stats = trackStats(rows, track);

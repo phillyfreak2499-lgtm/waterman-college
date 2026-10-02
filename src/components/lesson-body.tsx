@@ -1,6 +1,7 @@
 import { ExternalLink } from "lucide-react";
 import { lessonLineKey, tagOfLine } from "@/lib/lesson-tags";
 import { RichText } from "@/components/rich-text";
+import { parseAudioSrc } from "@/lib/audio-src";
 import { parseVideoEmbed } from "@/lib/video-embed";
 
 /**
@@ -12,7 +13,8 @@ import { parseVideoEmbed } from "@/lib/video-embed";
  *  - a paragraph beginning with a recognised `TAG · …` / `TAG …` prefix renders
  *    the tag as a small brass label; a `VIDEO ·` line whose attached link is a
  *    YouTube/Vimeo URL embeds an in-page player, otherwise it is an external
- *    link, and every other tag renders its (optional) link as before;
+ *    link; an `AUDIO ·` line with an https:// or /audio/… link plays in an
+ *    <audio controls> player; every other tag renders its (optional) link;
  *  - any other paragraph is rendered as a safe Markdown subset (headings, bold,
  *    italics, lists, inline images, links) via <RichText>.
  */
@@ -46,6 +48,23 @@ export function LessonLine({ text, href }: { text: string; href?: string }) {
               allowFullScreen
             />
           </div>
+        </figure>
+      );
+    }
+  }
+  if (tag === "AUDIO" && href) {
+    const src = parseAudioSrc(href);
+    if (src) {
+      return (
+        <figure className="not-prose">
+          <figcaption className="mb-2 text-sm">
+            {label}
+            {rest}
+          </figcaption>
+          {/* preload="metadata" keeps iPhone Safari from pulling the whole file up front. */}
+          <audio controls preload="metadata" src={src} className="w-full">
+            <a href={src}>Download the audio</a>
+          </audio>
         </figure>
       );
     }

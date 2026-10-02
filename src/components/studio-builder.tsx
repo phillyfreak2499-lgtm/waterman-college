@@ -1,5 +1,11 @@
 import { useMemo, useState, type FormEvent } from "react";
 import { toast } from "sonner";
+import {
+  CourseSettingsFields,
+  courseSettingsProblem,
+  NEW_COURSE_SETTINGS,
+  type CourseSettings,
+} from "@/components/audience-fields";
 import { useCatalog } from "@/components/catalog-provider";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +18,6 @@ import {
 } from "@/lib/cms";
 import { lessonLineKey, saveLessonLink } from "@/lib/lesson-links";
 import { QUAD_GAMES } from "@/lib/quad";
-import { isRoleId } from "@/lib/content";
 
 const darkInput =
   "h-11 w-full rounded-sm border border-paper/15 bg-navy-deep px-3 text-paper placeholder:text-paper/35 focus:outline-2 focus:outline-offset-1 focus:outline-brass";
@@ -406,7 +411,7 @@ export function StudioTemplates() {
   const [newCourse, setNewCourse] = useState(false);
   const [courseTitle, setCourseTitle] = useState("");
   const [audience, setAudience] = useState("Every Specialist");
-  const [who, setWho] = useState<"specialist" | "new-hires" | "mit" | "managers" | "all">("specialist");
+  const [settings, setSettings] = useState<CourseSettings>(NEW_COURSE_SETTINGS);
 
   const games = useMemo(() => QUAD_GAMES, []);
 
@@ -417,18 +422,18 @@ export function StudioTemplates() {
       let targetTrack = trackId;
       if (newCourse) {
         if (!courseTitle.trim()) throw new Error("Name the new course.");
+        const problem = courseSettingsProblem(settings, true);
+        if (problem) throw new Error(problem);
         const id = slugify(courseTitle);
         const payload: TrackInput = {
           id,
-          role: who === "all" ? "specialist" : who,
           title: courseTitle.trim(),
           nav: courseTitle.trim(),
           image: "/media/campus-cogs.jpg",
           audience,
           summary: picked.blurb,
-          visibleToAll: who === "all",
+          ...settings,
         };
-        if (!isRoleId(payload.role)) payload.role = "specialist";
         const next = await saveTrack({ data: payload });
         replace(next);
         targetTrack = id;
@@ -521,16 +526,9 @@ export function StudioTemplates() {
               <span className="mb-1.5 block text-xs font-medium uppercase tracking-[0.14em] text-paper/50">Audience</span>
               <input className={darkInput} value={audience} onChange={(e) => setAudience(e.target.value)} />
             </label>
-            <label className="block">
-              <span className="mb-1.5 block text-xs font-medium uppercase tracking-[0.14em] text-paper/50">Who sees it</span>
-              <select className={darkInput} value={who} onChange={(e) => setWho(e.target.value as typeof who)}>
-                <option value="new-hires">New Hires</option>
-                <option value="specialist">Specialists</option>
-                <option value="mit">MIT</option>
-                <option value="managers">Managers</option>
-                <option value="all">Every position</option>
-              </select>
-            </label>
+            <div className="sm:col-span-2">
+              <CourseSettingsFields dark categories={catalog.categories} value={settings} onChange={setSettings} />
+            </div>
           </div>
         ) : (
           <label className="block">
